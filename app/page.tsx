@@ -61,24 +61,61 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-indigo-400 text-lg font-medium animate-pulse">Cargando...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg)" }}>
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce [animation-delay:-0.3s]" />
+          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce [animation-delay:-0.15s]" />
+          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <header className="bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center gap-3">
-          <span className="text-3xl">🌀</span>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">SpinAI</h1>
-            <p className="text-xs text-gray-500">Asignador de reuniones de equipo · Viernes</p>
+    <div className="min-h-screen" style={{ background: "var(--color-bg)" }}>
+      {/* Header */}
+      <header
+        style={{
+          background: "var(--color-surface)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded flex items-center justify-center text-white text-lg font-bold"
+              style={{
+                background: "var(--color-primary)",
+                boxShadow: "var(--shadow-glow-sm)",
+                borderRadius: "var(--radius-md)",
+              }}
+            >
+              S
+            </div>
+            <div>
+              <h1 className="text-base font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
+                SpinAI
+              </h1>
+              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
+                Asignador de reuniones · Viernes
+              </p>
+            </div>
+          </div>
+          <div
+            className="text-xs px-3 py-1 font-medium"
+            style={{
+              color: "var(--color-primary)",
+              border: "1px solid #2C40FF44",
+              borderRadius: "var(--radius-md)",
+              background: "#2C40FF11",
+            }}
+          >
+            {data.members.filter((m) => m.active).length} activos
           </div>
         </div>
       </header>
 
+      {/* Main */}
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">

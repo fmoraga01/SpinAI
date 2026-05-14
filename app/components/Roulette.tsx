@@ -39,15 +39,13 @@ export default function Roulette({ members, nextFriday, alreadyAssigned, onAssig
 
     let elapsed = 0;
     const duration = 3000;
-    const startInterval = 80;
-    let currentInterval = startInterval;
+    let currentInterval = 80;
 
     function tick() {
       const random = activeMembers[Math.floor(Math.random() * activeMembers.length)];
       setDisplayName(random.name);
       elapsed += currentInterval;
 
-      // Slow down near the end
       if (elapsed > duration * 0.6) {
         currentInterval = Math.min(currentInterval * 1.15, 400);
       }
@@ -77,18 +75,43 @@ export default function Roulette({ members, nextFriday, alreadyAssigned, onAssig
     setDisplayName("");
   }
 
+  const isDisabled = spinning || activeMembers.length < 1 || alreadyAssigned;
+
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col items-center">
-      <h2 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
-        <span className="text-2xl">🎯</span> Ruleta de Turno
-      </h2>
-      <p className="text-sm text-gray-500 mb-6">
-        Selecciona el viernes y gira para asignar el turno
+    <div
+      style={{
+        background: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-glow)",
+        padding: "24px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+      }}
+    >
+      {/* Title */}
+      <div className="flex items-center gap-2 mb-1 self-start">
+        <span style={{ color: "var(--color-primary)", fontSize: 18 }}>◎</span>
+        <h2
+          className="text-sm font-semibold uppercase tracking-widest"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Ruleta de Turno
+        </h2>
+      </div>
+      <p className="text-xs mb-6 self-start" style={{ color: "#4B5563" }}>
+        Selecciona el viernes y gira para asignar
       </p>
 
       {/* Date selector */}
       <div className="w-full mb-6">
-        <label className="text-xs font-medium text-gray-500 mb-1 block">Viernes a asignar</label>
+        <label
+          className="text-xs font-medium block mb-1"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Viernes a asignar
+        </label>
         <input
           type="date"
           value={selectedDate}
@@ -97,34 +120,50 @@ export default function Roulette({ members, nextFriday, alreadyAssigned, onAssig
             setWinner(null);
             setDisplayName("");
           }}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          className="w-full text-sm outline-none"
+          style={{
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            padding: "8px 12px",
+            color: "var(--color-text-primary)",
+            colorScheme: "dark",
+          }}
         />
       </div>
 
-      {/* Roulette display */}
+      {/* Roulette circle */}
       <div
-        className={`w-48 h-48 rounded-full flex items-center justify-center mb-6 border-4 transition-all duration-300 ${
-          spinning
-            ? "border-indigo-400 bg-indigo-50 animate-pulse"
+        className="flex items-center justify-center mb-6"
+        style={{
+          width: 180,
+          height: 180,
+          borderRadius: "50%",
+          border: "2px solid " + (spinning ? "var(--color-primary)" : winner ? "#10B981" : "var(--color-border)"),
+          background: spinning
+            ? "#2C40FF11"
             : winner
-            ? "border-emerald-400 bg-emerald-50"
-            : "border-gray-200 bg-gray-50"
-        }`}
+            ? "#10B98111"
+            : "var(--color-surface-elevated)",
+          boxShadow: spinning
+            ? "var(--shadow-glow)"
+            : winner
+            ? "rgba(16, 185, 129, 0.3) 0px 0px 20px 0px"
+            : "none",
+          transition: "all 300ms ease",
+        }}
       >
         <div className="text-center px-4">
           {displayName ? (
             <p
-              className={`text-lg font-bold leading-tight ${
-                winner ? "text-emerald-700" : "text-indigo-700"
-              }`}
+              className="text-base font-semibold leading-tight"
+              style={{ color: winner ? "#10B981" : "var(--color-primary)" }}
             >
               {displayName}
             </p>
           ) : (
-            <p className="text-gray-400 text-sm">
-              {activeMembers.length === 0
-                ? "Sin integrantes activos"
-                : "Presiona Girar"}
+            <p className="text-sm" style={{ color: "#4B5563" }}>
+              {activeMembers.length === 0 ? "Sin activos" : "Presiona Girar"}
             </p>
           )}
         </div>
@@ -134,27 +173,56 @@ export default function Roulette({ members, nextFriday, alreadyAssigned, onAssig
       {!winner ? (
         <button
           onClick={spin}
-          disabled={spinning || activeMembers.length < 1 || alreadyAssigned}
-          className="px-8 py-3 bg-indigo-600 text-white rounded-xl font-semibold text-base hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-md"
+          disabled={isDisabled}
+          className="w-full text-sm font-semibold transition-all duration-150"
+          style={{
+            background: isDisabled ? "var(--color-surface-elevated)" : "var(--color-primary)",
+            color: isDisabled ? "#4B5563" : "var(--color-text-primary)",
+            border: "1px solid " + (isDisabled ? "var(--color-border)" : "var(--color-primary)"),
+            borderRadius: "var(--radius-md)",
+            padding: "12px",
+            cursor: isDisabled ? "not-allowed" : "pointer",
+            boxShadow: isDisabled ? "none" : "var(--shadow-glow-sm)",
+          }}
         >
           {spinning ? "Girando..." : alreadyAssigned ? "Ya asignado" : "¡Girar!"}
         </button>
       ) : (
-        <div className="flex flex-col items-center gap-3 w-full">
-          <p className="text-sm text-gray-600 text-center">
-            <strong>{winner.name}</strong> liderará la reunión del{" "}
+        <div className="w-full space-y-3">
+          <p
+            className="text-xs text-center"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            <strong style={{ color: "#10B981" }}>{winner.name}</strong> liderará el{" "}
             <strong>{formatFriday(selectedDate)}</strong>
           </p>
-          <div className="flex gap-3 w-full">
+          <div className="flex gap-2">
             <button
               onClick={handleCancel}
-              className="flex-1 py-2 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors"
+              className="flex-1 text-sm font-medium transition-all duration-150"
+              style={{
+                background: "transparent",
+                color: "var(--color-text-secondary)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                padding: "8px",
+                cursor: "pointer",
+              }}
             >
               Cancelar
             </button>
             <button
               onClick={handleConfirm}
-              className="flex-1 py-2 bg-emerald-600 text-white rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors"
+              className="flex-1 text-sm font-semibold transition-all duration-150"
+              style={{
+                background: "#10B981",
+                color: "#fff",
+                border: "1px solid #10B981",
+                borderRadius: "var(--radius-md)",
+                padding: "8px",
+                cursor: "pointer",
+                boxShadow: "rgba(16, 185, 129, 0.3) 0px 0px 10px 0px",
+              }}
             >
               Confirmar
             </button>
@@ -163,14 +231,14 @@ export default function Roulette({ members, nextFriday, alreadyAssigned, onAssig
       )}
 
       {alreadyAssigned && !winner && (
-        <p className="mt-3 text-xs text-amber-600 text-center">
-          Este viernes ya tiene un turno asignado. Cambia la fecha o elimina la asignación.
+        <p className="mt-3 text-xs text-center" style={{ color: "#F59E0B" }}>
+          Este viernes ya tiene turno. Cambia la fecha o elimina la asignación.
         </p>
       )}
 
       {activeMembers.length === 0 && (
-        <p className="mt-3 text-xs text-red-500 text-center">
-          Activa al menos un integrante para girar la ruleta.
+        <p className="mt-3 text-xs text-center" style={{ color: "#F87171" }}>
+          Activa al menos un integrante para girar.
         </p>
       )}
     </div>

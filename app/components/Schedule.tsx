@@ -32,21 +32,21 @@ function isPast(dateStr: string): boolean {
   return new Date(dateStr + "T12:00:00") < today;
 }
 
-const COLORS = [
-  "bg-indigo-500",
-  "bg-emerald-500",
-  "bg-amber-500",
-  "bg-rose-500",
-  "bg-violet-500",
-  "bg-cyan-500",
-  "bg-orange-500",
-  "bg-teal-500",
+const AVATAR_COLORS = [
+  "#2C40FF",
+  "#7C3AED",
+  "#0891B2",
+  "#059669",
+  "#DC2626",
+  "#D97706",
+  "#DB2777",
+  "#65A30D",
 ];
 
-function getColor(name: string): string {
+function getAvatarColor(name: string): string {
   let hash = 0;
-  for (const char of name) hash = (hash + char.charCodeAt(0)) % COLORS.length;
-  return COLORS[hash];
+  for (const char of name) hash = (hash + char.charCodeAt(0)) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[hash];
 }
 
 export default function Schedule({ assignments, onRemove }: Props) {
@@ -55,95 +55,190 @@ export default function Schedule({ assignments, onRemove }: Props) {
   const past = sorted.filter((a) => isPast(a.date));
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <span className="text-2xl">📅</span> Historial de turnos
-      </h2>
+    <div
+      style={{
+        background: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-glow)",
+        padding: "24px",
+      }}
+    >
+      {/* Title */}
+      <div className="flex items-center gap-2 mb-5">
+        <span style={{ color: "var(--color-primary)", fontSize: 18 }}>▤</span>
+        <h2
+          className="text-sm font-semibold uppercase tracking-widest"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Historial de Turnos
+        </h2>
+      </div>
 
       {assignments.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-8">
-          Aún no hay turnos asignados. ¡Gira la ruleta!
-        </p>
+        <div
+          className="text-center py-8 text-sm"
+          style={{
+            color: "var(--color-text-secondary)",
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          <p className="mt-4">Sin turnos asignados</p>
+          <p className="text-xs mt-1" style={{ color: "#4B5563" }}>
+            Gira la ruleta para asignar
+          </p>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {upcoming.length > 0 && (
             <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              <p
+                className="text-xs font-semibold uppercase tracking-widest mb-3"
+                style={{ color: "#4B5563" }}
+              >
                 Próximos viernes
-              </h3>
+              </p>
               <ul className="space-y-2">
-                {upcoming.map((a, i) => (
-                  <li
-                    key={a.id}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                      i === 0
-                        ? "border-indigo-200 bg-indigo-50"
-                        : "border-gray-100 bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${getColor(a.memberName)}`}
-                      >
-                        {getInitials(a.memberName)}
-                      </div>
-                      <div>
-                        <p className={`text-sm font-semibold ${i === 0 ? "text-indigo-800" : "text-gray-800"}`}>
-                          {a.memberName}
-                        </p>
-                        <p className={`text-xs ${i === 0 ? "text-indigo-600" : "text-gray-500"}`}>
-                          {formatDate(a.date)}
-                          {i === 0 && " · Próximo"}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => onRemove(a.id)}
-                      title="Eliminar asignación"
-                      className="text-gray-300 hover:text-red-400 transition-colors text-lg leading-none"
+                {upcoming.map((a, i) => {
+                  const color = getAvatarColor(a.memberName);
+                  const isNext = i === 0;
+                  return (
+                    <li
+                      key={a.id}
+                      className="flex items-center justify-between transition-all duration-150"
+                      style={{
+                        background: isNext ? "#2C40FF11" : "var(--color-surface-elevated)",
+                        border: "1px solid " + (isNext ? "#2C40FF44" : "var(--color-border)"),
+                        borderRadius: "var(--radius-md)",
+                        padding: "10px 12px",
+                        boxShadow: isNext ? "var(--shadow-glow-sm)" : "none",
+                      }}
                     >
-                      ✕
-                    </button>
-                  </li>
-                ))}
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="flex-shrink-0 flex items-center justify-center text-white text-xs font-bold"
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: "50%",
+                            background: color,
+                            boxShadow: `${color}44 0px 0px 8px 0px`,
+                            fontSize: 11,
+                          }}
+                        >
+                          {getInitials(a.memberName)}
+                        </div>
+                        <div>
+                          <p
+                            className="text-sm font-semibold leading-tight"
+                            style={{ color: isNext ? "var(--color-primary)" : "var(--color-text-primary)" }}
+                          >
+                            {a.memberName}
+                          </p>
+                          <p className="text-xs" style={{ color: "#4B5563" }}>
+                            {formatDate(a.date)}
+                            {isNext && (
+                              <span
+                                className="ml-2 font-medium"
+                                style={{ color: "var(--color-primary)" }}
+                              >
+                                · Próximo
+                              </span>
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => onRemove(a.id)}
+                        title="Eliminar"
+                        className="text-xs transition-colors duration-150"
+                        style={{
+                          color: "#374151",
+                          cursor: "pointer",
+                          background: "transparent",
+                          border: "none",
+                          padding: "4px",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = "#F87171")}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
+                      >
+                        ✕
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
 
           {past.length > 0 && (
             <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+              <p
+                className="text-xs font-semibold uppercase tracking-widest mb-3"
+                style={{ color: "#374151" }}
+              >
                 Anteriores
-              </h3>
-              <ul className="space-y-2 opacity-60">
+              </p>
+              <ul className="space-y-2" style={{ opacity: 0.5 }}>
                 {past
                   .slice()
                   .reverse()
-                  .map((a) => (
-                    <li
-                      key={a.id}
-                      className="flex items-center justify-between px-4 py-3 rounded-xl border border-gray-100 bg-gray-50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${getColor(a.memberName)}`}
-                        >
-                          {getInitials(a.memberName)}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-600">{a.memberName}</p>
-                          <p className="text-xs text-gray-400">{formatDate(a.date)}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => onRemove(a.id)}
-                        title="Eliminar"
-                        className="text-gray-200 hover:text-red-400 transition-colors"
+                  .map((a) => {
+                    const color = getAvatarColor(a.memberName);
+                    return (
+                      <li
+                        key={a.id}
+                        className="flex items-center justify-between"
+                        style={{
+                          background: "var(--color-surface-elevated)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "10px 12px",
+                        }}
                       >
-                        ✕
-                      </button>
-                    </li>
-                  ))}
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="flex-shrink-0 flex items-center justify-center text-white font-bold"
+                            style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: "50%",
+                              background: color,
+                              fontSize: 11,
+                            }}
+                          >
+                            {getInitials(a.memberName)}
+                          </div>
+                          <div>
+                            <p
+                              className="text-sm font-medium"
+                              style={{ color: "var(--color-text-secondary)" }}
+                            >
+                              {a.memberName}
+                            </p>
+                            <p className="text-xs" style={{ color: "#374151" }}>
+                              {formatDate(a.date)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => onRemove(a.id)}
+                          title="Eliminar"
+                          style={{
+                            color: "#374151",
+                            cursor: "pointer",
+                            background: "transparent",
+                            border: "none",
+                            fontSize: 12,
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.color = "#F87171")}
+                          onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
+                        >
+                          ✕
+                        </button>
+                      </li>
+                    );
+                  })}
               </ul>
             </div>
           )}

@@ -32,70 +32,132 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove }: Pro
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-      <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <span className="text-2xl">👥</span> Equipo
-      </h2>
+    <div
+      style={{
+        background: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--shadow-glow)",
+        padding: "24px",
+      }}
+    >
+      {/* Title */}
+      <div className="flex items-center gap-2 mb-5">
+        <span style={{ color: "var(--color-primary)", fontSize: 18 }}>⬡</span>
+        <h2
+          className="text-sm font-semibold uppercase tracking-widest"
+          style={{ color: "var(--color-text-secondary)" }}
+        >
+          Equipo
+        </h2>
+      </div>
 
+      {/* Input */}
       <form onSubmit={handleAdd} className="flex gap-2 mb-5">
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre del integrante..."
-          className="flex-1 px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent"
+          className="flex-1 text-sm outline-none placeholder:text-[#4B5563]"
+          style={{
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            padding: "8px 12px",
+            color: "var(--color-text-primary)",
+            transition: "border-color 150ms ease",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#2C40FF")}
+          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
         />
         <button
           type="submit"
           disabled={!name.trim()}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="text-sm font-medium transition-all duration-150"
+          style={{
+            background: name.trim() ? "var(--color-primary)" : "#1a2035",
+            color: "var(--color-text-primary)",
+            border: "1px solid " + (name.trim() ? "var(--color-primary)" : "var(--color-border)"),
+            borderRadius: "var(--radius-md)",
+            padding: "8px 16px",
+            cursor: name.trim() ? "pointer" : "not-allowed",
+            boxShadow: name.trim() ? "var(--shadow-glow-sm)" : "none",
+          }}
         >
           Agregar
         </button>
       </form>
 
+      {/* List */}
       {members.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-6">
-          Aún no hay integrantes. ¡Agrega el primero!
-        </p>
+        <div
+          className="text-center py-8 text-sm"
+          style={{ color: "var(--color-text-secondary)", borderTop: "1px solid var(--color-border)" }}
+        >
+          <p className="mt-4">Sin integrantes aún</p>
+          <p className="text-xs mt-1" style={{ color: "#4B5563" }}>Agrega el primero arriba</p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {members.map((m) => (
             <li
               key={m.id}
-              className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                m.active
-                  ? "border-indigo-100 bg-indigo-50"
-                  : "border-gray-100 bg-gray-50 opacity-50"
-              }`}
+              className="flex items-center justify-between transition-all duration-150"
+              style={{
+                background: m.active ? "#2C40FF11" : "var(--color-surface-elevated)",
+                border: "1px solid " + (m.active ? "#2C40FF44" : "var(--color-border)"),
+                borderRadius: "var(--radius-md)",
+                padding: "10px 12px",
+              }}
             >
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => onToggle(m.id)}
                   title={m.active ? "Desactivar" : "Activar"}
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                    m.active
-                      ? "bg-indigo-500 border-indigo-500"
-                      : "bg-white border-gray-300"
-                  }`}
+                  className="flex-shrink-0 transition-all duration-150"
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    border: "2px solid " + (m.active ? "var(--color-primary)" : "var(--color-border)"),
+                    background: m.active ? "var(--color-primary)" : "transparent",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: m.active ? "var(--shadow-glow-sm)" : "none",
+                    cursor: "pointer",
+                  }}
                 >
                   {m.active && (
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </button>
-                <span className={`text-sm font-medium ${m.active ? "text-gray-800" : "text-gray-400"}`}>
+                <span
+                  className="text-sm font-medium"
+                  style={{
+                    color: m.active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                    opacity: m.active ? 1 : 0.5,
+                  }}
+                >
                   {m.name}
                 </span>
               </div>
+
               <button
                 onClick={() => handleRemove(m.id)}
-                className={`text-xs px-2 py-1 rounded-lg transition-colors ${
-                  confirmRemove === m.id
-                    ? "bg-red-100 text-red-600 font-semibold"
-                    : "text-gray-400 hover:text-red-500"
-                }`}
+                className="text-xs transition-all duration-150"
+                style={{
+                  color: confirmRemove === m.id ? "#F87171" : "#4B5563",
+                  background: confirmRemove === m.id ? "#F8717122" : "transparent",
+                  border: "1px solid " + (confirmRemove === m.id ? "#F87171" : "transparent"),
+                  borderRadius: "var(--radius-md)",
+                  padding: "2px 8px",
+                  cursor: "pointer",
+                  fontWeight: confirmRemove === m.id ? 600 : 400,
+                }}
               >
                 {confirmRemove === m.id ? "¿Seguro?" : "✕"}
               </button>
@@ -104,9 +166,18 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove }: Pro
         </ul>
       )}
 
-      <p className="mt-4 text-xs text-gray-400">
-        {members.filter((m) => m.active).length} activos · {members.length} total
-      </p>
+      {/* Footer */}
+      <div
+        className="mt-4 flex items-center justify-between text-xs"
+        style={{
+          color: "#4B5563",
+          borderTop: "1px solid var(--color-border)",
+          paddingTop: "12px",
+        }}
+      >
+        <span>{members.filter((m) => m.active).length} activos</span>
+        <span>{members.length} total</span>
+      </div>
     </div>
   );
 }
