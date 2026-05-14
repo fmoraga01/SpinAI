@@ -168,24 +168,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
-      <section
-        style={{
-          borderTop: "1px solid var(--color-border)",
-          background: "var(--color-surface)",
-          padding: "80px 0",
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-6">
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-10"
-            style={{ color: "#4B5563" }}
-          >
-            Secciones
-          </p>
-          <FeatureCards />
-        </div>
-      </section>
     </div>
   );
 }
