@@ -1,149 +1,191 @@
-"use client";
+import Link from "next/link";
+import Nav from "./components/Nav";
+import FeatureCards from "./components/FeatureCards";
 
-import { useState, useEffect } from "react";
-import { AppData } from "@/lib/types";
-import {
-  loadData,
-  addMember,
-  toggleMember,
-  removeMember,
-  addAssignment,
-  removeAssignment,
-  getNextFridays,
-} from "@/lib/storage";
-import MembersPanel from "./components/MembersPanel";
-import Roulette from "./components/Roulette";
-import Schedule from "./components/Schedule";
-
-export default function Home() {
-  const [data, setData] = useState<AppData>({ members: [], assignments: [] });
-  const [nextFridays, setNextFridays] = useState<string[]>([]);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setData(loadData());
-    setNextFridays(getNextFridays(8));
-    setMounted(true);
-  }, []);
-
-  function refresh() {
-    setData(loadData());
-  }
-
-  function handleAddMember(name: string) {
-    addMember(name);
-    refresh();
-  }
-
-  function handleToggleMember(id: string) {
-    toggleMember(id);
-    refresh();
-  }
-
-  function handleRemoveMember(id: string) {
-    removeMember(id);
-    refresh();
-  }
-
-  function handleAssign(memberId: string, date: string) {
-    addAssignment(memberId, date);
-    refresh();
-  }
-
-  function handleRemoveAssignment(id: string) {
-    removeAssignment(id);
-    refresh();
-  }
-
-  const nextFriday = nextFridays[0] ?? "";
-  const alreadyAssigned = (date: string) =>
-    data.assignments.some((a) => a.date === date);
-
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: "var(--color-bg)" }}>
-        <div className="flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce [animation-delay:-0.3s]" />
-          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce [animation-delay:-0.15s]" />
-          <div className="w-2 h-2 rounded-full bg-[#2C40FF] animate-bounce" />
-        </div>
-      </div>
-    );
-  }
+function GridDecoration() {
+  const cols = 10;
+  const rows = 12;
+  const heights = [3, 6, 9, 5, 11, 4, 8, 7, 10, 6, 5, 9, 4, 11, 7, 3, 8, 6, 10, 5];
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--color-bg)" }}>
-      {/* Header */}
-      <header
+    <div
+      className="absolute right-0 top-0 h-full w-1/2 pointer-events-none overflow-hidden"
+      style={{ maskImage: "linear-gradient(to left, rgba(0,0,0,0.6), transparent)" }}
+    >
+      <div
+        className="absolute right-0 top-0 h-full"
         style={{
-          background: "var(--color-surface)",
-          borderBottom: "1px solid var(--color-border)",
+          display: "grid",
+          gridTemplateColumns: `repeat(${cols}, 36px)`,
+          gap: 4,
+          alignItems: "end",
+          paddingBottom: 0,
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded flex items-center justify-center text-white text-lg font-bold"
+        {Array.from({ length: cols }).map((_, col) =>
+          Array.from({ length: rows }).map((_, row) => {
+            const h = heights[(col * rows + row) % heights.length];
+            const opacity = 0.08 + (h / 12) * 0.45;
+            const isBlue = h > 7;
+            return (
+              <div
+                key={`${col}-${row}`}
+                style={{
+                  width: 32,
+                  height: 28,
+                  borderRadius: 3,
+                  background: isBlue ? "#2C40FF" : "#1a2040",
+                  opacity,
+                  border: isBlue ? "1px solid #2C40FF55" : "1px solid #1f2333",
+                }}
+              />
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
+      <Nav />
+
+      {/* Hero */}
+      <section
+        className="relative overflow-hidden"
+        style={{ minHeight: "calc(100vh - 60px)" }}
+      >
+        <GridDecoration />
+
+        <div className="max-w-6xl mx-auto px-6 relative z-10 flex flex-col justify-center" style={{ minHeight: "calc(100vh - 60px)", paddingTop: 80, paddingBottom: 80 }}>
+
+          {/* Tag */}
+          <div className="mb-6">
+            <span
               style={{
-                background: "var(--color-primary)",
-                boxShadow: "var(--shadow-glow-sm)",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--color-primary)",
+                background: "#2C40FF15",
+                border: "1px solid #2C40FF33",
                 borderRadius: "var(--radius-md)",
+                padding: "4px 12px",
               }}
             >
-              S
-            </div>
-            <div>
-              <h1 className="text-base font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
-                SpinAI
-              </h1>
-              <p className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
-                Asignador de reuniones · Viernes
-              </p>
-            </div>
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: "var(--color-primary)",
+                  boxShadow: "var(--shadow-glow-sm)",
+                  display: "inline-block",
+                }}
+              />
+              Reuniones de equipo · Viernes
+            </span>
           </div>
-          <div
-            className="text-xs px-3 py-1 font-medium"
+
+          {/* Headline */}
+          <h1
             style={{
-              color: "var(--color-primary)",
-              border: "1px solid #2C40FF44",
-              borderRadius: "var(--radius-md)",
-              background: "#2C40FF11",
+              fontSize: "clamp(48px, 7vw, 88px)",
+              fontWeight: 600,
+              lineHeight: 1,
+              letterSpacing: "-0.025em",
+              color: "#fff",
+              maxWidth: 700,
+              marginBottom: 28,
             }}
           >
-            {data.members.filter((m) => m.active).length} activos
+            Decide quién lidera,{" "}
+            <span style={{ color: "var(--color-primary)" }}>sin debates.</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p
+            style={{
+              fontSize: 18,
+              fontWeight: 500,
+              lineHeight: "28px",
+              color: "var(--color-text-secondary)",
+              maxWidth: 480,
+              marginBottom: 48,
+            }}
+          >
+            SpinAI asigna aleatoriamente quién conduce la reunión de equipo cada
+            viernes. Justo, simple y sin discusiones.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <Link
+              href="/ruleta"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 24px",
+                borderRadius: "var(--radius-md)",
+                fontSize: 15,
+                fontWeight: 500,
+                color: "#fff",
+                background: "var(--color-primary)",
+                textDecoration: "none",
+                boxShadow: "var(--shadow-glow)",
+                transition: "opacity 150ms ease",
+                border: "1px solid var(--color-primary)",
+              }}
+            >
+              Girar la ruleta
+              <span style={{ fontSize: 18 }}>↗</span>
+            </Link>
+            <Link
+              href="/equipo"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "12px 24px",
+                borderRadius: "var(--radius-md)",
+                fontSize: 15,
+                fontWeight: 500,
+                color: "var(--color-text-secondary)",
+                textDecoration: "none",
+                border: "1px solid var(--color-border-bright)",
+                background: "transparent",
+                transition: "border-color 150ms ease",
+              }}
+            >
+              Gestionar equipo
+            </Link>
           </div>
         </div>
-      </header>
+      </section>
 
-      {/* Main */}
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <MembersPanel
-              members={data.members}
-              onAdd={handleAddMember}
-              onToggle={handleToggleMember}
-              onRemove={handleRemoveMember}
-            />
-          </div>
-
-          <div className="lg:col-span-1">
-            <Roulette
-              members={data.members}
-              nextFriday={nextFriday}
-              alreadyAssigned={alreadyAssigned(nextFriday)}
-              onAssign={handleAssign}
-            />
-          </div>
-
-          <div className="lg:col-span-1">
-            <Schedule
-              assignments={data.assignments}
-              onRemove={handleRemoveAssignment}
-            />
-          </div>
+      {/* Features */}
+      <section
+        style={{
+          borderTop: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+          padding: "80px 0",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-6">
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-10"
+            style={{ color: "#4B5563" }}
+          >
+            Secciones
+          </p>
+          <FeatureCards />
         </div>
-      </main>
+      </section>
     </div>
   );
 }
