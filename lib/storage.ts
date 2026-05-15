@@ -127,7 +127,12 @@ export async function swapAssignmentMembers(idA: string, idB: string): Promise<v
 // ─── Logs ─────────────────────────────────────────────────────────────────────
 
 export async function loadLogs(): Promise<{ entries: LogEntry[]; tableError: boolean }> {
-  const { data, error } = await getSupabase()
+  const db = getSupabase();
+
+  // If no assignments exist, wipe logs and return empty
+  await clearLogsIfNoAssignments(db);
+
+  const { data, error } = await db
     .from("assignment_logs")
     .select("*")
     .order("created_at", { ascending: false })
