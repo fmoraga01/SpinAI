@@ -130,8 +130,8 @@ export default function Drawer() {
               transition: "border-color 150ms, color 150ms",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "#F87171";
-              e.currentTarget.style.color = "#F87171";
+              e.currentTarget.style.borderColor = "var(--color-primary)";
+              e.currentTarget.style.color = "var(--color-primary)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = "var(--color-border)";
