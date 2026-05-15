@@ -1,81 +1,94 @@
+import { supabase } from "./supabase";
 import { AppData, TeamMember, Assignment } from "./types";
 
-const STORAGE_KEY = "spinai_data";
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-function getDefaultData(): AppData {
-  return { members: [], assignments: [] };
-}
-
-export function loadData(): AppData {
-  if (typeof window === "undefined") return getDefaultData();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return getDefaultData();
-    return JSON.parse(raw) as AppData;
-  } catch {
-    return getDefaultData();
-  }
-}
-
-export function saveData(data: AppData): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-export function addMember(name: string): TeamMember {
-  const data = loadData();
-  const member: TeamMember = {
-    id: crypto.randomUUID(),
-    name: name.trim(),
-    active: true,
-    createdAt: new Date().toISOString(),
+function rowToMember(row: Record<string, unknown>): TeamMember {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    active: row.active as boolean,
+    createdAt: row.created_at as string,
   };
-  data.members.push(member);
-  saveData(data);
-  return member;
 }
 
-export function toggleMember(id: string): void {
-  const data = loadData();
-  const member = data.members.find((m) => m.id === id);
-  if (member) {
-    member.active = !member.active;
-    saveData(data);
-  }
-}
-
-export function removeMember(id: string): void {
-  const data = loadData();
-  data.members = data.members.filter((m) => m.id !== id);
-  saveData(data);
-}
-
-export function addAssignment(memberId: string, date: string): Assignment {
-  const data = loadData();
-  const member = data.members.find((m) => m.id === memberId);
-  if (!member) throw new Error("Member not found");
-  const assignment: Assignment = {
-    id: crypto.randomUUID(),
-    memberId,
-    memberName: member.name,
-    date,
-    createdAt: new Date().toISOString(),
+function rowToAssignment(row: Record<string, unknown>): Assignment {
+  return {
+    id: row.id as string,
+    memberId: row.member_id as string,
+    memberName: row.member_name as string,
+    date: row.date as string,
+    createdAt: row.created_at as string,
   };
-  data.assignments.push(assignment);
-  saveData(data);
-  return assignment;
 }
 
-export function removeAssignment(id: string): void {
-  const data = loadData();
-  data.assignments = data.assignments.filter((a) => a.id !== id);
-  saveData(data);
+// ─── Load ────────────────────────────────────────────────────────────────────
+
+export async function loadData(): Promise<AppData> {
+  const [{ data: members }, { data: assignments }] = await Promise.all([
+    supabase.from("members").select("*").order("created_at"),
+    supabase.from("assignments").select("*").order("date"),
+  ]);
+
+  return {
+    members: (members ?? []).map(rowToMember),
+    assignments: (assignments ?? []).map(rowToAssignment),
+  };
+}
+
+// ─── Members ─────────────────────────────────────────────────────────────────
+
+export async function addMember(name: string): Promise<TeamMember> {
+  const { data, error } = await supabase
+    .from("members")
+    .insert({ name: name.trim(), active: true })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return rowToMember(data);
+}
+
+export async function toggleMember(id: string): Promise<void> {
+  const { data: current, error: fetchError } = await supabase
+    .from("members")
+    .select("active")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) throw new Error(fetchError.message);
+
+  const { error } = await supabase
+    .from("members")
+    .update({ active: !current.active })
+    .eq("id", id);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function removeMember(id: string): Promise<void> {
+  const { error } = await supabase.from("members").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Assignments ──────────────────────────────────────────────────────────────
+
+export async function removeAssignment(id: string): Promise<void> {
+  const { error } = await supabase.from("assignments").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Bulk assignment ─────────────────────────────────────────────────────────
+
+export interface BulkAssignmentPreview {
+  memberId: string;
+  memberName: string;
+  date: string;
 }
 
 export function getNextFridays(count: number = 8): string[] {
   const fridays: string[] = [];
-  const today = new Date();
-  const current = new Date(today);
+  const current = new Date();
 
   const dayOfWeek = current.getDay();
   const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 6;
@@ -92,20 +105,13 @@ export function getNextFridays(count: number = 8): string[] {
   return fridays;
 }
 
-export interface BulkAssignmentPreview {
-  memberId: string;
-  memberName: string;
-  date: string;
-}
-
-export function buildBulkAssignmentPreview(): BulkAssignmentPreview[] {
-  const data = loadData();
+export async function buildBulkAssignmentPreview(): Promise<BulkAssignmentPreview[]> {
+  const data = await loadData();
   const activeMembers = data.members.filter((m) => m.active);
   if (activeMembers.length === 0) return [];
 
   const assignedDates = new Set(data.assignments.map((a) => a.date));
 
-  // Get enough available Fridays (skip already assigned)
   const needed = activeMembers.length;
   const candidates = getNextFridays(needed + assignedDates.size + 4);
   const available = candidates.filter((d) => !assignedDates.has(d)).slice(0, needed);
@@ -124,17 +130,13 @@ export function buildBulkAssignmentPreview(): BulkAssignmentPreview[] {
   }));
 }
 
-export function confirmBulkAssignment(previews: BulkAssignmentPreview[]): void {
-  const data = loadData();
-  const now = new Date().toISOString();
-  for (const p of previews) {
-    data.assignments.push({
-      id: crypto.randomUUID(),
-      memberId: p.memberId,
-      memberName: p.memberName,
-      date: p.date,
-      createdAt: now,
-    });
-  }
-  saveData(data);
+export async function confirmBulkAssignment(previews: BulkAssignmentPreview[]): Promise<void> {
+  const rows = previews.map((p) => ({
+    member_id: p.memberId,
+    member_name: p.memberName,
+    date: p.date,
+  }));
+
+  const { error } = await supabase.from("assignments").insert(rows);
+  if (error) throw new Error(error.message);
 }

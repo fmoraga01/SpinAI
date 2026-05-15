@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { loadData } from "@/lib/storage";
 
-function getNextFridayAssignment() {
-  const { assignments } = loadData();
+async function getNextFridayAssignment() {
+  const { assignments } = await loadData();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -25,8 +25,7 @@ export default function HeroChip() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setAssignment(getNextFridayAssignment());
-    setMounted(true);
+    getNextFridayAssignment().then((a) => { setAssignment(a); setMounted(true); });
   }, []);
 
   if (!mounted || !assignment) return null;

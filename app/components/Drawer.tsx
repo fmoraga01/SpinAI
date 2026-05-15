@@ -8,7 +8,6 @@ import {
   addMember,
   toggleMember,
   removeMember,
-  addAssignment,
   removeAssignment,
   confirmBulkAssignment,
   BulkAssignmentPreview,
@@ -28,12 +27,11 @@ export default function Drawer() {
   const [data, setData] = useState<AppData>({ members: [], assignments: [] });
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Animate in/out
   useEffect(() => {
     if (drawer) {
       setMounted(true);
-      // Small delay so CSS transition fires
       requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
     } else {
       setVisible(false);
@@ -42,12 +40,12 @@ export default function Drawer() {
     }
   }, [drawer]);
 
-  // Load data whenever drawer opens
   useEffect(() => {
-    if (drawer) setData(loadData());
+    if (!drawer) return;
+    setLoading(true);
+    loadData().then((d) => { setData(d); setLoading(false); });
   }, [drawer]);
 
-  // Close on Escape
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") closeDrawer();
@@ -56,8 +54,9 @@ export default function Drawer() {
     return () => window.removeEventListener("keydown", onKey);
   }, [closeDrawer]);
 
-  function refresh() {
-    setData(loadData());
+  async function refresh() {
+    const d = await loadData();
+    setData(d);
   }
 
   if (!mounted) return null;
@@ -148,28 +147,45 @@ export default function Drawer() {
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-          {drawer === "equipo" && (
-            <MembersPanel
-              members={data.members}
-              onAdd={(name) => { addMember(name); refresh(); }}
-              onToggle={(id) => { toggleMember(id); refresh(); }}
-              onRemove={(id) => { removeMember(id); refresh(); }}
-            />
-          )}
-          {drawer === "ruleta" && (
-            <Roulette
-              members={data.members}
-              onAssignAll={(previews: BulkAssignmentPreview[]) => {
-                confirmBulkAssignment(previews);
-                refresh();
-              }}
-            />
-          )}
-          {drawer === "historial" && (
-            <Schedule
-              assignments={data.assignments}
-              onRemove={(id) => { removeAssignment(id); refresh(); }}
-            />
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <div
+                style={{
+                  width: 20, height: 20,
+                  border: "2px solid var(--color-border)",
+                  borderTopColor: "var(--color-primary)",
+                  borderRadius: "50%",
+                  animation: "spin 0.7s linear infinite",
+                }}
+              />
+              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            </div>
+          ) : (
+            <>
+              {drawer === "equipo" && (
+                <MembersPanel
+                  members={data.members}
+                  onAdd={async (name) => { await addMember(name); await refresh(); }}
+                  onToggle={async (id) => { await toggleMember(id); await refresh(); }}
+                  onRemove={async (id) => { await removeMember(id); await refresh(); }}
+                />
+              )}
+              {drawer === "ruleta" && (
+                <Roulette
+                  members={data.members}
+                  onAssignAll={async (previews: BulkAssignmentPreview[]) => {
+                    await confirmBulkAssignment(previews);
+                    await refresh();
+                  }}
+                />
+              )}
+              {drawer === "historial" && (
+                <Schedule
+                  assignments={data.assignments}
+                  onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

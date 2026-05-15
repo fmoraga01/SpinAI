@@ -203,14 +203,14 @@ export default function Roulette({ members, onAssignAll }: Props) {
     drawPointer(ctx);
   }, []);
 
-  function spin() {
+  async function spin() {
     if (activeMembers.length === 0 || spinning) return;
     setSpinning(true);
     setPreview(null);
     setGlowIndex(null);
     setWinnerName(null);
 
-    const result = buildBulkAssignmentPreview();
+    const result = await buildBulkAssignmentPreview();
     const winnerName = result[0]?.memberName ?? "";
     const winnerIndex = activeMembers.findIndex((m) => m.name === winnerName);
 
