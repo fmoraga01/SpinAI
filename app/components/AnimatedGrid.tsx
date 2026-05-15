@@ -2,17 +2,23 @@
 
 import { useEffect, useRef } from "react";
 
-const CELL_W = 34;
-const CELL_H = 26;
-const GAP = 4;
-const COLS = 16;
-const SCAN_LINE_EVERY = 6;
+// Layer sizes: input → hidden layers → output
+const LAYERS = [5, 8, 6, 9, 6, 4];
+const NODE_R = 4;
 
-interface Column {
-  phase: number;
+interface NodeState {
+  x: number;
+  y: number;
+  activation: number; // 0–1, fades out after a pulse arrives
+  idlePhase: number;  // for subtle breathing animation
+}
+
+interface Pulse {
+  layer: number;   // source layer index
+  fromIdx: number;
+  toIdx: number;
+  t: number;       // 0→1 travel progress
   speed: number;
-  baseHeight: number;
-  amplitude: number;
 }
 
 export default function AnimatedGrid() {
@@ -22,105 +28,175 @@ export default function AnimatedGrid() {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
-
-    // Each column oscillates around a base height (taller on the right)
-    const columns: Column[] = Array.from({ length: COLS }, (_, i) => {
-      const t = i / (COLS - 1); // 0 = leftmost, 1 = rightmost
-      return {
-        phase: Math.random() * Math.PI * 2,
-        speed: 0.35 + Math.random() * 0.45,
-        baseHeight: 0.08 + t * t * 0.88, // quadratic — right cols much taller
-        amplitude: 0.06 + Math.random() * 0.12,
-      };
-    });
-
-    let animId: number;
-    let w = 0;
-    let h = 0;
     const dpr = window.devicePixelRatio || 1;
 
+    let W = 0, H = 0;
+    let nodes: NodeState[][] = [];
+    let pulses: Pulse[] = [];
+    let rafId: number;
+    let lastTime = -1;
+    let spawnTimer = 0;
+
+    function buildNodes() {
+      pulses = [];
+      const layerCount = LAYERS.length;
+      const xStart = W * 0.28;
+      const xEnd = W * 0.97;
+      const xStep = (xEnd - xStart) / (layerCount - 1);
+
+      nodes = LAYERS.map((count, li) => {
+        const x = xStart + li * xStep;
+        const spacing = H / (count + 1);
+        return Array.from({ length: count }, (_, ni) => ({
+          x,
+          y: spacing * (ni + 1),
+          activation: 0,
+          idlePhase: Math.random() * Math.PI * 2,
+        }));
+      });
+    }
+
     function resize() {
-      if (!canvas || !ctx) return;
-      const rect = canvas.getBoundingClientRect();
-      w = rect.width;
-      h = rect.height;
-      canvas.width = w * dpr;
-      canvas.height = h * dpr;
-      ctx.scale(dpr, dpr);
+      const rect = canvas!.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas!.width = W * dpr;
+      canvas!.height = H * dpr;
+      buildNodes();
     }
 
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    function draw(time: number) {
-      const elapsed = time / 1000;
-      ctx.clearRect(0, 0, w, h);
+    function spawnPulse() {
+      const layer = Math.floor(Math.random() * (LAYERS.length - 1));
+      const fromIdx = Math.floor(Math.random() * LAYERS[layer]);
+      const toIdx = Math.floor(Math.random() * LAYERS[layer + 1]);
+      pulses.push({ layer, fromIdx, toIdx, t: 0, speed: 0.45 + Math.random() * 0.35 });
+    }
 
-      const totalCellW = COLS * (CELL_W + GAP) - GAP;
-      const startX = w - totalCellW;
+    function frame(time: number) {
+      if (lastTime < 0) lastTime = time;
+      const dt = Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
 
-      for (let col = 0; col < COLS; col++) {
-        const c = columns[col];
-        const heightFactor = Math.max(
-          0.05,
-          Math.min(1, c.baseHeight + Math.sin(elapsed * c.speed + c.phase) * c.amplitude)
-        );
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
 
-        const totalRows = Math.floor(h / (CELL_H + GAP));
-        const activeRows = Math.max(1, Math.round(heightFactor * totalRows));
-        const x = startX + col * (CELL_W + GAP);
+      if (!nodes.length) { ctx.restore(); rafId = requestAnimationFrame(frame); return; }
 
-        for (let row = 0; row < activeRows; row++) {
-          const y = h - (row + 1) * (CELL_H + GAP);
-          if (y < 0) continue;
+      // Spawn pulses
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawnPulse();
+        if (Math.random() > 0.5) spawnPulse(); // occasional double burst
+        spawnTimer = 0.2 + Math.random() * 0.35;
+      }
 
-          // 0 = bottom row, 1 = top row
-          const rowRatio = row / activeRows;
+      // Update pulses & trigger node activations
+      for (const p of pulses) p.t = Math.min(1, p.t + dt * p.speed);
+      for (const p of pulses.filter(p => p.t >= 1)) {
+        nodes[p.layer + 1][p.toIdx].activation = 1;
+      }
+      pulses = pulses.filter(p => p.t < 1);
 
-          // Base cell color — brighter toward top
-          const alpha = 0.18 + rowRatio * 0.55;
-          const isHighlight = rowRatio > 0.75;
+      // Decay activations
+      for (const layer of nodes) {
+        for (const n of layer) {
+          n.activation = Math.max(0, n.activation - dt * 1.8);
+        }
+      }
 
-          if (isHighlight) {
-            ctx.fillStyle = `rgba(44, 64, 255, ${alpha + 0.15})`;
-          } else {
-            // Dark navy base
-            const r = Math.round(10 + rowRatio * 20);
-            const g = Math.round(16 + rowRatio * 30);
-            const b = Math.round(60 + rowRatio * 120);
-            ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
-          }
-
-          // Cell background
-          ctx.beginPath();
-          (ctx as CanvasRenderingContext2D & { roundRect: (x: number, y: number, w: number, h: number, r: number) => void }).roundRect(x, y, CELL_W, CELL_H, 3);
-          ctx.fill();
-
-          // Scan lines (horizontal stripes inside each cell)
-          ctx.fillStyle = "rgba(0,0,0,0.28)";
-          for (let line = SCAN_LINE_EVERY; line < CELL_H; line += SCAN_LINE_EVERY) {
-            ctx.fillRect(x + 1, y + line, CELL_W - 2, 1);
-          }
-
-          // Bright border on highlight cells
-          if (isHighlight) {
-            ctx.strokeStyle = `rgba(44, 64, 255, ${rowRatio * 0.7})`;
-            ctx.lineWidth = 0.8;
+      // ── Draw edges ──────────────────────────────────────────────────────────
+      for (let li = 0; li < nodes.length - 1; li++) {
+        for (const a of nodes[li]) {
+          for (const b of nodes[li + 1]) {
             ctx.beginPath();
-            (ctx as CanvasRenderingContext2D & { roundRect: (x: number, y: number, w: number, h: number, r: number) => void }).roundRect(x, y, CELL_W, CELL_H, 3);
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = "rgba(44,64,255,0.055)";
+            ctx.lineWidth = 0.5;
             ctx.stroke();
           }
         }
       }
 
-      animId = requestAnimationFrame(draw);
+      // ── Draw pulses ──────────────────────────────────────────────────────────
+      for (const p of pulses) {
+        const from = nodes[p.layer][p.fromIdx];
+        const to = nodes[p.layer + 1][p.toIdx];
+        const px = from.x + (to.x - from.x) * p.t;
+        const py = from.y + (to.y - from.y) * p.t;
+
+        // Highlight the edge being traversed
+        ctx.beginPath();
+        ctx.moveTo(from.x, from.y);
+        ctx.lineTo(to.x, to.y);
+        ctx.strokeStyle = `rgba(44,64,255,${0.12 + (1 - Math.abs(p.t - 0.5) * 2) * 0.2})`;
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // Outer glow
+        const grd = ctx.createRadialGradient(px, py, 0, px, py, 10);
+        grd.addColorStop(0, "rgba(44,64,255,0.55)");
+        grd.addColorStop(1, "rgba(44,64,255,0)");
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(px, py, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core dot
+        ctx.beginPath();
+        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(160,180,255,1)";
+        ctx.fill();
+      }
+
+      // ── Draw nodes ──────────────────────────────────────────────────────────
+      const t = time / 1000;
+      for (const layer of nodes) {
+        for (const n of layer) {
+          const idle = 0.5 + 0.5 * Math.sin(t * 0.6 + n.idlePhase); // 0–1 breathing
+          const act = n.activation;
+          const glow = act + idle * 0.15;
+          const r = NODE_R + act * 2.5;
+
+          // Activation glow halo
+          if (glow > 0.05) {
+            const halo = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 22);
+            halo.addColorStop(0, `rgba(44,64,255,${glow * 0.35})`);
+            halo.addColorStop(1, "rgba(44,64,255,0)");
+            ctx.fillStyle = halo;
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Node fill
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(44,64,255,${0.1 + glow * 0.25})`;
+          ctx.fill();
+
+          // Node border
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(44,64,255,${0.22 + glow * 0.55})`;
+          ctx.lineWidth = 0.8 + act * 0.8;
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+      rafId = requestAnimationFrame(frame);
     }
 
-    animId = requestAnimationFrame(draw);
+    rafId = requestAnimationFrame(frame);
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(rafId);
       ro.disconnect();
     };
   }, []);
@@ -134,9 +210,9 @@ export default function AnimatedGrid() {
         width: "100%",
         height: "100%",
         maskImage:
-          "linear-gradient(to left, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.3) 65%, transparent 100%)",
+          "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)",
         WebkitMaskImage:
-          "linear-gradient(to left, rgba(0,0,0,0.9) 30%, rgba(0,0,0,0.3) 65%, transparent 100%)",
+          "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)",
         pointerEvents: "none",
       }}
     />
