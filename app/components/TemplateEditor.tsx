@@ -111,6 +111,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [presenting, setPresenting] = useState(false);
 
   useEffect(() => {
     loadTemplate(assignment.id).then((t) => {
@@ -143,6 +144,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
   }
 
   async function handlePresent() {
+    setPresenting(true);
     // Must call requestFullscreen synchronously inside the click handler
     // before any await — browsers reject it outside a user gesture context
     document.documentElement.requestFullscreen?.().catch(() => {});
@@ -150,7 +152,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
     onPresent(buildTemplate());
   }
 
-  if (loading) {
+  if (loading || presenting) {
     return (
       <div className="flex items-center justify-center py-16">
         <div style={{ width: 20, height: 20, border: "2px solid var(--color-border)", borderTopColor: "var(--color-primary)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
