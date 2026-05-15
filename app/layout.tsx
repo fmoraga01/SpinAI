@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { DrawerProvider } from "./components/DrawerContext";
 import Drawer from "./components/Drawer";
+import PinGate from "./components/PinGate";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,10 +20,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es" className={`${inter.variable} h-full`}>
       <body className="min-h-full flex flex-col">
-        <DrawerProvider>
-          {children}
-          <Drawer />
-        </DrawerProvider>
+        <PinGate>
+          <DrawerProvider>
+            {children}
+            <Drawer />
+          </DrawerProvider>
+        </PinGate>
       </body>
     </html>
   );
