@@ -22,20 +22,14 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 }
 
-const SEGMENT_COLORS = [
-  "#2C40FF", "#7C3AED", "#0891B2", "#059669",
-  "#DC2626", "#D97706", "#DB2777", "#0D9488",
-  "#7C3AED", "#EA580C", "#0284C7", "#16A34A",
-];
-
-function getSegmentColor(index: number): string {
-  return SEGMENT_COLORS[index % SEGMENT_COLORS.length];
-}
-
-const SIZE = 320;
+const SIZE = 300;
 const CENTER = SIZE / 2;
-const RADIUS = CENTER - 16;
-const INNER_RADIUS = RADIUS * 0.32;
+const RADIUS = CENTER - 12;
+const INNER_RADIUS = RADIUS * 0.28;
+
+// Two alternating dark tones from the design system
+const SEG_EVEN = "#141724"; // surface-elevated
+const SEG_ODD  = "#0e101a"; // surface
 
 function drawWheel(
   ctx: CanvasRenderingContext2D,
@@ -49,17 +43,17 @@ function drawWheel(
   ctx.scale(dpr, dpr);
 
   const n = members.length;
+
   if (n === 0) {
-    // Empty state
     ctx.beginPath();
     ctx.arc(CENTER, CENTER, RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = "#0e101a";
+    ctx.fillStyle = SEG_ODD;
     ctx.fill();
     ctx.strokeStyle = "#1f2333";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
     ctx.stroke();
-    ctx.fillStyle = "#4B5563";
-    ctx.font = "500 13px Inter, sans-serif";
+    ctx.fillStyle = "#374151";
+    ctx.font = "500 12px Inter, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Sin integrantes", CENTER, CENTER);
@@ -72,15 +66,7 @@ function drawWheel(
   for (let i = 0; i < n; i++) {
     const startAngle = angle + i * segAngle;
     const endAngle = startAngle + segAngle;
-    const color = getSegmentColor(i);
-    const isGlowing = glowIndex === i;
-
-    // Glow effect
-    if (isGlowing) {
-      ctx.save();
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 24;
-    }
+    const isWinner = glowIndex === i;
 
     // Segment fill
     ctx.beginPath();
@@ -88,42 +74,42 @@ function drawWheel(
     ctx.arc(CENTER, CENTER, RADIUS, startAngle, endAngle);
     ctx.closePath();
 
-    const gradient = ctx.createRadialGradient(CENTER, CENTER, INNER_RADIUS, CENTER, CENTER, RADIUS);
-    gradient.addColorStop(0, isGlowing ? color + "dd" : color + "55");
-    gradient.addColorStop(1, isGlowing ? color + "ff" : color + "cc");
-    ctx.fillStyle = gradient;
+    if (isWinner) {
+      // Winner: primary blue fill
+      ctx.fillStyle = "#2C40FF22";
+      ctx.shadowColor = "#2C40FF";
+      ctx.shadowBlur = 20;
+    } else {
+      ctx.fillStyle = i % 2 === 0 ? SEG_EVEN : SEG_ODD;
+      ctx.shadowBlur = 0;
+    }
     ctx.fill();
+    ctx.shadowBlur = 0;
 
-    if (isGlowing) ctx.restore();
-
-    // Segment border
+    // Divider line
     ctx.beginPath();
     ctx.moveTo(CENTER, CENTER);
     ctx.arc(CENTER, CENTER, RADIUS, startAngle, endAngle);
     ctx.closePath();
-    ctx.strokeStyle = "rgba(8,9,15,0.8)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isWinner ? "#2C40FF55" : "#08090f";
+    ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Label
+    // Label — initials
     const midAngle = startAngle + segAngle / 2;
-    const labelR = (INNER_RADIUS + RADIUS) / 2 + 8;
+    const labelR = INNER_RADIUS + (RADIUS - INNER_RADIUS) * 0.58;
     const lx = CENTER + Math.cos(midAngle) * labelR;
     const ly = CENTER + Math.sin(midAngle) * labelR;
 
     ctx.save();
     ctx.translate(lx, ly);
     ctx.rotate(midAngle + Math.PI / 2);
-
-    const initials = getInitials(members[i].name);
-    const fontSize = n > 8 ? 10 : 12;
-    ctx.font = `700 ${fontSize}px Inter, sans-serif`;
-    ctx.fillStyle = "#ffffff";
+    const fontSize = n > 10 ? 9 : n > 6 ? 11 : 12;
+    ctx.font = `600 ${fontSize}px Inter, sans-serif`;
+    ctx.fillStyle = isWinner ? "#2C40FF" : "#9CA3AF";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,0.8)";
-    ctx.shadowBlur = 4;
-    ctx.fillText(initials, 0, 0);
+    ctx.fillText(getInitials(members[i].name), 0, 0);
     ctx.restore();
   }
 
@@ -131,29 +117,33 @@ function drawWheel(
   ctx.beginPath();
   ctx.arc(CENTER, CENTER, RADIUS, 0, Math.PI * 2);
   ctx.strokeStyle = glowIndex !== null ? "#2C40FF" : "#1f2333";
-  ctx.lineWidth = glowIndex !== null ? 3 : 2;
+  ctx.lineWidth = glowIndex !== null ? 1.5 : 1.5;
   if (glowIndex !== null) {
     ctx.shadowColor = "#2C40FF";
-    ctx.shadowBlur = 16;
+    ctx.shadowBlur = 12;
   }
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Inner circle (hub)
+  // Hub
   ctx.beginPath();
   ctx.arc(CENTER, CENTER, INNER_RADIUS, 0, Math.PI * 2);
-  ctx.fillStyle = "#0e101a";
+  ctx.fillStyle = "#08090f";
   ctx.fill();
-  ctx.strokeStyle = glowIndex !== null ? "#2C40FF66" : "#1f2333";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = glowIndex !== null ? "#2C40FF44" : "#1f2333";
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Hub icon
-  ctx.font = "600 12px Inter, sans-serif";
+  // Hub dot
+  ctx.beginPath();
+  ctx.arc(CENTER, CENTER, 4, 0, Math.PI * 2);
   ctx.fillStyle = glowIndex !== null ? "#2C40FF" : "#374151";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("SPIN", CENTER, CENTER);
+  if (glowIndex !== null) {
+    ctx.shadowColor = "#2C40FF";
+    ctx.shadowBlur = 8;
+  }
+  ctx.fill();
+  ctx.shadowBlur = 0;
 
   ctx.restore();
 }
@@ -164,13 +154,9 @@ function drawPointer(ctx: CanvasRenderingContext2D) {
   ctx.scale(dpr, dpr);
 
   const px = CENTER;
-  const py = 6;
-  const pw = 12;
-  const ph = 22;
-
-  // Shadow
-  ctx.shadowColor = "#2C40FF";
-  ctx.shadowBlur = 10;
+  const py = 4;
+  const pw = 8;
+  const ph = 16;
 
   ctx.beginPath();
   ctx.moveTo(px, py + ph);
@@ -178,6 +164,8 @@ function drawPointer(ctx: CanvasRenderingContext2D) {
   ctx.lineTo(px + pw / 2, py);
   ctx.closePath();
   ctx.fillStyle = "#2C40FF";
+  ctx.shadowColor = "#2C40FF";
+  ctx.shadowBlur = 8;
   ctx.fill();
 
   ctx.restore();
@@ -326,7 +314,6 @@ export default function Roulette({ members, onAssignAll }: Props) {
           </p>
           <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
             {preview.map((p, i) => {
-              const color = getSegmentColor(activeMembers.findIndex(m => m.name === p.memberName));
               return (
                 <div
                   key={p.memberId}
@@ -339,15 +326,17 @@ export default function Roulette({ members, onAssignAll }: Props) {
                     animation: `fadeIn 300ms ease ${i * 60}ms both`,
                   }}
                 >
-                  <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
+                  <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
                     {i + 1}
                   </span>
                   <div
                     style={{
-                      flexShrink: 0, width: 32, height: 32, borderRadius: "50%",
-                      background: color, display: "flex", alignItems: "center",
-                      justifyContent: "center", color: "#fff", fontWeight: 700,
-                      fontSize: 11, boxShadow: `${color}55 0px 0px 10px`,
+                      flexShrink: 0, width: 28, height: 28, borderRadius: "var(--radius-md)",
+                      background: i === 0 ? "#2C40FF22" : "var(--color-surface)",
+                      border: "1px solid " + (i === 0 ? "#2C40FF55" : "#1f2333"),
+                      display: "flex", alignItems: "center",
+                      justifyContent: "center", color: i === 0 ? "#2C40FF" : "#9CA3AF",
+                      fontWeight: 600, fontSize: 10,
                     }}
                   >
                     {getInitials(p.memberName)}
