@@ -284,29 +284,7 @@ export default function Roulette({ members, onAssignAll }: Props) {
   const isDisabled = spinning || activeMembers.length === 0;
 
   return (
-    <div
-      style={{
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
-        boxShadow: "none",
-        padding: "28px 24px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-1 self-start">
-        <span style={{ color: "var(--color-primary)", fontSize: 18 }}>◎</span>
-        <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-secondary)" }}>
-          Ruleta de Turno
-        </h2>
-      </div>
-      <p className="text-xs mb-6 self-start" style={{ color: "#4B5563" }}>
-        Gira para asignar a todos los integrantes
-      </p>
-
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
       {/* Wheel */}
       <div className="relative mb-6" style={{ width: SIZE, height: SIZE }}>
         <canvas

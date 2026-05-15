@@ -55,26 +55,7 @@ export default function Schedule({ assignments, onRemove }: Props) {
   const past = sorted.filter((a) => isPast(a.date));
 
   return (
-    <div
-      style={{
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
-        boxShadow: "none",
-        padding: "24px",
-      }}
-    >
-      {/* Title */}
-      <div className="flex items-center gap-2 mb-5">
-        <span style={{ color: "var(--color-primary)", fontSize: 18 }}>▤</span>
-        <h2
-          className="text-sm font-semibold uppercase tracking-widest"
-          style={{ color: "var(--color-text-secondary)" }}
-        >
-          Historial de Turnos
-        </h2>
-      </div>
-
+    <div>
       {assignments.length === 0 ? (
         <div
           className="text-center py-8 text-sm"
