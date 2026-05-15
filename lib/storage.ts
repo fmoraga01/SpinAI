@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 import { AppData, TeamMember, Assignment } from "./types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -26,8 +26,8 @@ function rowToAssignment(row: Record<string, unknown>): Assignment {
 
 export async function loadData(): Promise<AppData> {
   const [{ data: members }, { data: assignments }] = await Promise.all([
-    supabase.from("members").select("*").order("created_at"),
-    supabase.from("assignments").select("*").order("date"),
+    getSupabase().from("members").select("*").order("created_at"),
+    getSupabase().from("assignments").select("*").order("date"),
   ]);
 
   return {
@@ -39,7 +39,7 @@ export async function loadData(): Promise<AppData> {
 // ─── Members ─────────────────────────────────────────────────────────────────
 
 export async function addMember(name: string): Promise<TeamMember> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from("members")
     .insert({ name: name.trim(), active: true })
     .select()
@@ -50,7 +50,7 @@ export async function addMember(name: string): Promise<TeamMember> {
 }
 
 export async function toggleMember(id: string): Promise<void> {
-  const { data: current, error: fetchError } = await supabase
+  const { data: current, error: fetchError } = await getSupabase()
     .from("members")
     .select("active")
     .eq("id", id)
@@ -58,7 +58,7 @@ export async function toggleMember(id: string): Promise<void> {
 
   if (fetchError) throw new Error(fetchError.message);
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from("members")
     .update({ active: !current.active })
     .eq("id", id);
@@ -67,14 +67,14 @@ export async function toggleMember(id: string): Promise<void> {
 }
 
 export async function removeMember(id: string): Promise<void> {
-  const { error } = await supabase.from("members").delete().eq("id", id);
+  const { error } = await getSupabase().from("members").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
 // ─── Assignments ──────────────────────────────────────────────────────────────
 
 export async function removeAssignment(id: string): Promise<void> {
-  const { error } = await supabase.from("assignments").delete().eq("id", id);
+  const { error } = await getSupabase().from("assignments").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
@@ -137,6 +137,6 @@ export async function confirmBulkAssignment(previews: BulkAssignmentPreview[]): 
     date: p.date,
   }));
 
-  const { error } = await supabase.from("assignments").insert(rows);
+  const { error } = await getSupabase().from("assignments").insert(rows);
   if (error) throw new Error(error.message);
 }
