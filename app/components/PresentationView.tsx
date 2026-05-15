@@ -16,11 +16,28 @@ function formatDate(dateStr: string): string {
 
 export default function PresentationView({ template, date, onClose }: Props) {
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    // Enter fullscreen
+    document.documentElement.requestFullscreen?.().catch(() => {});
+
+    function onFullscreenChange() {
+      if (!document.fullscreenElement) onClose();
     }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        document.exitFullscreen?.().catch(() => {});
+        onClose();
+      }
+    }
+
+    document.addEventListener("fullscreenchange", onFullscreenChange);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      window.removeEventListener("keydown", onKey);
+      document.exitFullscreen?.().catch(() => {});
+    };
   }, [onClose]);
 
   const hasAgenda = template.agenda.length > 0;
@@ -82,7 +99,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
             {formatDate(date)}
           </span>
           <button
-            onClick={onClose}
+            onClick={() => { document.exitFullscreen?.().catch(() => {}); onClose(); }}
             style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "6px 14px",
