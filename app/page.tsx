@@ -1,6 +1,7 @@
 import Nav from "./components/Nav";
 import AnimatedGrid from "./components/AnimatedGrid";
 import HomeCTAs from "./components/HomeCTAs";
+import HeroChip from "./components/HeroChip";
 
 export default function Home() {
   return (
@@ -18,32 +19,7 @@ export default function Home() {
 
           {/* Tag */}
           <div className="mb-6">
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--color-primary)",
-                background: "#2C40FF15",
-                border: "1px solid #2C40FF33",
-                borderRadius: "var(--radius-md)",
-                padding: "4px 12px",
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  background: "var(--color-primary)",
-                  boxShadow: "var(--shadow-glow-sm)",
-                  display: "inline-block",
-                }}
-              />
-              Reuniones de equipo · Viernes
-            </span>
+            <HeroChip />
           </div>
 
           {/* Headline */}
