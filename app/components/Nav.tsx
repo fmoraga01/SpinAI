@@ -85,23 +85,6 @@ export default function Nav() {
           })}
         </nav>
 
-        {/* CTA */}
-        <Link
-          href="/ruleta"
-          style={{
-            padding: "8px 18px",
-            borderRadius: "var(--radius-md)",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "#fff",
-            background: "var(--color-primary)",
-            textDecoration: "none",
-            boxShadow: "var(--shadow-glow-sm)",
-            transition: "opacity 150ms ease",
-          }}
-        >
-          Girar ahora
-        </Link>
       </div>
     </header>
   );
