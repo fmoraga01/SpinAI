@@ -2,44 +2,53 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const STORAGE_KEY = "spinai_auth";
-const PIN = process.env.NEXT_PUBLIC_PIN || "SPIN2025";
-
 export default function PinGate({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
   const [shaking, setShaking] = useState(false);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Check auth by hitting the API — if cookie is valid the middleware already
+  // lets the page through; we probe with a lightweight request to know the state
   useEffect(() => {
-    setAuthed(localStorage.getItem(STORAGE_KEY) === "1");
+    fetch("/api/auth/check")
+      .then((r) => setAuthed(r.ok))
+      .catch(() => setAuthed(false));
   }, []);
 
   useEffect(() => {
     if (authed === false) setTimeout(() => inputRef.current?.focus(), 80);
   }, [authed]);
 
-  function submit() {
-    if (value.trim().toUpperCase() === PIN.toUpperCase()) {
-      localStorage.setItem(STORAGE_KEY, "1");
-      setAuthed(true);
-    } else {
-      setError(true);
-      setShaking(true);
-      setValue("");
-      setTimeout(() => setShaking(false), 500);
-      setTimeout(() => { setError(false); inputRef.current?.focus(); }, 1200);
+  async function submit() {
+    if (!value.trim()) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: value.trim() }),
+      });
+
+      if (res.ok) {
+        setAuthed(true);
+      } else {
+        setError(true);
+        setShaking(true);
+        setValue("");
+        setTimeout(() => setShaking(false), 500);
+        setTimeout(() => { setError(false); inputRef.current?.focus(); }, 1200);
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
-  // Still checking localStorage
   if (authed === null) return null;
-
-  // Authenticated — render app normally
   if (authed) return <>{children}</>;
 
-  // PIN screen
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 9999,
@@ -48,7 +57,6 @@ export default function PinGate({ children }: { children: React.ReactNode }) {
       alignItems: "center", justifyContent: "center",
       gap: 32,
     }}>
-      {/* Subtle grid background */}
       <div style={{
         position: "absolute", inset: 0,
         backgroundImage: "radial-gradient(circle at 60% 40%, #2C40FF0a 0%, transparent 60%)",
@@ -76,18 +84,16 @@ export default function PinGate({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* PIN form */}
-      <div
-        style={{
-          display: "flex", flexDirection: "column", gap: 12,
-          width: "100%", maxWidth: 280, position: "relative",
-          animation: shaking ? "shake 0.45s ease" : "none",
-        }}
-      >
+      <div style={{
+        display: "flex", flexDirection: "column", gap: 12,
+        width: "100%", maxWidth: 280, position: "relative",
+        animation: shaking ? "shake 0.45s ease" : "none",
+      }}>
         <input
           ref={inputRef}
           type="password"
           value={value}
-          onChange={(e) => { setValue(e.target.value.toUpperCase()); setError(false); }}
+          onChange={(e) => { setValue(e.target.value); setError(false); }}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="••••••••"
           autoComplete="off"
@@ -117,19 +123,20 @@ export default function PinGate({ children }: { children: React.ReactNode }) {
 
         <button
           onClick={submit}
+          disabled={loading}
           style={{
             width: "100%", padding: "12px",
             background: "var(--color-primary)",
             border: "1px solid var(--color-primary)",
             borderRadius: "var(--radius-md)",
             color: "#fff", fontSize: 14, fontWeight: 600,
-            cursor: "pointer", boxShadow: "var(--shadow-glow-sm)",
+            cursor: loading ? "wait" : "pointer",
+            boxShadow: "var(--shadow-glow-sm)",
+            opacity: loading ? 0.7 : 1,
             transition: "opacity 150ms",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
-          Entrar
+          {loading ? "Verificando..." : "Entrar"}
         </button>
       </div>
 
