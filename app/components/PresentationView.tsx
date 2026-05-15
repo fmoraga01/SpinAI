@@ -20,18 +20,26 @@ export default function PresentationView({ template, date, onClose }: Props) {
     function onFullscreenChange() {
       if (!document.fullscreenElement) onClose();
     }
+
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
-        document.exitFullscreen?.().catch(() => {});
-        onClose();
+        e.stopImmediatePropagation();
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.().catch(() => {});
+          // onClose will be called by fullscreenchange
+        } else {
+          onClose();
+        }
       }
     }
+
     document.addEventListener("fullscreenchange", onFullscreenChange);
-    window.addEventListener("keydown", onKey);
+    // capture:true intercepts Escape before the Drawer's listener and the browser default
+    window.addEventListener("keydown", onKey, true);
+
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
-      window.removeEventListener("keydown", onKey);
-      document.exitFullscreen?.().catch(() => {});
+      window.removeEventListener("keydown", onKey, true);
     };
   }, [onClose]);
 
