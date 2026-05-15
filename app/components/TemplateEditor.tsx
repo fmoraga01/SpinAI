@@ -108,8 +108,6 @@ function ListEditor({
 export default function TemplateEditor({ assignment, onBack, onPresent }: Props) {
   const [title, setTitle] = useState("");
   const [agenda, setAgenda] = useState<string[]>([""]);
-  const [keyPoints, setKeyPoints] = useState<string[]>([""]);
-  const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -119,8 +117,6 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       if (t) {
         setTitle(t.title);
         setAgenda(t.agenda.length > 0 ? t.agenda : [""]);
-        setKeyPoints(t.keyPoints.length > 0 ? t.keyPoints : [""]);
-        setNotes(t.notes);
       }
       setLoading(false);
     });
@@ -133,8 +129,8 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       memberName: assignment.memberName,
       title,
       agenda: agenda.filter((a) => a.trim() !== ""),
-      keyPoints: keyPoints.filter((k) => k.trim() !== ""),
-      notes,
+      keyPoints: [],
+      notes: "",
     };
   }
 
@@ -212,41 +208,6 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
         onChange={setAgenda}
       />
 
-      {/* Puntos clave */}
-      <ListEditor
-        label="Puntos clave"
-        items={keyPoints}
-        placeholder="Ej: Aumentar cobertura de tests"
-        onChange={setKeyPoints}
-      />
-
-      {/* Notas */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
-          Notas
-        </p>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Notas adicionales para la reunión..."
-          rows={4}
-          style={{
-            width: "100%",
-            background: "var(--color-surface-elevated)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "var(--radius-md)",
-            padding: "10px 14px",
-            fontSize: 13,
-            color: "var(--color-text-primary)",
-            outline: "none",
-            resize: "vertical",
-            transition: "border-color 150ms",
-            lineHeight: "1.6",
-          }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
-        />
-      </div>
 
       {/* Actions */}
       <div className="flex gap-2 flex-wrap">
