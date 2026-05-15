@@ -23,7 +23,7 @@ const TITLES: Record<string, string> = {
 };
 
 export default function Drawer() {
-  const { drawer, closeDrawer } = useDrawer();
+  const { drawer, openDrawer, closeDrawer } = useDrawer();
   const [data, setData] = useState<AppData>({ members: [], assignments: [] });
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -173,6 +173,7 @@ export default function Drawer() {
                   onAssignAll={async (previews: BulkAssignmentPreview[]) => {
                     await confirmBulkAssignment(previews);
                     await refresh();
+                    openDrawer("historial");
                   }}
                 />
               )}
