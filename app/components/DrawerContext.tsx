@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from "react";
+import { Assignment } from "@/lib/types";
 
 export type DrawerView = "equipo" | "ruleta" | "historial" | null;
 
@@ -9,6 +10,9 @@ interface DrawerContextType {
   openDrawer: (view: DrawerView) => void;
   closeDrawer: () => void;
   switchDrawer: (view: DrawerView) => void;
+  pendingPrepare: Assignment | null;
+  openPrepare: (assignment: Assignment) => void;
+  clearPendingPrepare: () => void;
 }
 
 const DrawerContext = createContext<DrawerContextType>({
@@ -16,19 +20,36 @@ const DrawerContext = createContext<DrawerContextType>({
   openDrawer: () => {},
   closeDrawer: () => {},
   switchDrawer: () => {},
+  pendingPrepare: null,
+  openPrepare: () => {},
+  clearPendingPrepare: () => {},
 });
 
 export function DrawerProvider({ children }: { children: ReactNode }) {
   const [drawer, setDrawer] = useState<DrawerView>(null);
+  const [pendingPrepare, setPendingPrepare] = useState<Assignment | null>(null);
 
   function switchDrawer(view: DrawerView) {
     setDrawer(null);
     setTimeout(() => setDrawer(view), 350);
   }
 
+  function openPrepare(assignment: Assignment) {
+    setPendingPrepare(assignment);
+    setDrawer("historial");
+  }
+
   return (
     <DrawerContext.Provider
-      value={{ drawer, openDrawer: setDrawer, closeDrawer: () => setDrawer(null), switchDrawer }}
+      value={{
+        drawer,
+        openDrawer: setDrawer,
+        closeDrawer: () => setDrawer(null),
+        switchDrawer,
+        pendingPrepare,
+        openPrepare,
+        clearPendingPrepare: () => setPendingPrepare(null),
+      }}
     >
       {children}
     </DrawerContext.Provider>

@@ -25,7 +25,7 @@ const TITLES: Record<string, string> = {
 };
 
 export default function Drawer() {
-  const { drawer, openDrawer, closeDrawer } = useDrawer();
+  const { drawer, openDrawer, closeDrawer, pendingPrepare, clearPendingPrepare } = useDrawer();
   const [data, setData] = useState<AppData>({ members: [], assignments: [] });
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -57,8 +57,17 @@ export default function Drawer() {
   useEffect(() => {
     if (!drawer) return;
     setLoading(true);
-    loadData().then((d) => { setData(d); setLoading(false); });
-  }, [drawer]);
+    loadData().then((d) => {
+      setData(d);
+      setLoading(false);
+      if (pendingPrepare) {
+        // Find the fresh assignment from DB (same id) so data is up to date
+        const match = d.assignments.find((a) => a.id === pendingPrepare.id) ?? pendingPrepare;
+        setEditingAssignment(match);
+        clearPendingPrepare();
+      }
+    });
+  }, [drawer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
