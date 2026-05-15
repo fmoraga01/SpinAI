@@ -82,7 +82,10 @@ export function getNextFridays(count: number = 8): string[] {
   current.setDate(current.getDate() + daysUntilFriday);
 
   for (let i = 0; i < count; i++) {
-    fridays.push(current.toISOString().split("T")[0]);
+    const y = current.getFullYear();
+    const m = String(current.getMonth() + 1).padStart(2, "0");
+    const d = String(current.getDate()).padStart(2, "0");
+    fridays.push(`${y}-${m}-${d}`);
     current.setDate(current.getDate() + 7);
   }
 
