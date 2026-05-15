@@ -19,17 +19,14 @@ export default function PresentationView({ template, date, onClose }: Props) {
     function onFullscreenChange() {
       if (!document.fullscreenElement) onClose();
     }
-
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         document.exitFullscreen?.().catch(() => {});
         onClose();
       }
     }
-
     document.addEventListener("fullscreenchange", onFullscreenChange);
     window.addEventListener("keydown", onKey);
-
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       window.removeEventListener("keydown", onKey);
@@ -40,6 +37,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
   const hasAgenda = template.agenda.length > 0;
   const hasKeyPoints = template.keyPoints.length > 0;
   const hasNotes = !!template.notes.trim();
+
+  const hasBoth = hasAgenda && hasKeyPoints;
 
   return (
     <div
@@ -59,47 +58,42 @@ export default function PresentationView({ template, date, onClose }: Props) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "16px 32px",
+          padding: "14px 40px",
           borderBottom: "1px solid var(--color-border)",
           flexShrink: 0,
         }}
       >
-        <div className="flex items-center gap-3">
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
-              width: 28, height: 28,
+              width: 26, height: 26,
               borderRadius: "var(--radius-md)",
               background: "var(--color-primary)",
               boxShadow: "var(--shadow-glow-sm)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, fontSize: 14, color: "#fff",
+              fontWeight: 700, fontSize: 13, color: "#fff",
             }}
           >
             S
           </div>
-          <span style={{ fontSize: 13, color: "#4B5563", fontWeight: 500 }}>
-            SpinAI · Presentación
-          </span>
+          <span style={{ fontSize: 13, color: "#4B5563", fontWeight: 500 }}>SpinAI · Presentación</span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span
-            style={{
-              fontSize: 12, color: "#4B5563",
-              background: "var(--color-surface-elevated)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "4px 10px",
-              textTransform: "capitalize",
-            }}
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{
+            fontSize: 12, color: "#4B5563",
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            padding: "4px 12px", textTransform: "capitalize",
+          }}>
             {formatDate(date)}
           </span>
           <button
             onClick={() => { document.exitFullscreen?.().catch(() => {}); onClose(); }}
             style={{
               display: "flex", alignItems: "center", gap: 6,
-              padding: "6px 14px",
+              padding: "6px 16px",
               background: "transparent",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-md)",
@@ -110,133 +104,151 @@ export default function PresentationView({ template, date, onClose }: Props) {
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "var(--color-text-secondary)"; }}
           >
-            ✕ <span>Salir</span>
+            ✕ Salir
           </button>
         </div>
       </div>
 
-      {/* Slide content */}
+      {/* Slide */}
       <div
         style={{
           flex: 1,
           display: "flex",
-          alignItems: "center",
+          flexDirection: "column",
           justifyContent: "center",
-          padding: "40px 48px",
+          padding: "48px 80px",
+          gap: 40,
           overflow: "auto",
         }}
       >
-        <div style={{ width: "100%", maxWidth: 900 }}>
+        {/* Presenter + title */}
+        <div>
+          <p style={{
+            fontSize: 14, color: "var(--color-primary)", fontWeight: 700,
+            marginBottom: 14, letterSpacing: "0.08em", textTransform: "uppercase",
+          }}>
+            {template.memberName}
+          </p>
+          <h1 style={{
+            fontSize: "clamp(36px, 4.5vw, 64px)",
+            fontWeight: 700, color: "#fff",
+            lineHeight: 1.1, letterSpacing: "-0.02em", margin: 0,
+          }}>
+            {template.title || "Sin título"}
+          </h1>
+        </div>
 
-          {/* Presenter + title */}
-          <div style={{ marginBottom: 48 }}>
-            <p style={{ fontSize: 13, color: "var(--color-primary)", fontWeight: 600, marginBottom: 12, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-              {template.memberName}
-            </p>
-            <h1
-              style={{
-                fontSize: "clamp(32px, 5vw, 56px)",
-                fontWeight: 700,
-                color: "#fff",
-                lineHeight: 1.1,
-                letterSpacing: "-0.02em",
-                margin: 0,
-              }}
-            >
-              {template.title || "Sin título"}
-            </h1>
-          </div>
+        {/* Sections */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: hasBoth ? "1fr 1fr" : "1fr",
+          gap: 24,
+          alignItems: "start",
+        }}>
+          {hasAgenda && (
+            <div style={{
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "28px 32px",
+            }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: "var(--color-primary)",
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20,
+              }}>
+                Agenda
+              </p>
+              <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
+                {template.agenda.map((item, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
+                    <span style={{
+                      fontSize: 12, color: "var(--color-primary)", fontWeight: 700,
+                      minWidth: 24, flexShrink: 0,
+                    }}>
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span style={{
+                      fontSize: "clamp(16px, 1.8vw, 22px)",
+                      color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
+                    }}>
+                      {item}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
-          {/* Grid sections */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: hasAgenda && hasKeyPoints ? "1fr 1fr" : "1fr",
-              gap: 20,
-            }}
-          >
-            {hasAgenda && (
-              <div
-                style={{
-                  background: "var(--color-surface)",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-md)",
-                  padding: "24px",
-                }}
-              >
-                <p style={{ fontSize: 11, fontWeight: 700, color: "var(--color-primary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
-                  Agenda
-                </p>
-                <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                  {template.agenda.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span style={{ fontSize: 11, color: "var(--color-primary)", fontWeight: 700, minWidth: 20, paddingTop: 2 }}>
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <span style={{ fontSize: 15, color: "var(--color-text-primary)", lineHeight: 1.4 }}>{item}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
+          {hasKeyPoints && (
+            <div style={{
+              background: "#2C40FF0a",
+              border: "1px solid #2C40FF22",
+              borderRadius: "var(--radius-md)",
+              padding: "28px 32px",
+            }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: "var(--color-primary)",
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20,
+              }}>
+                Puntos clave
+              </p>
+              <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
+                {template.keyPoints.map((point, i) => (
+                  <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                    <span style={{ color: "var(--color-primary)", fontSize: 10, flexShrink: 0, paddingTop: 4 }}>◆</span>
+                    <span style={{
+                      fontSize: "clamp(16px, 1.8vw, 22px)",
+                      color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
+                    }}>
+                      {point}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-            {hasKeyPoints && (
-              <div
-                style={{
-                  background: "#2C40FF0a",
-                  border: "1px solid #2C40FF22",
-                  borderRadius: "var(--radius-md)",
-                  padding: "24px",
-                }}
-              >
-                <p style={{ fontSize: 11, fontWeight: 700, color: "var(--color-primary)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 16 }}>
-                  Puntos clave
-                </p>
-                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
-                  {template.keyPoints.map((point, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <span style={{ color: "var(--color-primary)", fontSize: 16, lineHeight: 1.4, flexShrink: 0 }}>◆</span>
-                      <span style={{ fontSize: 15, color: "var(--color-text-primary)", lineHeight: 1.4 }}>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {hasNotes && (
-              <div
-                style={{
-                  gridColumn: hasAgenda && hasKeyPoints ? "1 / -1" : "auto",
-                  background: "var(--color-surface)",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-md)",
-                  padding: "24px",
-                }}
-              >
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
-                  Notas
-                </p>
-                <p style={{ fontSize: 14, color: "var(--color-text-secondary)", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" }}>
-                  {template.notes}
-                </p>
-              </div>
-            )}
-          </div>
-
+          {hasNotes && (
+            <div style={{
+              gridColumn: hasBoth ? "1 / -1" : "auto",
+              background: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "28px 32px",
+            }}>
+              <p style={{
+                fontSize: 11, fontWeight: 700, color: "#4B5563",
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14,
+              }}>
+                Notas
+              </p>
+              <p style={{
+                fontSize: "clamp(14px, 1.4vw, 18px)",
+                color: "var(--color-text-secondary)", lineHeight: 1.8,
+                margin: 0, whiteSpace: "pre-wrap",
+              }}>
+                {template.notes}
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Footer hint */}
-      <div
-        style={{
-          padding: "12px 32px",
-          borderTop: "1px solid var(--color-border)",
-          display: "flex",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span style={{ fontSize: 11, color: "#374151" }}>Presiona <kbd style={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: 4, padding: "1px 6px", fontSize: 10 }}>ESC</kbd> para salir de la presentación</span>
+      {/* Footer */}
+      <div style={{
+        padding: "10px 40px",
+        borderTop: "1px solid var(--color-border)",
+        display: "flex", justifyContent: "center", flexShrink: 0,
+      }}>
+        <span style={{ fontSize: 11, color: "#374151" }}>
+          Presiona{" "}
+          <kbd style={{
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: 4, padding: "1px 6px", fontSize: 10,
+          }}>ESC</kbd>{" "}
+          para salir
+        </span>
       </div>
     </div>
   );
