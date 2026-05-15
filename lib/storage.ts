@@ -67,7 +67,9 @@ export async function toggleMember(id: string): Promise<void> {
 }
 
 export async function removeMember(id: string): Promise<void> {
-  const { error } = await getSupabase().from("members").delete().eq("id", id);
+  const db = getSupabase();
+  await db.from("assignments").delete().eq("member_id", id);
+  const { error } = await db.from("members").delete().eq("id", id);
   if (error) throw new Error(error.message);
 }
 
