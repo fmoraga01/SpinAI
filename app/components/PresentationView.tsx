@@ -117,10 +117,10 @@ export default function PresentationView({ template, date, onClose }: Props) {
           flexDirection: "column",
           justifyContent: "center",
           padding: "48px 80px",
-          gap: 40,
           overflow: "auto",
         }}
       >
+        <div style={{ width: "70%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
         {/* Presenter + title */}
         <div>
           <p style={{
@@ -162,8 +162,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
                 {template.agenda.map((item, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
                     <span style={{
-                      fontSize: 12, color: "var(--color-primary)", fontWeight: 700,
-                      minWidth: 24, flexShrink: 0,
+                      fontSize: "clamp(31px, 3.5vw, 43px)", color: "var(--color-primary)", fontWeight: 700,
+                      minWidth: 48, flexShrink: 0, lineHeight: 1,
                     }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
@@ -232,6 +232,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
             </div>
           )}
         </div>
+        </div>{/* end 70% wrapper */}
       </div>
 
       {/* Footer */}
