@@ -24,17 +24,13 @@ export default function PresentationView({ template, date, onClose }: Props) {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
-        if (document.fullscreenElement) {
-          document.exitFullscreen?.().catch(() => {});
-          // onClose will be called by fullscreenchange
-        } else {
-          onClose();
-        }
+        document.exitFullscreen?.().catch(() => {});
+        onClose();
       }
     }
 
     document.addEventListener("fullscreenchange", onFullscreenChange);
-    // capture:true intercepts Escape before the Drawer's listener and the browser default
+    // capture:true intercepts Escape before the Drawer's listener
     window.addEventListener("keydown", onKey, true);
 
     return () => {
