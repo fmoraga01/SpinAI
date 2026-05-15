@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { DrawerProvider } from "./components/DrawerContext";
+import Drawer from "./components/Drawer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -13,14 +15,15 @@ export const metadata: Metadata = {
   description: "Asigna aleatoriamente quién lidera la reunión de equipo cada viernes",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <DrawerProvider>
+          {children}
+          <Drawer />
+        </DrawerProvider>
+      </body>
     </html>
   );
 }

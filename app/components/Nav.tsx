@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useDrawer, DrawerView } from "./DrawerContext";
 
-const links = [
-  { href: "/", label: "Inicio" },
-  { href: "/equipo", label: "Equipo" },
-  { href: "/ruleta", label: "Ruleta" },
-  { href: "/historial", label: "Historial" },
+const drawerLinks: { view: DrawerView; label: string }[] = [
+  { view: "equipo", label: "Equipo" },
+  { view: "ruleta", label: "Ruleta" },
+  { view: "historial", label: "Historial" },
 ];
 
 export default function Nav() {
-  const pathname = usePathname();
+  const { drawer, openDrawer } = useDrawer();
 
   return (
     <header
@@ -22,13 +21,10 @@ export default function Nav() {
         WebkitBackdropFilter: "blur(12px)",
         position: "sticky",
         top: 0,
-        zIndex: 50,
+        zIndex: 30,
       }}
     >
-      <div
-        className="max-w-6xl mx-auto px-6 flex items-center justify-between"
-        style={{ height: 60 }}
-      >
+      <div className="max-w-6xl mx-auto px-6 flex items-center justify-between" style={{ height: 60 }}>
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 no-underline">
           <div
@@ -48,26 +44,36 @@ export default function Nav() {
           >
             S
           </div>
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: 15,
-              color: "var(--color-text-primary)",
-              letterSpacing: "-0.01em",
-            }}
-          >
+          <span style={{ fontWeight: 600, fontSize: 15, color: "var(--color-text-primary)", letterSpacing: "-0.01em" }}>
             SpinAI
           </span>
         </Link>
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
-          {links.map((link) => {
-            const active = pathname === link.href;
+          <Link
+            href="/"
+            style={{
+              padding: "6px 14px",
+              borderRadius: "var(--radius-md)",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--color-tertiary)",
+              background: "transparent",
+              border: "1px solid transparent",
+              textDecoration: "none",
+              transition: "all 150ms ease",
+            }}
+          >
+            Inicio
+          </Link>
+
+          {drawerLinks.map(({ view, label }) => {
+            const active = drawer === view;
             return (
-              <Link
-                key={link.href}
-                href={link.href}
+              <button
+                key={view}
+                onClick={() => openDrawer(active ? null : view)}
                 style={{
                   padding: "6px 14px",
                   borderRadius: "var(--radius-md)",
@@ -76,16 +82,15 @@ export default function Nav() {
                   color: active ? "#fff" : "var(--color-tertiary)",
                   background: active ? "#2C40FF22" : "transparent",
                   border: "1px solid " + (active ? "#2C40FF55" : "transparent"),
-                  textDecoration: "none",
+                  cursor: "pointer",
                   transition: "all 150ms ease",
                 }}
               >
-                {link.label}
-              </Link>
+                {label}
+              </button>
             );
           })}
         </nav>
-
       </div>
     </header>
   );
