@@ -16,9 +16,6 @@ function formatDate(dateStr: string): string {
 
 export default function PresentationView({ template, date, onClose }: Props) {
   useEffect(() => {
-    // Enter fullscreen
-    document.documentElement.requestFullscreen?.().catch(() => {});
-
     function onFullscreenChange() {
       if (!document.fullscreenElement) onClose();
     }

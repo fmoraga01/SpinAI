@@ -147,6 +147,9 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
   }
 
   async function handlePresent() {
+    // Must call requestFullscreen synchronously inside the click handler
+    // before any await — browsers reject it outside a user gesture context
+    document.documentElement.requestFullscreen?.().catch(() => {});
     await saveTemplate(buildTemplate());
     onPresent(buildTemplate());
   }
