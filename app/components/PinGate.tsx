@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const STORAGE_KEY = "spinai_auth";
-const PIN = process.env.NEXT_PUBLIC_PIN ?? "";
+const PIN = process.env.NEXT_PUBLIC_PIN || "SPIN2025";
 
 export default function PinGate({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState<boolean | null>(null);
