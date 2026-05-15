@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Template } from "@/lib/types";
+import RunningFigure from "./RunningFigure";
 
 interface Props {
   template: Template;
@@ -163,19 +164,22 @@ export default function PresentationView({ template, date, onClose }: Props) {
               </span>
               <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
                 {template.agenda.map((item, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
-                    <span style={{
-                      fontSize: "clamp(31px, 3.5vw, 43px)", color: "var(--color-primary)", fontWeight: 700,
-                      minWidth: 48, flexShrink: 0, lineHeight: 1,
-                    }}>
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span style={{
-                      fontSize: "clamp(22px, 2.5vw, 31px)",
-                      color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
-                    }}>
-                      {item}
-                    </span>
+                  <li key={i} style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
+                      <span style={{
+                        fontSize: "clamp(31px, 3.5vw, 43px)", color: "var(--color-primary)", fontWeight: 700,
+                        minWidth: 48, flexShrink: 0, lineHeight: 1,
+                      }}>
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span style={{
+                        fontSize: "clamp(22px, 2.5vw, 31px)",
+                        color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
+                      }}>
+                        {item}
+                      </span>
+                    </div>
+                    <RunningFigure delay={i} />
                   </li>
                 ))}
               </ol>
