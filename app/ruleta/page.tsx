@@ -2,25 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { AppData } from "@/lib/types";
-import { loadData, addAssignment, getNextFridays } from "@/lib/storage";
+import { loadData, confirmBulkAssignment, BulkAssignmentPreview } from "@/lib/storage";
 import Nav from "@/app/components/Nav";
 import Roulette from "@/app/components/Roulette";
 
 export default function RuletaPage() {
   const [data, setData] = useState<AppData>({ members: [], assignments: [] });
-  const [nextFridays, setNextFridays] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setData(loadData());
-    setNextFridays(getNextFridays(8));
     setMounted(true);
   }, []);
 
   function refresh() { setData(loadData()); }
 
-  const nextFriday = nextFridays[0] ?? "";
-  const alreadyAssigned = data.assignments.some((a) => a.date === nextFriday);
+  function handleAssignAll(previews: BulkAssignmentPreview[]) {
+    confirmBulkAssignment(previews);
+    refresh();
+  }
 
   if (!mounted) return (
     <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
@@ -40,14 +40,12 @@ export default function RuletaPage() {
             Ruleta de Turno
           </h1>
           <p className="mt-2 text-sm" style={{ color: "var(--color-text-secondary)" }}>
-            Gira y deja que el azar elija al líder del próximo viernes.
+            Gira para asignar a todos los integrantes en viernes consecutivos.
           </p>
         </div>
         <Roulette
           members={data.members}
-          nextFriday={nextFriday}
-          alreadyAssigned={alreadyAssigned}
-          onAssign={(memberId, date) => { addAssignment(memberId, date); refresh(); }}
+          onAssignAll={handleAssignAll}
         />
       </main>
     </div>

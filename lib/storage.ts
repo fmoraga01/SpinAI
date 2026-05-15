@@ -77,7 +77,6 @@ export function getNextFridays(count: number = 8): string[] {
   const today = new Date();
   const current = new Date(today);
 
-  // Find next Friday (5 = Friday)
   const dayOfWeek = current.getDay();
   const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 6;
   current.setDate(current.getDate() + daysUntilFriday);
@@ -88,4 +87,51 @@ export function getNextFridays(count: number = 8): string[] {
   }
 
   return fridays;
+}
+
+export interface BulkAssignmentPreview {
+  memberId: string;
+  memberName: string;
+  date: string;
+}
+
+export function buildBulkAssignmentPreview(): BulkAssignmentPreview[] {
+  const data = loadData();
+  const activeMembers = data.members.filter((m) => m.active);
+  if (activeMembers.length === 0) return [];
+
+  const assignedDates = new Set(data.assignments.map((a) => a.date));
+
+  // Get enough available Fridays (skip already assigned)
+  const needed = activeMembers.length;
+  const candidates = getNextFridays(needed + assignedDates.size + 4);
+  const available = candidates.filter((d) => !assignedDates.has(d)).slice(0, needed);
+
+  // Fisher-Yates shuffle
+  const shuffled = [...activeMembers];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.map((member, i) => ({
+    memberId: member.id,
+    memberName: member.name,
+    date: available[i],
+  }));
+}
+
+export function confirmBulkAssignment(previews: BulkAssignmentPreview[]): void {
+  const data = loadData();
+  const now = new Date().toISOString();
+  for (const p of previews) {
+    data.assignments.push({
+      id: crypto.randomUUID(),
+      memberId: p.memberId,
+      memberName: p.memberName,
+      date: p.date,
+      createdAt: now,
+    });
+  }
+  saveData(data);
 }
