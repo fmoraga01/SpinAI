@@ -126,7 +126,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
           zIndex: 1,
         }}
       >
-        <div style={{ width: "70%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
+        <div style={{ width: "50%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
         {/* Presenter + title */}
         <div>
           <p style={{
