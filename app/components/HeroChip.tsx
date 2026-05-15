@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { loadData } from "@/lib/storage";
+import { useDrawer } from "./DrawerContext";
 
 async function getNextFridayAssignment() {
   const { assignments } = await loadData();
@@ -21,12 +22,13 @@ function formatShortDate(dateStr: string): string {
 }
 
 export default function HeroChip() {
+  const { drawer } = useDrawer();
   const [assignment, setAssignment] = useState<{ memberName: string; date: string } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     getNextFridayAssignment().then((a) => { setAssignment(a); setMounted(true); });
-  }, []);
+  }, [drawer]);
 
   if (!mounted || !assignment) return null;
 

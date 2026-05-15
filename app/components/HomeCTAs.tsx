@@ -19,12 +19,14 @@ export default function HomeCTAs() {
   const [next, setNext] = useState<Assignment | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  const { drawer } = useDrawer();
+
   useEffect(() => {
     loadData().then(({ assignments }) => {
       setNext(getNextAssignment(assignments));
       setMounted(true);
     });
-  }, []);
+  }, [drawer]);
 
   return (
     <div className="flex items-center gap-3 flex-wrap">
