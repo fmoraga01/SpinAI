@@ -16,6 +16,7 @@ import MembersPanel from "./MembersPanel";
 import Roulette from "./Roulette";
 import Schedule from "./Schedule";
 import TemplateEditor from "./TemplateEditor";
+import PresentationView from "./PresentationView";
 
 const TITLES: Record<string, string> = {
   equipo: "Equipo",
@@ -30,6 +31,7 @@ export default function Drawer() {
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [presentingTemplate, setPresentingTemplate] = useState<{ template: import("@/lib/types").Template; date: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -180,6 +182,7 @@ export default function Drawer() {
             <TemplateEditor
               assignment={editingAssignment}
               onBack={() => setEditingAssignment(null)}
+              onPresent={(template) => setPresentingTemplate({ template, date: editingAssignment.date })}
             />
           ) : (
             <>
@@ -212,6 +215,15 @@ export default function Drawer() {
           )}
         </div>
       </div>
+
+      {/* Presentation — rendered outside the transformed panel so position:fixed works correctly */}
+      {presentingTemplate && (
+        <PresentationView
+          template={presentingTemplate.template}
+          date={presentingTemplate.date}
+          onClose={() => setPresentingTemplate(null)}
+        />
+      )}
     </>
   );
 }

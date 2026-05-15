@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { Assignment, Template } from "@/lib/types";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
-import PresentationView from "./PresentationView";
 
 interface Props {
   assignment: Assignment;
   onBack: () => void;
+  onPresent: (template: Template) => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -105,7 +105,7 @@ function ListEditor({
   );
 }
 
-export default function TemplateEditor({ assignment, onBack }: Props) {
+export default function TemplateEditor({ assignment, onBack, onPresent }: Props) {
   const [title, setTitle] = useState("");
   const [agenda, setAgenda] = useState<string[]>([""]);
   const [keyPoints, setKeyPoints] = useState<string[]>([""]);
@@ -113,7 +113,6 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [presenting, setPresenting] = useState(false);
 
   useEffect(() => {
     loadTemplate(assignment.id).then((t) => {
@@ -149,17 +148,7 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
 
   async function handlePresent() {
     await saveTemplate(buildTemplate());
-    setPresenting(true);
-  }
-
-  if (presenting) {
-    return (
-      <PresentationView
-        template={buildTemplate()}
-        date={assignment.date}
-        onClose={() => setPresenting(false)}
-      />
-    );
+    onPresent(buildTemplate());
   }
 
   if (loading) {
