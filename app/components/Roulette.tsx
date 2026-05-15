@@ -289,7 +289,7 @@ export default function Roulette({ members, onAssignAll }: Props) {
         background: "var(--color-surface)",
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-md)",
-        boxShadow: "var(--shadow-glow)",
+        boxShadow: "none",
         padding: "28px 24px",
         display: "flex",
         flexDirection: "column",
