@@ -24,7 +24,6 @@ export default function Nav() {
   const visibleLinks: { view: DrawerView; label: string }[] = [
     { view: "equipo", label: "Equipo" },
     ...(rouletteVisible ? [{ view: "ruleta" as DrawerView, label: "Ruleta" }] : []),
-    { view: "historial", label: "Historial" },
   ];
 
   return (
