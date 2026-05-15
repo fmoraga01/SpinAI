@@ -34,8 +34,8 @@ export default function Home() {
               marginBottom: 28,
             }}
           >
-            Decide quién lidera,{" "}
-            <span style={{ color: "var(--color-primary)" }}>sin debates.</span>
+            El destino habló.{" "}
+            <span style={{ color: "var(--color-primary)" }}>Te toca a ti.</span>
           </h1>
 
           {/* Subtitle */}
