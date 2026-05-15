@@ -1,13 +1,15 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { Assignment } from "@/lib/types";
 import { useDrawer } from "./DrawerContext";
-
+import { swapAssignmentMembers } from "@/lib/storage";
 
 interface Props {
   assignments: Assignment[];
   onRemove: (id: string) => void;
   onPrepare: (assignment: Assignment) => void;
+  onRefresh: () => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -29,11 +31,34 @@ function isPast(dateStr: string): boolean {
   return new Date(dateStr + "T12:00:00") < today;
 }
 
-export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
+export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }: Props) {
   const { switchDrawer } = useDrawer();
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
+
+  const dragIndex = useRef<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [swapping, setSwapping] = useState(false);
+
+  async function handleDrop(targetIndex: number) {
+    const from = dragIndex.current;
+    if (from === null || from === targetIndex) {
+      setOverIndex(null);
+      return;
+    }
+    const a = upcoming[from];
+    const b = upcoming[targetIndex];
+    setOverIndex(null);
+    dragIndex.current = null;
+    setSwapping(true);
+    try {
+      await swapAssignmentMembers(a.id, b.id);
+      onRefresh();
+    } finally {
+      setSwapping(false);
+    }
+  }
 
   if (assignments.length === 0) {
     return (
@@ -48,17 +73,13 @@ export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
           gap: 24,
         }}
       >
-        {/* Icon */}
         <div
           style={{
-            width: 64,
-            height: 64,
+            width: 64, height: 64,
             borderRadius: "var(--radius-md)",
             background: "#2C40FF0f",
             border: "1px solid #2C40FF22",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0,
           }}
         >
@@ -72,48 +93,22 @@ export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
             <circle cx="16" cy="15" r="1" fill="#2C40FF" stroke="none" />
           </svg>
         </div>
-
-        {/* Text */}
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <p
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: "var(--color-text-primary)",
-              margin: 0,
-            }}
-          >
+          <p style={{ fontSize: 15, fontWeight: 600, color: "var(--color-text-primary)", margin: 0 }}>
             Sin asignaciones
           </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: "#4B5563",
-              lineHeight: "20px",
-              margin: 0,
-              maxWidth: 260,
-            }}
-          >
+          <p style={{ fontSize: 13, color: "#4B5563", lineHeight: "20px", margin: 0, maxWidth: 260 }}>
             Gira la ruleta para asignar turnos a cada integrante del equipo.
           </p>
         </div>
-
-        {/* CTA */}
         <button
           onClick={() => switchDrawer("ruleta")}
           style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 20px",
-            borderRadius: "var(--radius-md)",
-            fontSize: 13,
-            fontWeight: 600,
-            color: "#fff",
-            background: "var(--color-primary)",
-            border: "1px solid var(--color-primary)",
-            boxShadow: "var(--shadow-glow-sm)",
-            cursor: "pointer",
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "10px 20px", borderRadius: "var(--radius-md)",
+            fontSize: 13, fontWeight: 600, color: "#fff",
+            background: "var(--color-primary)", border: "1px solid var(--color-primary)",
+            boxShadow: "var(--shadow-glow-sm)", cursor: "pointer",
           }}
         >
           <span style={{ fontSize: 15 }}>◎</span>
@@ -133,17 +128,30 @@ export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
           <div className="space-y-2">
             {upcoming.map((a, i) => {
               const isNext = i === 0;
+              const isDragging = dragIndex.current === i;
+              const isOver = overIndex === i && dragIndex.current !== i;
               return (
                 <div
                   key={a.id}
+                  draggable={!swapping}
+                  onDragStart={() => { dragIndex.current = i; }}
+                  onDragEnd={() => { dragIndex.current = null; setOverIndex(null); }}
+                  onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
+                  onDragLeave={() => setOverIndex(null)}
+                  onDrop={() => handleDrop(i)}
                   className="flex items-center gap-3"
                   style={{
-                    background: isNext ? "#2C40FF0f" : "var(--color-surface-elevated)",
-                    border: "1px solid " + (isNext ? "#2C40FF33" : "var(--color-border)"),
+                    background: isOver ? "#2C40FF0f" : isNext ? "#2C40FF0f" : "var(--color-surface-elevated)",
+                    border: "1px solid " + (isOver ? "var(--color-primary)" : isNext ? "#2C40FF33" : "var(--color-border)"),
                     borderRadius: "var(--radius-md)",
                     padding: "10px 12px",
+                    opacity: isDragging ? 0.4 : 1,
+                    cursor: swapping ? "wait" : "grab",
+                    transition: "opacity 150ms, border-color 150ms, background 150ms",
                   }}
                 >
+                  {/* Drag handle */}
+                  <span style={{ fontSize: 10, color: "#4B5563", flexShrink: 0, cursor: "grab", lineHeight: 1 }}>⠿</span>
                   <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
                     {i + 1}
                   </span>
@@ -257,7 +265,7 @@ export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
                     color: "#374151", cursor: "pointer",
                     background: "transparent", border: "none", padding: "4px", fontSize: 12,
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#F87171")}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-primary)")}
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
                 >
                   ✕

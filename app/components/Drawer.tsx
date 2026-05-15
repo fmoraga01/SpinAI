@@ -220,6 +220,7 @@ export default function Drawer() {
                   assignments={data.assignments}
                   onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
                   onPrepare={(assignment) => setEditingAssignment(assignment)}
+                  onRefresh={refresh}
                 />
               )}
             </>

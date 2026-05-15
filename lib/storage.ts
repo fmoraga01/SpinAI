@@ -90,6 +90,23 @@ export async function removeAssignment(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+export async function swapAssignmentMembers(idA: string, idB: string): Promise<void> {
+  const db = getSupabase();
+  const { data, error } = await db
+    .from("assignments")
+    .select("id, member_id, member_name")
+    .in("id", [idA, idB]);
+  if (error) throw new Error(error.message);
+
+  const a = data!.find((r) => r.id === idA)!;
+  const b = data!.find((r) => r.id === idB)!;
+
+  await Promise.all([
+    db.from("assignments").update({ member_id: b.member_id, member_name: b.member_name }).eq("id", idA),
+    db.from("assignments").update({ member_id: a.member_id, member_name: a.member_name }).eq("id", idB),
+  ]);
+}
+
 // ─── Bulk assignment ─────────────────────────────────────────────────────────
 
 export interface BulkAssignmentPreview {
