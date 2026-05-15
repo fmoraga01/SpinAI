@@ -76,18 +76,26 @@ export async function toggleMember(id: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+async function clearLogsIfNoAssignments(db: ReturnType<typeof getSupabase>): Promise<void> {
+  const { count } = await db.from("assignments").select("*", { count: "exact", head: true });
+  if (count === 0) await db.from("assignment_logs").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+}
+
 export async function removeMember(id: string): Promise<void> {
   const db = getSupabase();
   await db.from("assignments").delete().eq("member_id", id);
   const { error } = await db.from("members").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  await clearLogsIfNoAssignments(db);
 }
 
 // ─── Assignments ──────────────────────────────────────────────────────────────
 
 export async function removeAssignment(id: string): Promise<void> {
-  const { error } = await getSupabase().from("assignments").delete().eq("id", id);
+  const db = getSupabase();
+  const { error } = await db.from("assignments").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  await clearLogsIfNoAssignments(db);
 }
 
 export async function swapAssignmentMembers(idA: string, idB: string): Promise<void> {
