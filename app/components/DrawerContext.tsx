@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 import { Assignment } from "@/lib/types";
 
-export type DrawerView = "equipo" | "ruleta" | "historial" | null;
+export type DrawerView = "equipo" | "ruleta" | "historial" | "log" | null;
 
 interface DrawerContextType {
   drawer: DrawerView;

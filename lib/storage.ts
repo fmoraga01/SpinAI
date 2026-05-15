@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase";
-import { AppData, TeamMember, Assignment, Template } from "./types";
+import { AppData, TeamMember, Assignment, Template, LogEntry } from "./types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -94,7 +94,7 @@ export async function swapAssignmentMembers(idA: string, idB: string): Promise<v
   const db = getSupabase();
   const { data, error } = await db
     .from("assignments")
-    .select("id, member_id, member_name")
+    .select("id, member_id, member_name, date")
     .in("id", [idA, idB]);
   if (error) throw new Error(error.message);
 
@@ -104,7 +104,32 @@ export async function swapAssignmentMembers(idA: string, idB: string): Promise<v
   await Promise.all([
     db.from("assignments").update({ member_id: b.member_id, member_name: b.member_name }).eq("id", idA),
     db.from("assignments").update({ member_id: a.member_id, member_name: a.member_name }).eq("id", idB),
+    db.from("assignment_logs").insert({
+      member_a_name: a.member_name,
+      member_b_name: b.member_name,
+      date_a: a.date,
+      date_b: b.date,
+    }),
   ]);
+}
+
+// ─── Logs ─────────────────────────────────────────────────────────────────────
+
+export async function loadLogs(): Promise<LogEntry[]> {
+  const { data, error } = await getSupabase()
+    .from("assignment_logs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(50);
+  if (error) return [];
+  return (data ?? []).map((r) => ({
+    id: r.id as string,
+    memberAName: r.member_a_name as string,
+    memberBName: r.member_b_name as string,
+    dateA: r.date_a as string,
+    dateB: r.date_b as string,
+    createdAt: r.created_at as string,
+  }));
 }
 
 // ─── Bulk assignment ─────────────────────────────────────────────────────────

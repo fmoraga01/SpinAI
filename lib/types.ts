@@ -29,3 +29,12 @@ export interface Template {
   keyPoints: string[];
   notes: string;
 }
+
+export interface LogEntry {
+  id: string;
+  memberAName: string;
+  memberBName: string;
+  dateA: string;
+  dateB: string;
+  createdAt: string;
+}

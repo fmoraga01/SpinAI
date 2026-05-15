@@ -17,11 +17,13 @@ import Roulette from "./Roulette";
 import Schedule from "./Schedule";
 import TemplateEditor from "./TemplateEditor";
 import PresentationView from "./PresentationView";
+import ChangeLog from "./ChangeLog";
 
 const TITLES: Record<string, string> = {
   equipo: "Equipo",
   ruleta: "Ruleta de Turno",
   historial: "Calendario de asignados",
+  log: "Log de cambios",
 };
 
 export default function Drawer() {
@@ -223,6 +225,7 @@ export default function Drawer() {
                   onRefresh={refresh}
                 />
               )}
+              {drawer === "log" && <ChangeLog />}
             </>
           )}
         </div>
