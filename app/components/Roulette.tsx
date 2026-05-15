@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { TeamMember } from "@/lib/types";
 import { BulkAssignmentPreview, buildBulkAssignmentPreview } from "@/lib/storage";
 
@@ -32,92 +32,65 @@ function getAvatarColor(name: string): string {
 export default function Roulette({ members, onAssignAll }: Props) {
   const activeMembers = members.filter((m) => m.active);
   const [spinning, setSpinning] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [displayColor, setDisplayColor] = useState("");
   const [preview, setPreview] = useState<BulkAssignmentPreview[] | null>(null);
-  const [scrollPositions, setScrollPositions] = useState([0, 0, 0]);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const ITEM_HEIGHT = 80;
+  const [rotation, setRotation] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   function spin(buildPreview: () => BulkAssignmentPreview[]) {
     if (activeMembers.length === 0 || spinning) return;
     setSpinning(true);
     setPreview(null);
+    setRotation(0);
 
-    const result = buildPreview();
+    let elapsed = 0;
+    const duration = 2800;
+    let currentInterval = 70;
+    let spinRotation = 0;
 
-    // Animate each reel stopping at the correct position
-    setTimeout(() => {
-      animateReel(0, result[0]?.memberName ?? "", () => {
-        setTimeout(() => {
-          animateReel(1, result[1]?.memberName ?? "", () => {
-            setTimeout(() => {
-              animateReel(2, result[2]?.memberName ?? "", () => {
-                setPreview(result);
-                setSpinning(false);
-              });
-            }, 300);
-          });
-        }, 300);
-      });
-    }, 100);
-  }
+    function tick() {
+      const random = activeMembers[Math.floor(Math.random() * activeMembers.length)];
+      setDisplayName(random.name);
+      setDisplayColor(getAvatarColor(random.name));
 
-  function animateReel(reelIndex: number, targetName: string, onComplete: () => void) {
-    const targetIndex = activeMembers.findIndex((m) => m.name === targetName);
-    if (targetIndex === -1) {
-      onComplete();
-      return;
-    }
+      // Rotate circle continuously
+      spinRotation += Math.random() * 45;
+      setRotation(spinRotation % 360);
 
-    const startPos = scrollPositions[reelIndex];
-    const endPos = targetIndex * ITEM_HEIGHT;
-    const distance = endPos - startPos;
-    const duration = 1200 + reelIndex * 200;
-    const startTime = Date.now();
+      elapsed += currentInterval;
 
-    function easeOut(t: number) {
-      return 1 - Math.pow(1 - t, 3);
-    }
+      if (elapsed > duration * 0.55) {
+        currentInterval = Math.min(currentInterval * 1.18, 380);
+      }
 
-    function animate() {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Overshoot and settle for a satisfying effect
-      const eased = easeOut(progress);
-      const newPos = startPos + distance * eased;
-
-      setScrollPositions((prev) => {
-        const next = [...prev];
-        next[reelIndex] = newPos;
-        return next;
-      });
-
-      if (progress < 1) {
-        requestAnimationFrame(animate);
+      if (elapsed >= duration) {
+        const result = buildPreview();
+        setDisplayName(result[0]?.memberName ?? "");
+        setDisplayColor(getAvatarColor(result[0]?.memberName ?? ""));
+        setPreview(result);
+        setSpinning(false);
+        setRotation(0);
       } else {
-        setScrollPositions((prev) => {
-          const next = [...prev];
-          next[reelIndex] = endPos;
-          return next;
-        });
-        onComplete();
+        intervalRef.current = setTimeout(tick, currentInterval);
       }
     }
 
-    animate();
+    intervalRef.current = setTimeout(tick, currentInterval);
   }
 
   function handleConfirm() {
     if (!preview) return;
     onAssignAll(preview);
     setPreview(null);
-    setScrollPositions([0, 0, 0]);
+    setDisplayName("");
+    setDisplayColor("");
   }
 
   function handleCancel() {
     setPreview(null);
-    setScrollPositions([0, 0, 0]);
+    setDisplayName("");
+    setDisplayColor("");
   }
 
   const isDisabled = spinning || activeMembers.length === 0;
@@ -139,123 +112,104 @@ export default function Roulette({ members, onAssignAll }: Props) {
       <div className="flex items-center gap-2 mb-2 self-start">
         <span style={{ color: "var(--color-primary)", fontSize: 18 }}>◎</span>
         <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-secondary)" }}>
-          Máquina de Sorteo
+          Ruleta de Turno
         </h2>
       </div>
       <p className="text-xs mb-6 self-start" style={{ color: "#4B5563" }}>
-        Gira los cilindros para asignar turnos
+        Asigna a todos los integrantes automáticamente
       </p>
 
-      {/* Slot Machine */}
-      <div
-        style={{
-          display: "flex",
-          gap: 12,
-          marginBottom: 24,
-          padding: "20px",
-          background: "var(--color-surface-elevated)",
-          border: "2px solid var(--color-border)",
-          borderRadius: "var(--radius-md)",
-          boxShadow: "inset 0 2px 8px rgba(0,0,0,0.4)",
-        }}
-        ref={scrollRef}
-      >
-        {[0, 1, 2].map((reelIndex) => (
+      {/* Spinning Circle */}
+      {!preview && (
+        <div className="mb-8 relative" style={{ perspective: "1000px" }}>
+          <style>{`
+            @keyframes spinCustom {
+              from { transform: rotateZ(0deg); }
+              to { transform: rotateZ(360deg); }
+            }
+          `}</style>
+
           <div
-            key={reelIndex}
             style={{
-              flex: 1,
-              height: 280,
-              overflow: "hidden",
-              borderRadius: "var(--radius-md)",
-              background: "rgba(44,64,255,0.05)",
-              border: "1px solid var(--color-border)",
-              position: "relative",
+              width: 220,
+              height: 220,
+              borderRadius: "50%",
+              border: "3px solid " + (spinning ? "var(--color-primary)" : "var(--color-border)"),
+              background: spinning ? "#2C40FF0f" : "var(--color-surface-elevated)",
+              boxShadow: spinning ? "var(--shadow-glow), inset 0 0 30px rgba(44,64,255,0.1)" : "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "border-color 300ms ease, box-shadow 300ms ease",
+              transform: spinning ? `rotateZ(${rotation}deg)` : "rotateZ(0deg)",
+              transformOrigin: "center",
             }}
           >
-            {/* Reel content */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                transform: `translateY(-${scrollPositions[reelIndex]}px)`,
-                transition: spinning ? "none" : "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
-              }}
-            >
-              {[...activeMembers, ...activeMembers].map((member, i) => (
-                <div
-                  key={`${reelIndex}-${i}`}
-                  style={{
-                    height: ITEM_HEIGHT,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <div className="text-center" style={{ width: "100%" }}>
-                    <div
-                      style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        background: getAvatarColor(member.name),
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: 11,
-                        margin: "0 auto 6px",
-                        boxShadow: `${getAvatarColor(member.name)}44 0px 0px 12px`,
-                      }}
-                    >
-                      {getInitials(member.name)}
-                    </div>
-                    <p className="text-xs font-semibold" style={{ color: "var(--color-text-secondary)" }}>
-                      {member.name}
-                    </p>
+            <div className="text-center">
+              {displayName ? (
+                <>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: "50%",
+                      background: displayColor,
+                      boxShadow: `${displayColor}66 0px 0px 20px`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontWeight: 700,
+                      fontSize: 18,
+                      margin: "0 auto 8px",
+                    }}
+                  >
+                    {getInitials(displayName)}
                   </div>
+                  <p
+                    className="text-sm font-semibold leading-tight"
+                    style={{ color: "var(--color-text-primary)", maxWidth: 150 }}
+                  >
+                    {displayName}
+                  </p>
+                </>
+              ) : (
+                <div>
+                  <p style={{ fontSize: 28, marginBottom: 4, color: "var(--color-primary)" }}>◎</p>
+                  <p className="text-xs" style={{ color: "#4B5563" }}>
+                    {activeMembers.length === 0 ? "Sin activos" : `${activeMembers.length} integrantes`}
+                  </p>
                 </div>
-              ))}
+              )}
             </div>
-
-            {/* Glass effect overlay */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(180deg, rgba(8,9,15,0.5) 0%, transparent 30%, transparent 70%, rgba(8,9,15,0.5) 100%)",
-                pointerEvents: "none",
-              }}
-            />
-
-            {/* Center indicator */}
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: 0,
-                right: 0,
-                height: ITEM_HEIGHT,
-                borderTop: "2px solid var(--color-primary)",
-                borderBottom: "2px solid var(--color-primary)",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                boxShadow: "inset 0 0 12px rgba(44,64,255,0.2)",
-              }}
-            />
           </div>
-        ))}
-      </div>
 
-      {/* Preview */}
+          {/* Spin indicator arrow */}
+          {!spinning && !preview && (
+            <div
+              style={{
+                position: "absolute",
+                top: -12,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "8px solid transparent",
+                borderRight: "8px solid transparent",
+                borderTop: "10px solid var(--color-primary)",
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Preview list */}
       {preview && (
         <div className="w-full mb-6">
           <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
             Asignaciones generadas
           </p>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-64 overflow-y-auto">
             {preview.map((p, i) => {
               const color = getAvatarColor(p.memberName);
               return (
@@ -267,7 +221,7 @@ export default function Roulette({ members, onAssignAll }: Props) {
                     border: "1px solid " + (i === 0 ? "#2C40FF33" : "var(--color-border)"),
                     borderRadius: "var(--radius-md)",
                     padding: "12px",
-                    animation: `fadeIn 300ms ease ${i * 80}ms both`,
+                    animation: `fadeIn 300ms ease ${i * 50}ms both`,
                   }}
                 >
                   <style>{`
@@ -285,7 +239,7 @@ export default function Roulette({ members, onAssignAll }: Props) {
                       minWidth: 24,
                       textAlign: "center",
                       background: "#2C40FF22",
-                      padding: "2px 6px",
+                      padding: "2px 4px",
                       borderRadius: "var(--radius-md)",
                     }}
                   >
@@ -342,13 +296,13 @@ export default function Roulette({ members, onAssignAll }: Props) {
             boxShadow: isDisabled ? "none" : "var(--shadow-glow-sm)",
           }}
         >
-          {spinning ? "Sorteando..." : "¡Girar cilindros!"}
+          {spinning ? "Sorteando..." : "¡Girar y asignar todos!"}
         </button>
       ) : (
         <div className="flex gap-2 w-full">
           <button
             onClick={handleCancel}
-            className="flex-1 text-sm font-medium"
+            className="flex-1 text-sm font-medium transition-colors duration-150"
             style={{
               background: "transparent",
               color: "var(--color-text-secondary)",
@@ -362,7 +316,7 @@ export default function Roulette({ members, onAssignAll }: Props) {
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 text-sm font-semibold"
+            className="flex-1 text-sm font-semibold transition-all duration-150"
             style={{
               background: "var(--color-primary)",
               color: "#fff",
