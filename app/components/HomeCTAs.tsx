@@ -15,15 +15,15 @@ function getNextAssignment(assignments: Assignment[]): Assignment | null {
 }
 
 export default function HomeCTAs() {
-  const { openDrawer, openPrepare } = useDrawer();
+  const { openDrawer, openPrepare, drawer } = useDrawer();
   const [next, setNext] = useState<Assignment | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  const { drawer } = useDrawer();
-
   useEffect(() => {
-    loadData().then(({ assignments }) => {
-      setNext(getNextAssignment(assignments));
+    loadData().then(({ assignments, members }) => {
+      const memberIds = new Set(members.map((m) => m.id));
+      const valid = assignments.filter((a) => memberIds.has(a.memberId));
+      setNext(getNextAssignment(valid));
       setMounted(true);
     });
   }, [drawer]);

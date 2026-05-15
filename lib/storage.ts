@@ -25,14 +25,24 @@ function rowToAssignment(row: Record<string, unknown>): Assignment {
 // ─── Load ────────────────────────────────────────────────────────────────────
 
 export async function loadData(): Promise<AppData> {
+  const db = getSupabase();
   const [{ data: members }, { data: assignments }] = await Promise.all([
-    getSupabase().from("members").select("*").order("created_at"),
-    getSupabase().from("assignments").select("*").order("date"),
+    db.from("members").select("*").order("created_at"),
+    db.from("assignments").select("*").order("date"),
   ]);
+
+  const memberIds = new Set((members ?? []).map((r) => r.id as string));
+  const allAssignments = (assignments ?? []).map(rowToAssignment);
+
+  // Remove orphaned assignments whose member no longer exists
+  const orphans = allAssignments.filter((a) => !memberIds.has(a.memberId));
+  if (orphans.length > 0) {
+    await db.from("assignments").delete().in("id", orphans.map((a) => a.id!));
+  }
 
   return {
     members: (members ?? []).map(rowToMember),
-    assignments: (assignments ?? []).map(rowToAssignment),
+    assignments: allAssignments.filter((a) => memberIds.has(a.memberId)),
   };
 }
 

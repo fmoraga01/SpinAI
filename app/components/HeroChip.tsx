@@ -5,12 +5,13 @@ import { loadData } from "@/lib/storage";
 import { useDrawer } from "./DrawerContext";
 
 async function getNextFridayAssignment() {
-  const { assignments } = await loadData();
+  const { assignments, members } = await loadData();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const memberIds = new Set(members.map((m) => m.id));
 
   const upcoming = assignments
-    .filter((a) => new Date(a.date + "T12:00:00") >= today)
+    .filter((a) => new Date(a.date + "T12:00:00") >= today && memberIds.has(a.memberId))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return upcoming[0] ?? null;
