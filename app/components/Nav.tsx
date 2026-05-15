@@ -13,7 +13,7 @@ function hasUpcomingAssignments(assignments: { date: string }[]): boolean {
 
 export default function Nav() {
   const { drawer, openDrawer } = useDrawer();
-  const [rouletteVisible, setRouletteVisible] = useState(true);
+  const [rouletteVisible, setRouletteVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
     loadData().then(({ assignments }) => {
@@ -23,7 +23,7 @@ export default function Nav() {
 
   const visibleLinks: { view: DrawerView; label: string }[] = [
     { view: "equipo", label: "Equipo" },
-    ...(rouletteVisible ? [{ view: "ruleta" as DrawerView, label: "Ruleta" }] : []),
+    ...(rouletteVisible === true ? [{ view: "ruleta" as DrawerView, label: "Ruleta" }] : []),
   ];
 
   return (
