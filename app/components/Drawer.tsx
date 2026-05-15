@@ -20,7 +20,7 @@ import Schedule from "./Schedule";
 const TITLES: Record<string, string> = {
   equipo: "Equipo",
   ruleta: "Ruleta de Turno",
-  historial: "Historial de Turnos",
+  historial: "Calendario de asignados",
 };
 
 export default function Drawer() {

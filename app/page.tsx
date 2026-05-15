@@ -1,7 +1,6 @@
-import Link from "next/link";
 import Nav from "./components/Nav";
-import FeatureCards from "./components/FeatureCards";
 import AnimatedGrid from "./components/AnimatedGrid";
+import HomeCTAs from "./components/HomeCTAs";
 
 export default function Home() {
   return (
@@ -79,48 +78,7 @@ export default function Home() {
           </p>
 
           {/* CTAs */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <Link
-              href="/ruleta"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                borderRadius: "var(--radius-md)",
-                fontSize: 15,
-                fontWeight: 500,
-                color: "#fff",
-                background: "var(--color-primary)",
-                textDecoration: "none",
-                boxShadow: "var(--shadow-glow)",
-                transition: "opacity 150ms ease",
-                border: "1px solid var(--color-primary)",
-              }}
-            >
-              Girar la ruleta
-              <span style={{ fontSize: 18 }}>↗</span>
-            </Link>
-            <Link
-              href="/equipo"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "12px 24px",
-                borderRadius: "var(--radius-md)",
-                fontSize: 15,
-                fontWeight: 500,
-                color: "var(--color-text-secondary)",
-                textDecoration: "none",
-                border: "1px solid var(--color-border-bright)",
-                background: "transparent",
-                transition: "border-color 150ms ease",
-              }}
-            >
-              Gestionar equipo
-            </Link>
-          </div>
+          <HomeCTAs />
         </div>
       </section>
 
