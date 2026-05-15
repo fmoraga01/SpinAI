@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { TeamMember } from "@/lib/types";
 import { BulkAssignmentPreview, buildBulkAssignmentPreview } from "@/lib/storage";
 
@@ -22,75 +22,263 @@ function getInitials(name: string): string {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 }
 
-const AVATAR_COLORS = ["#2C40FF","#7C3AED","#0891B2","#059669","#DC2626","#D97706","#DB2777","#65A30D"];
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (const char of name) hash = (hash + char.charCodeAt(0)) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[hash];
+const SEGMENT_COLORS = [
+  "#2C40FF", "#7C3AED", "#0891B2", "#059669",
+  "#DC2626", "#D97706", "#DB2777", "#0D9488",
+  "#7C3AED", "#EA580C", "#0284C7", "#16A34A",
+];
+
+function getSegmentColor(index: number): string {
+  return SEGMENT_COLORS[index % SEGMENT_COLORS.length];
+}
+
+const SIZE = 320;
+const CENTER = SIZE / 2;
+const RADIUS = CENTER - 16;
+const INNER_RADIUS = RADIUS * 0.32;
+
+function drawWheel(
+  ctx: CanvasRenderingContext2D,
+  members: TeamMember[],
+  angle: number,
+  glowIndex: number | null
+) {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, SIZE * dpr, SIZE * dpr);
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const n = members.length;
+  if (n === 0) {
+    // Empty state
+    ctx.beginPath();
+    ctx.arc(CENTER, CENTER, RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = "#0e101a";
+    ctx.fill();
+    ctx.strokeStyle = "#1f2333";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#4B5563";
+    ctx.font = "500 13px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Sin integrantes", CENTER, CENTER);
+    ctx.restore();
+    return;
+  }
+
+  const segAngle = (Math.PI * 2) / n;
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = angle + i * segAngle;
+    const endAngle = startAngle + segAngle;
+    const color = getSegmentColor(i);
+    const isGlowing = glowIndex === i;
+
+    // Glow effect
+    if (isGlowing) {
+      ctx.save();
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 24;
+    }
+
+    // Segment fill
+    ctx.beginPath();
+    ctx.moveTo(CENTER, CENTER);
+    ctx.arc(CENTER, CENTER, RADIUS, startAngle, endAngle);
+    ctx.closePath();
+
+    const gradient = ctx.createRadialGradient(CENTER, CENTER, INNER_RADIUS, CENTER, CENTER, RADIUS);
+    gradient.addColorStop(0, isGlowing ? color + "dd" : color + "55");
+    gradient.addColorStop(1, isGlowing ? color + "ff" : color + "cc");
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    if (isGlowing) ctx.restore();
+
+    // Segment border
+    ctx.beginPath();
+    ctx.moveTo(CENTER, CENTER);
+    ctx.arc(CENTER, CENTER, RADIUS, startAngle, endAngle);
+    ctx.closePath();
+    ctx.strokeStyle = "rgba(8,9,15,0.8)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    const midAngle = startAngle + segAngle / 2;
+    const labelR = (INNER_RADIUS + RADIUS) / 2 + 8;
+    const lx = CENTER + Math.cos(midAngle) * labelR;
+    const ly = CENTER + Math.sin(midAngle) * labelR;
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(midAngle + Math.PI / 2);
+
+    const initials = getInitials(members[i].name);
+    const fontSize = n > 8 ? 10 : 12;
+    ctx.font = `700 ${fontSize}px Inter, sans-serif`;
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.shadowColor = "rgba(0,0,0,0.8)";
+    ctx.shadowBlur = 4;
+    ctx.fillText(initials, 0, 0);
+    ctx.restore();
+  }
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(CENTER, CENTER, RADIUS, 0, Math.PI * 2);
+  ctx.strokeStyle = glowIndex !== null ? "#2C40FF" : "#1f2333";
+  ctx.lineWidth = glowIndex !== null ? 3 : 2;
+  if (glowIndex !== null) {
+    ctx.shadowColor = "#2C40FF";
+    ctx.shadowBlur = 16;
+  }
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Inner circle (hub)
+  ctx.beginPath();
+  ctx.arc(CENTER, CENTER, INNER_RADIUS, 0, Math.PI * 2);
+  ctx.fillStyle = "#0e101a";
+  ctx.fill();
+  ctx.strokeStyle = glowIndex !== null ? "#2C40FF66" : "#1f2333";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Hub icon
+  ctx.font = "600 12px Inter, sans-serif";
+  ctx.fillStyle = glowIndex !== null ? "#2C40FF" : "#374151";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("SPIN", CENTER, CENTER);
+
+  ctx.restore();
+}
+
+function drawPointer(ctx: CanvasRenderingContext2D) {
+  const dpr = window.devicePixelRatio || 1;
+  ctx.save();
+  ctx.scale(dpr, dpr);
+
+  const px = CENTER;
+  const py = 6;
+  const pw = 12;
+  const ph = 22;
+
+  // Shadow
+  ctx.shadowColor = "#2C40FF";
+  ctx.shadowBlur = 10;
+
+  ctx.beginPath();
+  ctx.moveTo(px, py + ph);
+  ctx.lineTo(px - pw / 2, py);
+  ctx.lineTo(px + pw / 2, py);
+  ctx.closePath();
+  ctx.fillStyle = "#2C40FF";
+  ctx.fill();
+
+  ctx.restore();
 }
 
 export default function Roulette({ members, onAssignAll }: Props) {
   const activeMembers = members.filter((m) => m.active);
-  const [spinning, setSpinning] = useState(false);
-  const [displayName, setDisplayName] = useState("");
-  const [displayColor, setDisplayColor] = useState("");
-  const [preview, setPreview] = useState<BulkAssignmentPreview[] | null>(null);
-  const [rotation, setRotation] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const pointerCanvasRef = useRef<HTMLCanvasElement>(null);
+  const animRef = useRef<number | null>(null);
+  const angleRef = useRef(0);
 
-  function spin(buildPreview: () => BulkAssignmentPreview[]) {
+  const [spinning, setSpinning] = useState(false);
+  const [preview, setPreview] = useState<BulkAssignmentPreview[] | null>(null);
+  const [glowIndex, setGlowIndex] = useState<number | null>(null);
+  const [winnerName, setWinnerName] = useState<string | null>(null);
+
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+
+  const redraw = useCallback((angle: number, glow: number | null) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+    drawWheel(ctx, activeMembers, angle, glow);
+  }, [activeMembers]);
+
+  useEffect(() => {
+    redraw(angleRef.current, glowIndex);
+  }, [activeMembers, redraw, glowIndex]);
+
+  useEffect(() => {
+    const pointer = pointerCanvasRef.current;
+    if (!pointer) return;
+    const ctx = pointer.getContext("2d")!;
+    drawPointer(ctx);
+  }, []);
+
+  function spin() {
     if (activeMembers.length === 0 || spinning) return;
     setSpinning(true);
     setPreview(null);
-    setRotation(0);
+    setGlowIndex(null);
+    setWinnerName(null);
 
-    let elapsed = 0;
-    const duration = 2800;
-    let currentInterval = 70;
-    let spinRotation = 0;
+    const result = buildBulkAssignmentPreview();
+    const winnerName = result[0]?.memberName ?? "";
+    const winnerIndex = activeMembers.findIndex((m) => m.name === winnerName);
 
-    function tick() {
-      const random = activeMembers[Math.floor(Math.random() * activeMembers.length)];
-      setDisplayName(random.name);
-      setDisplayColor(getAvatarColor(random.name));
+    const n = activeMembers.length;
+    const segAngle = (Math.PI * 2) / n;
 
-      // Rotate circle continuously
-      spinRotation += Math.random() * 45;
-      setRotation(spinRotation % 360);
+    // Target angle so winner segment lands under the pointer (top = -π/2)
+    const winnerMidAngle = winnerIndex * segAngle + segAngle / 2;
+    const targetOffset = -Math.PI / 2 - winnerMidAngle;
+    const fullSpins = (5 + Math.floor(Math.random() * 4)) * Math.PI * 2;
+    const targetAngle = targetOffset + fullSpins;
 
-      elapsed += currentInterval;
+    const startAngle = angleRef.current;
+    const totalDelta = targetAngle - startAngle;
+    const duration = 3500;
+    const startTime = performance.now();
 
-      if (elapsed > duration * 0.55) {
-        currentInterval = Math.min(currentInterval * 1.18, 380);
-      }
+    function easeOut(t: number) {
+      return 1 - Math.pow(1 - t, 4);
+    }
 
-      if (elapsed >= duration) {
-        const result = buildPreview();
-        setDisplayName(result[0]?.memberName ?? "");
-        setDisplayColor(getAvatarColor(result[0]?.memberName ?? ""));
+    function frame(now: number) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = easeOut(t);
+      const currentAngle = startAngle + totalDelta * eased;
+
+      angleRef.current = currentAngle;
+      redraw(currentAngle, null);
+
+      if (t < 1) {
+        animRef.current = requestAnimationFrame(frame);
+      } else {
+        angleRef.current = targetAngle;
+        setGlowIndex(winnerIndex);
+        setWinnerName(winnerName);
         setPreview(result);
         setSpinning(false);
-        setRotation(0);
-      } else {
-        intervalRef.current = setTimeout(tick, currentInterval);
       }
     }
 
-    intervalRef.current = setTimeout(tick, currentInterval);
+    animRef.current = requestAnimationFrame(frame);
   }
 
   function handleConfirm() {
     if (!preview) return;
     onAssignAll(preview);
     setPreview(null);
-    setDisplayName("");
-    setDisplayColor("");
+    setGlowIndex(null);
+    setWinnerName(null);
   }
 
   function handleCancel() {
     setPreview(null);
-    setDisplayName("");
-    setDisplayColor("");
+    setGlowIndex(null);
+    setWinnerName(null);
   }
 
   const isDisabled = spinning || activeMembers.length === 0;
@@ -102,116 +290,65 @@ export default function Roulette({ members, onAssignAll }: Props) {
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-md)",
         boxShadow: "var(--shadow-glow)",
-        padding: "32px 24px",
+        padding: "28px 24px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
       }}
     >
       {/* Title */}
-      <div className="flex items-center gap-2 mb-2 self-start">
+      <div className="flex items-center gap-2 mb-1 self-start">
         <span style={{ color: "var(--color-primary)", fontSize: 18 }}>◎</span>
         <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-secondary)" }}>
           Ruleta de Turno
         </h2>
       </div>
       <p className="text-xs mb-6 self-start" style={{ color: "#4B5563" }}>
-        Asigna a todos los integrantes automáticamente
+        Gira para asignar a todos los integrantes
       </p>
 
-      {/* Spinning Circle */}
-      {!preview && (
-        <div className="mb-8 relative" style={{ perspective: "1000px" }}>
-          <style>{`
-            @keyframes spinCustom {
-              from { transform: rotateZ(0deg); }
-              to { transform: rotateZ(360deg); }
-            }
-          `}</style>
+      {/* Wheel */}
+      <div className="relative mb-6" style={{ width: SIZE, height: SIZE }}>
+        <canvas
+          ref={canvasRef}
+          width={SIZE * dpr}
+          height={SIZE * dpr}
+          style={{ width: SIZE, height: SIZE, display: "block" }}
+        />
+        <canvas
+          ref={pointerCanvasRef}
+          width={SIZE * dpr}
+          height={SIZE * dpr}
+          style={{ width: SIZE, height: SIZE, position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+        />
+      </div>
 
-          <div
-            style={{
-              width: 220,
-              height: 220,
-              borderRadius: "50%",
-              border: "3px solid " + (spinning ? "var(--color-primary)" : "var(--color-border)"),
-              background: spinning ? "#2C40FF0f" : "var(--color-surface-elevated)",
-              boxShadow: spinning ? "var(--shadow-glow), inset 0 0 30px rgba(44,64,255,0.1)" : "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "border-color 300ms ease, box-shadow 300ms ease",
-              transform: spinning ? `rotateZ(${rotation}deg)` : "rotateZ(0deg)",
-              transformOrigin: "center",
-            }}
-          >
-            <div className="text-center">
-              {displayName ? (
-                <>
-                  <div
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: "50%",
-                      background: displayColor,
-                      boxShadow: `${displayColor}66 0px 0px 20px`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontWeight: 700,
-                      fontSize: 18,
-                      margin: "0 auto 8px",
-                    }}
-                  >
-                    {getInitials(displayName)}
-                  </div>
-                  <p
-                    className="text-sm font-semibold leading-tight"
-                    style={{ color: "var(--color-text-primary)", maxWidth: 150 }}
-                  >
-                    {displayName}
-                  </p>
-                </>
-              ) : (
-                <div>
-                  <p style={{ fontSize: 28, marginBottom: 4, color: "var(--color-primary)" }}>◎</p>
-                  <p className="text-xs" style={{ color: "#4B5563" }}>
-                    {activeMembers.length === 0 ? "Sin activos" : `${activeMembers.length} integrantes`}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Spin indicator arrow */}
-          {!spinning && !preview && (
-            <div
-              style={{
-                position: "absolute",
-                top: -12,
-                left: "50%",
-                transform: "translateX(-50%)",
-                width: 0,
-                height: 0,
-                borderLeft: "8px solid transparent",
-                borderRight: "8px solid transparent",
-                borderTop: "10px solid var(--color-primary)",
-              }}
-            />
-          )}
+      {/* Winner badge */}
+      {winnerName && !spinning && (
+        <div
+          className="w-full mb-4 text-center py-3 px-4"
+          style={{
+            background: "#2C40FF11",
+            border: "1px solid #2C40FF33",
+            borderRadius: "var(--radius-md)",
+            animation: "fadeIn 400ms ease both",
+          }}
+        >
+          <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }`}</style>
+          <p className="text-xs mb-1" style={{ color: "#4B5563" }}>Primer turno</p>
+          <p className="text-base font-semibold" style={{ color: "var(--color-primary)" }}>{winnerName}</p>
         </div>
       )}
 
       {/* Preview list */}
       {preview && (
-        <div className="w-full mb-6">
+        <div className="w-full mb-5">
           <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
-            Asignaciones generadas
+            Asignaciones completas
           </p>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
             {preview.map((p, i) => {
-              const color = getAvatarColor(p.memberName);
+              const color = getSegmentColor(activeMembers.findIndex(m => m.name === p.memberName));
               return (
                 <div
                   key={p.memberId}
@@ -220,53 +357,25 @@ export default function Roulette({ members, onAssignAll }: Props) {
                     background: i === 0 ? "#2C40FF0f" : "var(--color-surface-elevated)",
                     border: "1px solid " + (i === 0 ? "#2C40FF33" : "var(--color-border)"),
                     borderRadius: "var(--radius-md)",
-                    padding: "12px",
-                    animation: `fadeIn 300ms ease ${i * 50}ms both`,
+                    padding: "10px 12px",
+                    animation: `fadeIn 300ms ease ${i * 60}ms both`,
                   }}
                 >
-                  <style>{`
-                    @keyframes fadeIn {
-                      from { opacity: 0; transform: translateY(8px); }
-                      to { opacity: 1; transform: translateY(0); }
-                    }
-                  `}</style>
-
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: "#4B5563",
-                      fontWeight: 600,
-                      minWidth: 24,
-                      textAlign: "center",
-                      background: "#2C40FF22",
-                      padding: "2px 4px",
-                      borderRadius: "var(--radius-md)",
-                    }}
-                  >
+                  <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
                     {i + 1}
-                  </div>
-
+                  </span>
                   <div
                     style={{
-                      flexShrink: 0,
-                      width: 36,
-                      height: 36,
-                      borderRadius: "50%",
-                      background: color,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#fff",
-                      fontWeight: 700,
-                      fontSize: 12,
-                      boxShadow: `${color}44 0px 0px 12px`,
+                      flexShrink: 0, width: 32, height: 32, borderRadius: "50%",
+                      background: color, display: "flex", alignItems: "center",
+                      justifyContent: "center", color: "#fff", fontWeight: 700,
+                      fontSize: 11, boxShadow: `${color}55 0px 0px 10px`,
                     }}
                   >
                     {getInitials(p.memberName)}
                   </div>
-
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)" }}>
+                    <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>
                       {p.memberName}
                     </p>
                     <p className="text-xs capitalize" style={{ color: "#4B5563" }}>
@@ -283,9 +392,9 @@ export default function Roulette({ members, onAssignAll }: Props) {
       {/* Buttons */}
       {!preview ? (
         <button
-          onClick={() => spin(buildBulkAssignmentPreview)}
+          onClick={spin}
           disabled={isDisabled}
-          className="w-full text-sm font-semibold transition-all duration-200"
+          className="w-full text-sm font-semibold transition-all duration-150"
           style={{
             background: isDisabled ? "var(--color-surface-elevated)" : "var(--color-primary)",
             color: isDisabled ? "#4B5563" : "#fff",
@@ -296,38 +405,31 @@ export default function Roulette({ members, onAssignAll }: Props) {
             boxShadow: isDisabled ? "none" : "var(--shadow-glow-sm)",
           }}
         >
-          {spinning ? "Sorteando..." : "¡Girar y asignar todos!"}
+          {spinning ? "Sorteando..." : "¡Girar!"}
         </button>
       ) : (
         <div className="flex gap-2 w-full">
           <button
             onClick={handleCancel}
-            className="flex-1 text-sm font-medium transition-colors duration-150"
+            className="flex-1 text-sm font-medium"
             style={{
-              background: "transparent",
-              color: "var(--color-text-secondary)",
-              border: "1px solid var(--color-border)",
-              borderRadius: "var(--radius-md)",
-              padding: "10px",
-              cursor: "pointer",
+              background: "transparent", color: "var(--color-text-secondary)",
+              border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)",
+              padding: "10px", cursor: "pointer",
             }}
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
-            className="flex-1 text-sm font-semibold transition-all duration-150"
+            className="flex-1 text-sm font-semibold"
             style={{
-              background: "var(--color-primary)",
-              color: "#fff",
-              border: "1px solid var(--color-primary)",
-              borderRadius: "var(--radius-md)",
-              padding: "10px",
-              cursor: "pointer",
-              boxShadow: "var(--shadow-glow-sm)",
+              background: "var(--color-primary)", color: "#fff",
+              border: "1px solid var(--color-primary)", borderRadius: "var(--radius-md)",
+              padding: "10px", cursor: "pointer", boxShadow: "var(--shadow-glow-sm)",
             }}
           >
-            Confirmar
+            Confirmar {preview.length} turnos
           </button>
         </div>
       )}
