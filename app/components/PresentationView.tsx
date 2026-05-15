@@ -130,7 +130,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
             {template.memberName}
           </p>
           <h1 style={{
-            fontSize: "clamp(36px, 4.5vw, 64px)",
+            fontSize: "40px",
             fontWeight: 700, color: "#fff",
             lineHeight: 1.1, letterSpacing: "-0.02em", margin: 0,
           }}>
@@ -168,7 +168,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span style={{
-                      fontSize: "clamp(16px, 1.8vw, 22px)",
+                      fontSize: "clamp(22px, 2.5vw, 31px)",
                       color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
                     }}>
                       {item}
@@ -197,7 +197,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                   <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                     <span style={{ color: "var(--color-primary)", fontSize: 10, flexShrink: 0, paddingTop: 4 }}>◆</span>
                     <span style={{
-                      fontSize: "clamp(16px, 1.8vw, 22px)",
+                      fontSize: "clamp(22px, 2.5vw, 31px)",
                       color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
                     }}>
                       {point}
