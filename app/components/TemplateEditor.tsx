@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Assignment, Template } from "@/lib/types";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
+import PresentationView from "./PresentationView";
 
 interface Props {
   assignment: Assignment;
@@ -112,6 +113,7 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [presenting, setPresenting] = useState(false);
 
   useEffect(() => {
     loadTemplate(assignment.id).then((t) => {
@@ -125,9 +127,8 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
     });
   }, [assignment.id]);
 
-  async function handleSave() {
-    setSaving(true);
-    const template: Template = {
+  function buildTemplate(): Template {
+    return {
       assignmentId: assignment.id,
       memberId: assignment.memberId,
       memberName: assignment.memberName,
@@ -136,10 +137,29 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
       keyPoints: keyPoints.filter((k) => k.trim() !== ""),
       notes,
     };
-    await saveTemplate(template);
+  }
+
+  async function handleSave() {
+    setSaving(true);
+    await saveTemplate(buildTemplate());
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function handlePresent() {
+    await saveTemplate(buildTemplate());
+    setPresenting(true);
+  }
+
+  if (presenting) {
+    return (
+      <PresentationView
+        template={buildTemplate()}
+        date={assignment.date}
+        onClose={() => setPresenting(false)}
+      />
+    );
   }
 
   if (loading) {
@@ -237,11 +257,11 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
         <button
           onClick={onBack}
           style={{
-            flex: 1, padding: "10px",
+            flex: 1, padding: "10px", minWidth: 80,
             background: "transparent", color: "var(--color-text-secondary)",
             border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)",
             fontSize: 13, fontWeight: 500, cursor: "pointer",
@@ -253,17 +273,30 @@ export default function TemplateEditor({ assignment, onBack }: Props) {
           onClick={handleSave}
           disabled={saving}
           style={{
-            flex: 2, padding: "10px",
-            background: saved ? "#059669" : "var(--color-primary)",
-            color: "#fff",
-            border: "1px solid " + (saved ? "#059669" : "var(--color-primary)"),
+            flex: 1, padding: "10px", minWidth: 100,
+            background: saved ? "#059669" : "var(--color-surface-elevated)",
+            color: saved ? "#fff" : "var(--color-text-secondary)",
+            border: "1px solid " + (saved ? "#059669" : "var(--color-border)"),
             borderRadius: "var(--radius-md)",
-            fontSize: 13, fontWeight: 600, cursor: saving ? "wait" : "pointer",
-            transition: "background 300ms, border-color 300ms",
-            boxShadow: "var(--shadow-glow-sm)",
+            fontSize: 13, fontWeight: 500, cursor: saving ? "wait" : "pointer",
+            transition: "background 300ms, border-color 300ms, color 300ms",
           }}
         >
-          {saved ? "✓ Guardado" : saving ? "Guardando..." : "Guardar plantilla"}
+          {saved ? "✓ Guardado" : saving ? "Guardando..." : "Guardar"}
+        </button>
+        <button
+          onClick={handlePresent}
+          style={{
+            flex: 2, padding: "10px", minWidth: 120,
+            background: "var(--color-primary)", color: "#fff",
+            border: "1px solid var(--color-primary)",
+            borderRadius: "var(--radius-md)",
+            fontSize: 13, fontWeight: 600, cursor: "pointer",
+            boxShadow: "var(--shadow-glow-sm)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+          }}
+        >
+          ▶ Presentar
         </button>
       </div>
     </div>
