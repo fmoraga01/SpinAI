@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { Template } from "@/lib/types";
+import SlideBackground from "./SlideBackground";
 
 interface Props {
   template: Template;
@@ -52,6 +53,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
         overflow: "hidden",
       }}
     >
+      <SlideBackground />
       {/* Top bar */}
       <div
         style={{
@@ -61,6 +63,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
           padding: "14px 40px",
           borderBottom: "1px solid var(--color-border)",
           flexShrink: 0,
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -118,6 +122,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
           justifyContent: "center",
           padding: "48px 80px",
           overflow: "auto",
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <div style={{ width: "70%", margin: "0 auto", display: "flex", flexDirection: "column", gap: 40 }}>
@@ -246,6 +252,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
 
       {/* Footer */}
       <div style={{
+        position: "relative", zIndex: 1,
         padding: "10px 40px",
         borderTop: "1px solid var(--color-border)",
         display: "flex", justifyContent: "center", flexShrink: 0,
