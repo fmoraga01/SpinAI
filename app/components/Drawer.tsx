@@ -107,15 +107,12 @@ export default function Drawer() {
             flexShrink: 0,
           }}
         >
-          <div className="flex items-center gap-2">
-            <span style={{ color: "var(--color-primary)", fontSize: 16 }}>◎</span>
-            <h2
-              className="text-sm font-semibold uppercase tracking-widest"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
-              {drawer ? TITLES[drawer] : ""}
-            </h2>
-          </div>
+          <h2
+            className="text-sm font-semibold uppercase tracking-widest"
+            style={{ color: "var(--color-text-secondary)" }}
+          >
+            {drawer ? TITLES[drawer] : ""}
+          </h2>
           <button
             onClick={closeDrawer}
             style={{
