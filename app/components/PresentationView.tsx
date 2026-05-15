@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Template } from "@/lib/types";
 import SlideBackground from "./SlideBackground";
 
@@ -16,28 +16,38 @@ function formatDate(dateStr: string): string {
 }
 
 export default function PresentationView({ template, date, onClose }: Props) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
+    let closed = false;
+
+    function close() {
+      if (closed) return;
+      closed = true;
+      document.exitFullscreen?.().catch(() => {});
+      onCloseRef.current();
+    }
+
     function onFullscreenChange() {
-      if (!document.fullscreenElement) onClose();
+      if (!document.fullscreenElement) close();
     }
 
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopImmediatePropagation();
-        document.exitFullscreen?.().catch(() => {});
-        onClose();
+        close();
       }
     }
 
     document.addEventListener("fullscreenchange", onFullscreenChange);
-    // capture:true intercepts Escape before the Drawer's listener
     window.addEventListener("keydown", onKey, true);
 
     return () => {
       document.removeEventListener("fullscreenchange", onFullscreenChange);
       window.removeEventListener("keydown", onKey, true);
     };
-  }, [onClose]);
+  }, []);
 
   const hasAgenda = template.agenda.length > 0;
   const hasKeyPoints = template.keyPoints.length > 0;
