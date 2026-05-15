@@ -65,23 +65,6 @@ export default function Nav() {
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
-          <Link
-            href="/"
-            style={{
-              padding: "6px 14px",
-              borderRadius: "var(--radius-md)",
-              fontSize: 14,
-              fontWeight: 500,
-              color: "var(--color-tertiary)",
-              background: "transparent",
-              border: "1px solid transparent",
-              textDecoration: "none",
-              transition: "all 150ms ease",
-            }}
-          >
-            Inicio
-          </Link>
-
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
             return (
