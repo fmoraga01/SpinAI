@@ -29,6 +29,8 @@ export default function HeroChip() {
     setMounted(true);
   }, []);
 
+  if (!mounted || !assignment) return null;
+
   return (
     <span
       style={{
@@ -55,9 +57,7 @@ export default function HeroChip() {
           flexShrink: 0,
         }}
       />
-      {mounted && assignment
-        ? `Próximo viernes · ${assignment.memberName} · ${formatShortDate(assignment.date)}`
-        : "Reuniones de equipo · Viernes"}
+      {`Próximo viernes · ${assignment.memberName} · ${formatShortDate(assignment.date)}`}
     </span>
   );
 }
