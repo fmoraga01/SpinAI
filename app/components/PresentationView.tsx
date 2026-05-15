@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Template } from "@/lib/types";
 import SlideBackground from "./SlideBackground";
 
@@ -18,6 +18,16 @@ function formatDate(dateStr: string): string {
 export default function PresentationView({ template, date, onClose }: Props) {
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+
+  const [crossed, setCrossed] = useState<Set<number>>(new Set());
+
+  function toggleCrossed(i: number) {
+    setCrossed((prev) => {
+      const next = new Set(prev);
+      next.has(i) ? next.delete(i) : next.add(i);
+      return next;
+    });
+  }
 
   useEffect(() => {
     let closed = false;
@@ -182,22 +192,34 @@ export default function PresentationView({ template, date, onClose }: Props) {
                 Agenda
               </span>
               <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
-                {template.agenda.map((item, i) => (
-                  <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
+                {template.agenda.map((item, i) => {
+                  const done = crossed.has(i);
+                  return (
+                  <li
+                    key={i}
+                    onClick={() => toggleCrossed(i)}
+                    style={{ display: "flex", alignItems: "baseline", gap: 16, cursor: "pointer", transition: "opacity 200ms" }}
+                  >
                     <span style={{
-                      fontSize: "clamp(31px, 3.5vw, 43px)", color: "var(--color-primary)", fontWeight: 700,
+                      fontSize: "clamp(31px, 3.5vw, 43px)", fontWeight: 700,
                       minWidth: 48, flexShrink: 0, lineHeight: 1,
+                      color: done ? "#374151" : "var(--color-primary)",
+                      transition: "color 200ms",
                     }}>
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span style={{
                       fontSize: "clamp(18px, 2vw, 25px)",
-                      color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
+                      lineHeight: 1.4, fontWeight: 500,
+                      color: done ? "#374151" : "var(--color-text-primary)",
+                      textDecoration: done ? "line-through" : "none",
+                      transition: "color 200ms, text-decoration 200ms",
                     }}>
                       {item}
                     </span>
                   </li>
-                ))}
+                  );
+                })}
               </ol>
             </div>
           )}
