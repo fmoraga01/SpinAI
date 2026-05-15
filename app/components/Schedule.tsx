@@ -7,6 +7,7 @@ import { useDrawer } from "./DrawerContext";
 interface Props {
   assignments: Assignment[];
   onRemove: (id: string) => void;
+  onPrepare: (assignment: Assignment) => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -28,7 +29,7 @@ function isPast(dateStr: string): boolean {
   return new Date(dateStr + "T12:00:00") < today;
 }
 
-export default function Schedule({ assignments, onRemove }: Props) {
+export default function Schedule({ assignments, onRemove, onPrepare }: Props) {
   const { switchDrawer } = useDrawer();
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
@@ -171,18 +172,38 @@ export default function Schedule({ assignments, onRemove }: Props) {
                       )}
                     </p>
                   </div>
-                  <button
-                    onClick={() => onRemove(a.id)}
-                    title="Eliminar"
-                    style={{
-                      color: "#374151", cursor: "pointer",
-                      background: "transparent", border: "none", padding: "4px", fontSize: 12,
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#F87171")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
-                  >
-                    ✕
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onPrepare(a)}
+                      title="Preparar lámina"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 4,
+                        padding: "4px 8px", cursor: "pointer",
+                        background: "transparent",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "var(--radius-md)",
+                        color: "#4B5563", fontSize: 11, fontWeight: 500,
+                        transition: "border-color 150ms, color 150ms",
+                        whiteSpace: "nowrap",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#4B5563"; }}
+                    >
+                      ◈ Lámina
+                    </button>
+                    <button
+                      onClick={() => onRemove(a.id)}
+                      title="Eliminar"
+                      style={{
+                        color: "#374151", cursor: "pointer",
+                        background: "transparent", border: "none", padding: "4px", fontSize: 12,
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#F87171")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
               );
             })}

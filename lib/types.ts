@@ -18,3 +18,14 @@ export interface AppData {
   members: TeamMember[];
   assignments: Assignment[];
 }
+
+export interface Template {
+  id?: string;
+  assignmentId: string;
+  memberId: string;
+  memberName: string;
+  title: string;
+  agenda: string[];
+  keyPoints: string[];
+  notes: string;
+}

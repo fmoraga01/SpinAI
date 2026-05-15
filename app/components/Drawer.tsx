@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDrawer } from "./DrawerContext";
-import { AppData } from "@/lib/types";
+import { AppData, Assignment } from "@/lib/types";
 import {
   loadData,
   addMember,
@@ -15,6 +15,7 @@ import {
 import MembersPanel from "./MembersPanel";
 import Roulette from "./Roulette";
 import Schedule from "./Schedule";
+import TemplateEditor from "./TemplateEditor";
 
 const TITLES: Record<string, string> = {
   equipo: "Equipo",
@@ -28,6 +29,7 @@ export default function Drawer() {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (drawer) {
@@ -35,6 +37,7 @@ export default function Drawer() {
       requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
     } else {
       setVisible(false);
+      setEditingAssignment(null);
       const t = setTimeout(() => setMounted(false), 320);
       return () => clearTimeout(t);
     }
@@ -48,16 +51,23 @@ export default function Drawer() {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") closeDrawer();
+      if (e.key === "Escape") {
+        if (editingAssignment) setEditingAssignment(null);
+        else closeDrawer();
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeDrawer]);
+  }, [closeDrawer, editingAssignment]);
 
   async function refresh() {
     const d = await loadData();
     setData(d);
   }
+
+  const headerTitle = editingAssignment
+    ? "Preparar lámina"
+    : drawer ? TITLES[drawer] : "";
 
   if (!mounted) return null;
 
@@ -111,7 +121,7 @@ export default function Drawer() {
             className="text-sm font-semibold uppercase tracking-widest"
             style={{ color: "var(--color-text-secondary)" }}
           >
-            {drawer ? TITLES[drawer] : ""}
+            {headerTitle}
           </h2>
           <button
             onClick={closeDrawer}
@@ -157,6 +167,11 @@ export default function Drawer() {
               />
               <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
+          ) : editingAssignment ? (
+            <TemplateEditor
+              assignment={editingAssignment}
+              onBack={() => setEditingAssignment(null)}
+            />
           ) : (
             <>
               {drawer === "equipo" && (
@@ -181,6 +196,7 @@ export default function Drawer() {
                 <Schedule
                   assignments={data.assignments}
                   onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
+                  onPrepare={(assignment) => setEditingAssignment(assignment)}
                 />
               )}
             </>

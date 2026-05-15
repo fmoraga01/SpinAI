@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase";
-import { AppData, TeamMember, Assignment } from "./types";
+import { AppData, TeamMember, Assignment, Template } from "./types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -138,5 +138,46 @@ export async function confirmBulkAssignment(previews: BulkAssignmentPreview[]): 
   }));
 
   const { error } = await getSupabase().from("assignments").insert(rows);
+  if (error) throw new Error(error.message);
+}
+
+// ─── Templates ────────────────────────────────────────────────────────────────
+
+export async function loadTemplate(assignmentId: string): Promise<Template | null> {
+  const { data } = await getSupabase()
+    .from("templates")
+    .select("*")
+    .eq("assignment_id", assignmentId)
+    .single();
+
+  if (!data) return null;
+  return {
+    id: data.id,
+    assignmentId: data.assignment_id,
+    memberId: data.member_id,
+    memberName: data.member_name,
+    title: data.title,
+    agenda: data.agenda ?? [],
+    keyPoints: data.key_points ?? [],
+    notes: data.notes,
+  };
+}
+
+export async function saveTemplate(template: Template): Promise<void> {
+  const row = {
+    assignment_id: template.assignmentId,
+    member_id: template.memberId,
+    member_name: template.memberName,
+    title: template.title,
+    agenda: template.agenda,
+    key_points: template.keyPoints,
+    notes: template.notes,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await getSupabase()
+    .from("templates")
+    .upsert(row, { onConflict: "assignment_id" });
+
   if (error) throw new Error(error.message);
 }
