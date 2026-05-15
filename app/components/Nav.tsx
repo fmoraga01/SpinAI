@@ -1,16 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useDrawer, DrawerView } from "./DrawerContext";
+import { loadData } from "@/lib/storage";
 
-const drawerLinks: { view: DrawerView; label: string }[] = [
-  { view: "equipo", label: "Equipo" },
-  { view: "ruleta", label: "Ruleta" },
-  { view: "historial", label: "Historial" },
-];
+function hasUpcomingAssignments(assignments: { date: string }[]): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return assignments.some((a) => new Date(a.date + "T12:00:00") >= today);
+}
 
 export default function Nav() {
   const { drawer, openDrawer } = useDrawer();
+  const [rouletteVisible, setRouletteVisible] = useState(true);
+
+  useEffect(() => {
+    loadData().then(({ assignments }) => {
+      setRouletteVisible(!hasUpcomingAssignments(assignments));
+    });
+  }, [drawer]);
+
+  const visibleLinks: { view: DrawerView; label: string }[] = [
+    { view: "equipo", label: "Equipo" },
+    ...(rouletteVisible ? [{ view: "ruleta" as DrawerView, label: "Ruleta" }] : []),
+    { view: "historial", label: "Historial" },
+  ];
 
   return (
     <header
@@ -68,7 +83,7 @@ export default function Nav() {
             Inicio
           </Link>
 
-          {drawerLinks.map(({ view, label }) => {
+          {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
             return (
               <button
