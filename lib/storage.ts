@@ -91,7 +91,7 @@ export function getNextFridays(count: number = 8): string[] {
   const current = new Date();
 
   const dayOfWeek = current.getDay();
-  const daysUntilFriday = dayOfWeek <= 5 ? 5 - dayOfWeek : 6;
+  const daysUntilFriday = dayOfWeek < 5 ? 5 - dayOfWeek : dayOfWeek === 5 ? 7 : 6;
   current.setDate(current.getDate() + daysUntilFriday);
 
   for (let i = 0; i < count; i++) {
