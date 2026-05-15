@@ -32,6 +32,7 @@ export default function Drawer() {
   const [loading, setLoading] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [presentingTemplate, setPresentingTemplate] = useState<{ template: import("@/lib/types").Template; date: string } | null>(null);
+  const [editorKey, setEditorKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
@@ -189,6 +190,7 @@ export default function Drawer() {
             </div>
           ) : editingAssignment ? (
             <TemplateEditor
+              key={editorKey}
               assignment={editingAssignment}
               onBack={() => setEditingAssignment(null)}
               onPresent={(template) => setPresentingTemplate({ template, date: editingAssignment.date })}
@@ -230,7 +232,7 @@ export default function Drawer() {
         <PresentationView
           template={presentingTemplate.template}
           date={presentingTemplate.date}
-          onClose={() => setPresentingTemplate(null)}
+          onClose={() => { setPresentingTemplate(null); setEditorKey((k) => k + 1); }}
         />
       )}
     </>
