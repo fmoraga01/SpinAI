@@ -177,7 +177,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <span style={{
-                      fontSize: "clamp(22px, 2.5vw, 31px)",
+                      fontSize: "clamp(18px, 2vw, 25px)",
                       color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
                     }}>
                       {item}
@@ -209,7 +209,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                   <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                     <span style={{ color: "var(--color-primary)", fontSize: 10, flexShrink: 0, paddingTop: 4 }}>◆</span>
                     <span style={{
-                      fontSize: "clamp(22px, 2.5vw, 31px)",
+                      fontSize: "clamp(18px, 2vw, 25px)",
                       color: "var(--color-text-primary)", lineHeight: 1.4, fontWeight: 500,
                     }}>
                       {point}
