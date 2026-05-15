@@ -152,12 +152,15 @@ export default function PresentationView({ template, date, onClose }: Props) {
               borderRadius: "var(--radius-md)",
               padding: "28px 32px",
             }}>
-              <p style={{
-                fontSize: 11, fontWeight: 700, color: "var(--color-primary)",
-                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20,
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20,
+                fontSize: 13, fontWeight: 500, color: "var(--color-primary)",
+                background: "#2C40FF15", border: "1px solid #2C40FF33",
+                borderRadius: "var(--radius-md)", padding: "4px 12px",
               }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--color-primary)", boxShadow: "var(--shadow-glow-sm)", display: "inline-block", flexShrink: 0 }} />
                 Agenda
-              </p>
+              </span>
               <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
                 {template.agenda.map((item, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
@@ -186,12 +189,15 @@ export default function PresentationView({ template, date, onClose }: Props) {
               borderRadius: "var(--radius-md)",
               padding: "28px 32px",
             }}>
-              <p style={{
-                fontSize: 11, fontWeight: 700, color: "var(--color-primary)",
-                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 20,
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 20,
+                fontSize: 13, fontWeight: 500, color: "var(--color-primary)",
+                background: "#2C40FF15", border: "1px solid #2C40FF33",
+                borderRadius: "var(--radius-md)", padding: "4px 12px",
               }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--color-primary)", boxShadow: "var(--shadow-glow-sm)", display: "inline-block", flexShrink: 0 }} />
                 Puntos clave
-              </p>
+              </span>
               <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 18 }}>
                 {template.keyPoints.map((point, i) => (
                   <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
@@ -216,12 +222,15 @@ export default function PresentationView({ template, date, onClose }: Props) {
               borderRadius: "var(--radius-md)",
               padding: "28px 32px",
             }}>
-              <p style={{
-                fontSize: 11, fontWeight: 700, color: "#4B5563",
-                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14,
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 14,
+                fontSize: 13, fontWeight: 500, color: "var(--color-primary)",
+                background: "#2C40FF15", border: "1px solid #2C40FF33",
+                borderRadius: "var(--radius-md)", padding: "4px 12px",
               }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--color-primary)", boxShadow: "var(--shadow-glow-sm)", display: "inline-block", flexShrink: 0 }} />
                 Notas
-              </p>
+              </span>
               <p style={{
                 fontSize: "clamp(14px, 1.4vw, 18px)",
                 color: "var(--color-text-secondary)", lineHeight: 1.8,
