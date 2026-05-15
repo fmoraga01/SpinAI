@@ -24,9 +24,14 @@ function formatRelative(isoStr: string): string {
 export default function ChangeLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableError, setTableError] = useState(false);
 
   useEffect(() => {
-    loadLogs().then((l) => { setLogs(l); setLoading(false); });
+    loadLogs().then(({ entries, tableError }) => {
+      setLogs(entries);
+      setTableError(tableError);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {
@@ -34,6 +39,36 @@ export default function ChangeLog() {
       <div className="flex items-center justify-center py-16">
         <div style={{ width: 20, height: 20, border: "2px solid var(--color-border)", borderTopColor: "var(--color-primary)", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  if (tableError) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "4px 0" }}>
+        <div style={{
+          background: "#FF4D4D0f", border: "1px solid #FF4D4D33",
+          borderRadius: "var(--radius-md)", padding: "14px 16px",
+          display: "flex", flexDirection: "column", gap: 8,
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "#F87171", margin: 0 }}>Tabla no encontrada</p>
+          <p style={{ fontSize: 12, color: "#9CA3AF", margin: 0, lineHeight: "18px" }}>
+            Ejecuta este SQL en el editor de Supabase para activar el log:
+          </p>
+        </div>
+        <pre style={{
+          background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-md)", padding: "14px 16px",
+          fontSize: 11, color: "#9CA3AF", lineHeight: 1.7, margin: 0,
+          overflowX: "auto", whiteSpace: "pre-wrap",
+        }}>{`create table assignment_logs (
+  id uuid primary key default gen_random_uuid(),
+  member_a_name text not null,
+  member_b_name text not null,
+  date_a text not null,
+  date_b text not null,
+  created_at timestamptz default now()
+);`}</pre>
       </div>
     );
   }

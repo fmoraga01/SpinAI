@@ -101,28 +101,31 @@ export async function swapAssignmentMembers(idA: string, idB: string): Promise<v
   const a = data!.find((r) => r.id === idA)!;
   const b = data!.find((r) => r.id === idB)!;
 
+  // Swap members between assignments
   await Promise.all([
     db.from("assignments").update({ member_id: b.member_id, member_name: b.member_name }).eq("id", idA),
     db.from("assignments").update({ member_id: a.member_id, member_name: a.member_name }).eq("id", idB),
-    db.from("assignment_logs").insert({
-      member_a_name: a.member_name,
-      member_b_name: b.member_name,
-      date_a: a.date,
-      date_b: b.date,
-    }),
   ]);
+
+  // Insert log entry separately so a missing table doesn't break the swap
+  await db.from("assignment_logs").insert({
+    member_a_name: a.member_name,
+    member_b_name: b.member_name,
+    date_a: a.date,
+    date_b: b.date,
+  });
 }
 
 // ─── Logs ─────────────────────────────────────────────────────────────────────
 
-export async function loadLogs(): Promise<LogEntry[]> {
+export async function loadLogs(): Promise<{ entries: LogEntry[]; tableError: boolean }> {
   const { data, error } = await getSupabase()
     .from("assignment_logs")
     .select("*")
     .order("created_at", { ascending: false })
     .limit(50);
-  if (error) return [];
-  return (data ?? []).map((r) => ({
+  if (error) return { entries: [], tableError: true };
+  const entries = (data ?? []).map((r) => ({
     id: r.id as string,
     memberAName: r.member_a_name as string,
     memberBName: r.member_b_name as string,
@@ -130,6 +133,7 @@ export async function loadLogs(): Promise<LogEntry[]> {
     dateB: r.date_b as string,
     createdAt: r.created_at as string,
   }));
+  return { entries, tableError: false };
 }
 
 // ─── Bulk assignment ─────────────────────────────────────────────────────────
