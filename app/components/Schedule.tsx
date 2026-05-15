@@ -3,6 +3,7 @@
 import { Assignment } from "@/lib/types";
 import { useDrawer } from "./DrawerContext";
 
+
 interface Props {
   assignments: Assignment[];
   onRemove: (id: string) => void;
@@ -28,7 +29,7 @@ function isPast(dateStr: string): boolean {
 }
 
 export default function Schedule({ assignments, onRemove }: Props) {
-  const { openDrawer } = useDrawer();
+  const { switchDrawer } = useDrawer();
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
@@ -98,7 +99,7 @@ export default function Schedule({ assignments, onRemove }: Props) {
 
         {/* CTA */}
         <button
-          onClick={() => openDrawer("ruleta")}
+          onClick={() => switchDrawer("ruleta")}
           style={{
             display: "inline-flex",
             alignItems: "center",
