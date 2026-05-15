@@ -30,6 +30,15 @@ export default function Drawer() {
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    function onFsChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
 
   useEffect(() => {
     if (drawer) {
@@ -96,7 +105,7 @@ export default function Drawer() {
           right: 0,
           bottom: 0,
           zIndex: 50,
-          width: "min(520px, 100vw)",
+          width: isFullscreen ? "70vw" : "min(520px, 100vw)",
           background: "var(--color-surface)",
           borderLeft: "1px solid var(--color-border)",
           display: "flex",
