@@ -8,17 +8,30 @@ interface Props {
   onAdd: (name: string) => void;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
+  onUpdateEmail: (id: string, email: string) => void;
 }
 
-export default function MembersPanel({ members, onAdd, onToggle, onRemove }: Props) {
+export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpdateEmail }: Props) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
     onAdd(name.trim());
     setName("");
+  }
+
+  function startEditEmail(m: TeamMember) {
+    setEditingEmail(m.id);
+    setEmailDraft(m.email ?? "");
+  }
+
+  function saveEmail(id: string) {
+    onUpdateEmail(id, emailDraft);
+    setEditingEmail(null);
   }
 
   function handleRemove(id: string) {
@@ -116,15 +129,57 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove }: Pro
                     </svg>
                   )}
                 </button>
-                <span
-                  className="text-sm font-medium"
-                  style={{
-                    color: m.active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                    opacity: m.active ? 1 : 0.5,
-                  }}
-                >
-                  {m.name}
-                </span>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span
+                    className="text-sm font-medium"
+                    style={{
+                      color: m.active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                      opacity: m.active ? 1 : 0.5,
+                    }}
+                  >
+                    {m.name}
+                  </span>
+                  {editingEmail === m.id ? (
+                    <input
+                      autoFocus
+                      type="email"
+                      value={emailDraft}
+                      onChange={(e) => setEmailDraft(e.target.value)}
+                      onBlur={() => saveEmail(m.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveEmail(m.id);
+                        if (e.key === "Escape") setEditingEmail(null);
+                      }}
+                      placeholder="email@ejemplo.com"
+                      style={{
+                        fontSize: 11,
+                        background: "var(--color-surface)",
+                        border: "1px solid var(--color-primary)",
+                        borderRadius: 4,
+                        padding: "2px 6px",
+                        color: "var(--color-text-primary)",
+                        outline: "none",
+                        width: 160,
+                      }}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => startEditEmail(m)}
+                      style={{
+                        fontSize: 10,
+                        color: m.email ? "#6B7280" : "#374151",
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        textDecoration: m.email ? "none" : "underline dotted",
+                      }}
+                    >
+                      {m.email ?? "+ agregar email"}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <button

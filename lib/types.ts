@@ -1,6 +1,7 @@
 export interface TeamMember {
   id: string;
   name: string;
+  email?: string;
   avatar?: string;
   active: boolean;
   createdAt: string;

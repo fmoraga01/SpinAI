@@ -7,6 +7,7 @@ function rowToMember(row: Record<string, unknown>): TeamMember {
   return {
     id: row.id as string,
     name: row.name as string,
+    email: (row.email as string | null) ?? undefined,
     active: row.active as boolean,
     createdAt: row.created_at as string,
   };
@@ -57,6 +58,14 @@ export async function addMember(name: string): Promise<TeamMember> {
 
   if (error) throw new Error(error.message);
   return rowToMember(data);
+}
+
+export async function updateMemberEmail(id: string, email: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("members")
+    .update({ email: email.trim() || null })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
 }
 
 export async function toggleMember(id: string): Promise<void> {

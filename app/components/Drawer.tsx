@@ -8,6 +8,7 @@ import {
   addMember,
   toggleMember,
   removeMember,
+  updateMemberEmail,
   removeAssignment,
   confirmBulkAssignment,
   BulkAssignmentPreview,
@@ -36,6 +37,7 @@ export default function Drawer() {
   const [presentingTemplate, setPresentingTemplate] = useState<{ template: import("@/lib/types").Template; date: string } | null>(null);
   const [editorKey, setEditorKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [notifyState, setNotifyState] = useState<"idle" | "sending" | "ok" | "no_email" | "error">("idle");
 
   useEffect(() => {
     function onFsChange() {
@@ -86,6 +88,23 @@ export default function Drawer() {
   async function refresh() {
     const d = await loadData();
     setData(d);
+  }
+
+  async function handleNotify(assignmentId: string) {
+    setNotifyState("sending");
+    try {
+      const res = await fetch("/api/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignmentId }),
+      });
+      if (res.status === 422) { setNotifyState("no_email"); }
+      else if (!res.ok) { setNotifyState("error"); }
+      else { setNotifyState("ok"); }
+    } catch {
+      setNotifyState("error");
+    }
+    setTimeout(() => setNotifyState("idle"), 4000);
   }
 
   const headerTitle = editingAssignment
@@ -205,6 +224,7 @@ export default function Drawer() {
                   onAdd={async (name) => { await addMember(name); await refresh(); }}
                   onToggle={async (id) => { await toggleMember(id); await refresh(); }}
                   onRemove={async (id) => { await removeMember(id); await refresh(); }}
+                  onUpdateEmail={async (id, email) => { await updateMemberEmail(id, email); await refresh(); }}
                 />
               )}
               {drawer === "ruleta" && (
@@ -218,12 +238,32 @@ export default function Drawer() {
                 />
               )}
               {drawer === "historial" && (
-                <Schedule
-                  assignments={data.assignments}
-                  onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
-                  onPrepare={(assignment) => setEditingAssignment(assignment)}
-                  onRefresh={refresh}
-                />
+                <>
+                  {notifyState !== "idle" && (
+                    <div style={{
+                      marginBottom: 12,
+                      padding: "8px 12px",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: 12,
+                      fontWeight: 500,
+                      background: notifyState === "ok" ? "#065F4622" : notifyState === "no_email" ? "#92400E22" : notifyState === "sending" ? "#2C40FF11" : "#7F1D1D22",
+                      border: "1px solid " + (notifyState === "ok" ? "#065F46" : notifyState === "no_email" ? "#92400E" : notifyState === "sending" ? "#2C40FF44" : "#7F1D1D"),
+                      color: notifyState === "ok" ? "#6EE7B7" : notifyState === "no_email" ? "#FCD34D" : notifyState === "sending" ? "var(--color-primary)" : "#FCA5A5",
+                    }}>
+                      {notifyState === "sending" && "Enviando notificación…"}
+                      {notifyState === "ok" && "✓ Email enviado correctamente"}
+                      {notifyState === "no_email" && "⚠ Este integrante no tiene email registrado"}
+                      {notifyState === "error" && "✕ Error al enviar el email"}
+                    </div>
+                  )}
+                  <Schedule
+                    assignments={data.assignments}
+                    onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
+                    onPrepare={(assignment) => setEditingAssignment(assignment)}
+                    onRefresh={refresh}
+                    onNotify={handleNotify}
+                  />
+                </>
               )}
               {drawer === "log" && <ChangeLog />}
             </>
