@@ -338,13 +338,13 @@ function drawSynaptic(
       const dx = a.x - bk.x, dy = a.y - bk.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < CONN) {
-        const str = (1 - dist / CONN) * 0.1;
+        const str = (1 - dist / CONN) * 0.28;
         const mx = (a.x + bk.x) / 2 + (Math.random() - 0.5) * 20;
         const my = (a.y + bk.y) / 2 + (Math.random() - 0.5) * 20;
         ctx.beginPath(); ctx.moveTo(a.x, a.y);
         ctx.quadraticCurveTo(mx, my, bk.x, bk.y);
         ctx.strokeStyle = `rgba(${r},${g},${b},${str})`;
-        ctx.lineWidth = 0.6; ctx.stroke();
+        ctx.lineWidth = 0.9; ctx.stroke();
       }
     }
   }
