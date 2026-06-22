@@ -291,8 +291,8 @@ function drawConstellation(
 // ─── Synaptic Flow (Warm) ─────────────────────────────────────────────────────
 
 const MATH_SYMBOLS = [
-  "∑", "∫", "∂", "∇", "σ", "μ", "α", "β", "ε", "θ",
-  "π", "λ", "ω", "⊗", "‖·‖", "ŷ", "x̂", "∞", "Δ", "ℝ",
+  "🍺", "🍻", "🥂", "🍷", "🥃", "🍾", "🍺", "🍻", "🥂", "🍺",
+  "🍻", "🥃", "🍾", "🍷", "🍺", "🍻", "🥂", "🍺", "🥃", "🍻",
 ];
 
 function makeSynaptic(count: number, W: number, H: number): Particle[] {
@@ -353,8 +353,7 @@ function drawSynaptic(
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   for (const t of particles) {
     const { x, y, text, alpha } = t;
-    const size = 13 + Math.floor(Math.random() * 0); // stable per particle
-    ctx.font = `500 ${size}px serif`;
+    ctx.font = `18px serif`;
 
     // Soft glow
     ctx.shadowColor = `rgba(${r},${g},${b},${alpha * 1.5})`;
