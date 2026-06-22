@@ -188,15 +188,18 @@ let nnReady = false;
 function initNN(W: number, H: number): void {
   nnNodes = [];
   nnPulses = [];
-  const padX = W * 0.12;
+  const padX = W * 0.04;
+  const padY = H * 0.08;
   const layerGap = (W - padX * 2) / (LAYER_SIZES.length - 1);
+  const maxNodes = Math.max(...LAYER_SIZES);
+  const nodeGap = (H - padY * 2) / (maxNodes - 1);
   for (let l = 0; l < LAYER_SIZES.length; l++) {
     const count = LAYER_SIZES[l];
     const x = padX + l * layerGap;
-    const totalH = (count - 1) * 68;
+    const totalH = (count - 1) * nodeGap;
     const startY = H / 2 - totalH / 2;
     nnNodes.push(
-      Array.from({ length: count }, (_, n) => ({ x, y: startY + n * 68, glow: 0 }))
+      Array.from({ length: count }, (_, n) => ({ x, y: startY + n * nodeGap, glow: 0 }))
     );
   }
   nnReady = true;
@@ -419,6 +422,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
         particlesRef.current = makeTokens(28, W, H);
       if (variant === "neural" && neuronsRef.current.length === 0)
         neuronsRef.current = makeNeurons(30, W, H);
+      if (variant === "neuralnet")
+        initNN(W, H);
       if (variant === "synaptic" && particlesRef.current.length === 0)
         particlesRef.current = makeSynaptic(22, W, H);
     }
