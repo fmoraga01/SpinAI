@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { assignmentId } = await req.json();
+  const { assignmentId, testMode } = await req.json();
   if (!assignmentId) {
     return NextResponse.json({ error: "assignmentId required" }, { status: 400 });
   }
@@ -125,9 +125,9 @@ export async function POST(req: NextRequest) {
   try {
     await transporter.sendMail({
       from: `SpinAI <${gmailUser}>`,
-      to: toEmail,
-      cc: ccEmails.length > 0 ? ccEmails.join(", ") : undefined,
-      subject: `⏰ Reunión del viernes — ${assignment.member_name} presenta`,
+      to: testMode ? gmailUser : toEmail,
+      cc: testMode ? undefined : (ccEmails.length > 0 ? ccEmails.join(", ") : undefined),
+      subject: `${testMode ? "[PRUEBA] " : ""}⏰ Reunión del viernes — ${assignment.member_name} presenta`,
       html,
     });
   } catch (err) {

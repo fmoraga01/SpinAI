@@ -28,6 +28,7 @@ export default function HeroChip() {
   const [assignment, setAssignment] = useState<{ id: string; memberName: string; date: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [notifyState, setNotifyState] = useState<"idle" | "sending" | "ok" | "no_email" | "error">("idle");
+  const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
     getNextFridayAssignment().then((a) => { setAssignment(a); setMounted(true); });
@@ -40,7 +41,7 @@ export default function HeroChip() {
       const res = await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId: assignment.id }),
+        body: JSON.stringify({ assignmentId: assignment.id, testMode }),
       });
       if (res.status === 422) setNotifyState("no_email");
       else if (!res.ok) setNotifyState("error");
@@ -67,69 +68,114 @@ export default function HeroChip() {
     "#4B5563";
 
   return (
-    <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 13,
-          fontWeight: 500,
-          color: "var(--color-primary)",
-          background: "#2C40FF15",
-          border: "1px solid #2C40FF33",
-          borderRadius: "var(--radius-md)",
-          padding: "4px 12px",
-        }}
-      >
+    <div style={{ display: "inline-flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
         <span
           style={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            background: "var(--color-primary)",
-            boxShadow: "var(--shadow-glow-sm)",
-            display: "inline-block",
-            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--color-primary)",
+            background: "#2C40FF15",
+            border: "1px solid #2C40FF33",
+            borderRadius: "var(--radius-md)",
+            padding: "4px 12px",
           }}
-        />
-        {`Próximo viernes · ${assignment.memberName} · ${formatShortDate(assignment.date)}`}
-      </span>
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "var(--color-primary)",
+              boxShadow: "var(--shadow-glow-sm)",
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+          />
+          {`Próximo viernes · ${assignment.memberName} · ${formatShortDate(assignment.date)}`}
+        </span>
 
-      <button
-        onClick={handleNotify}
-        disabled={notifyState === "sending"}
+        <button
+          onClick={handleNotify}
+          disabled={notifyState === "sending"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 12,
+            fontWeight: 500,
+            color: notifyColor,
+            background: "transparent",
+            border: "1px solid " + (notifyState === "idle" ? "#1f2333" : notifyColor + "55"),
+            borderRadius: "var(--radius-md)",
+            padding: "4px 10px",
+            cursor: notifyState === "sending" ? "wait" : "pointer",
+            transition: "border-color 150ms, color 150ms",
+            whiteSpace: "nowrap",
+          }}
+          onMouseEnter={(e) => {
+            if (notifyState === "idle") {
+              e.currentTarget.style.borderColor = "var(--color-primary)";
+              e.currentTarget.style.color = "var(--color-primary)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (notifyState === "idle") {
+              e.currentTarget.style.borderColor = "#1f2333";
+              e.currentTarget.style.color = "#4B5563";
+            }
+          }}
+        >
+          <EnvelopeIcon style={{ width: 13, height: 13, flexShrink: 0 }} />
+          {notifyLabel}
+        </button>
+      </div>
+
+      {/* Toggle modo prueba */}
+      <label
         style={{
           display: "inline-flex",
           alignItems: "center",
           gap: 6,
-          fontSize: 12,
-          fontWeight: 500,
-          color: notifyColor,
-          background: "transparent",
-          border: "1px solid " + (notifyState === "idle" ? "#1f2333" : notifyColor + "55"),
-          borderRadius: "var(--radius-md)",
-          padding: "4px 10px",
-          cursor: notifyState === "sending" ? "wait" : "pointer",
-          transition: "border-color 150ms, color 150ms",
-          whiteSpace: "nowrap",
-        }}
-        onMouseEnter={(e) => {
-          if (notifyState === "idle") {
-            e.currentTarget.style.borderColor = "var(--color-primary)";
-            e.currentTarget.style.color = "var(--color-primary)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (notifyState === "idle") {
-            e.currentTarget.style.borderColor = "#1f2333";
-            e.currentTarget.style.color = "#4B5563";
-          }
+          fontSize: 11,
+          color: testMode ? "#FCD34D" : "#4B5563",
+          cursor: "pointer",
+          userSelect: "none",
         }}
       >
-        <EnvelopeIcon style={{ width: 13, height: 13, flexShrink: 0 }} />
-        {notifyLabel}
-      </button>
+        <span
+          onClick={() => setTestMode((v) => !v)}
+          style={{
+            width: 28,
+            height: 16,
+            borderRadius: 8,
+            background: testMode ? "#92400E55" : "#1f2333",
+            border: "1px solid " + (testMode ? "#FCD34D55" : "#374151"),
+            position: "relative",
+            display: "inline-block",
+            transition: "background 150ms, border-color 150ms",
+            flexShrink: 0,
+            cursor: "pointer",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: 2,
+              left: testMode ? 13 : 2,
+              width: 10,
+              height: 10,
+              borderRadius: "50%",
+              background: testMode ? "#FCD34D" : "#4B5563",
+              transition: "left 150ms, background 150ms",
+            }}
+          />
+        </span>
+        Modo prueba — solo a mí
+      </label>
     </div>
   );
 }
