@@ -11,6 +11,9 @@ export interface FontConfig {
   titleSize?: string;
   numberSize?: string;
   bodySize?: string;
+  syntaxTitle?: string;
+  syntaxNumber?: string;
+  syntaxPalette?: string[];
 }
 
 export const FONTS: Record<SlideFont, FontConfig> = {
@@ -31,6 +34,9 @@ export const FONTS: Record<SlideFont, FontConfig> = {
     titleWeight: 700,
     titleTracking: "-0.01em",
     bodyWeight: 500,
+    syntaxTitle: "#DCDCAA",
+    syntaxNumber: "#B5CEA8",
+    syntaxPalette: ["#9CDCFE", "#CE9178", "#C586C0", "#4EC9B0"],
   },
   serif: {
     label: "Innovadora",

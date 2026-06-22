@@ -167,7 +167,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
               fontSize: fnt.titleSize ?? "40px",
               fontFamily: fnt.titleFamily,
               fontWeight: fnt.titleWeight,
-              color: th.titleColor,
+              color: fnt.syntaxTitle ?? th.titleColor,
               lineHeight: 1.1,
               letterSpacing: fnt.titleTracking,
               margin: 0,
@@ -213,7 +213,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                           fontFamily: fnt.titleFamily,
                           fontWeight: fnt.titleWeight,
                           minWidth: 48, flexShrink: 0, lineHeight: 1,
-                          color: done ? th.cardBorder : th.accent,
+                          color: done ? th.cardBorder : (fnt.syntaxNumber ?? th.accent),
                           transition: "color 200ms",
                         }}>
                           {String(i + 1).padStart(2, "0")}
@@ -222,7 +222,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                           fontSize: fnt.bodySize ?? "clamp(18px, 2vw, 25px)",
                           fontFamily: fnt.bodyFamily,
                           lineHeight: 1.4, fontWeight: fnt.bodyWeight,
-                          color: done ? th.textSecondary : th.textColor,
+                          color: done ? th.textSecondary : (fnt.syntaxPalette ? fnt.syntaxPalette[i % fnt.syntaxPalette.length] : th.textColor),
                           textDecoration: done ? "line-through" : "none",
                           transition: "color 200ms, text-decoration 200ms",
                         }}>
