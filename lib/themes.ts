@@ -16,7 +16,7 @@ export interface ThemeConfig {
 
 export const THEMES: Record<SlideTheme, ThemeConfig> = {
   default: {
-    label: "Default",
+    label: "Predeterminado",
     bg: "#0d0f1a",
     accent: "#2C40FF",
     accentBg: "#2C40FF15",
@@ -29,7 +29,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     animVariant: "tokens",
   },
   minimal: {
-    label: "Minimal",
+    label: "Minimalista",
     bg: "#050505",
     accent: "#e5e7eb",
     accentBg: "#ffffff08",
@@ -42,7 +42,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     animVariant: "neural",
   },
   blueprint: {
-    label: "Blueprint",
+    label: "CoE AI",
     bg: "#060f1e",
     accent: "#38BDF8",
     accentBg: "#38BDF808",
@@ -55,7 +55,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     animVariant: "constellation",
   },
   warm: {
-    label: "Warm",
+    label: "HenryStyle",
     bg: "#0c0800",
     accent: "#F59E0B",
     accentBg: "#F59E0B08",
