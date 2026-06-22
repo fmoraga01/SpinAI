@@ -39,12 +39,12 @@ export const FONTS: Record<SlideFont, FontConfig> = {
     bodyWeight: 400,
   },
   impact: {
-    label: "Impacto",
+    label: "Retro-digital",
     sample: "Aa",
-    titleFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-    bodyFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+    titleFamily: "var(--font-retro), 'Bitcount Grid Double', monospace",
+    bodyFamily: "var(--font-retro), 'Bitcount Grid Double', monospace",
     titleWeight: 700,
-    titleTracking: "-0.03em",
+    titleTracking: "0em",
     bodyWeight: 700,
   },
 };
