@@ -20,7 +20,7 @@ const jetbrainsMono = JetBrains_Mono({
 const bitcountGridDouble = Bitcount_Grid_Double({
   variable: "--font-retro",
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400"],
 });
 
 const playfair = Playfair_Display({

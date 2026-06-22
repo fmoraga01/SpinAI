@@ -43,9 +43,9 @@ export const FONTS: Record<SlideFont, FontConfig> = {
     sample: "Aa",
     titleFamily: "var(--font-retro), 'Bitcount Grid Double', monospace",
     bodyFamily: "var(--font-retro), 'Bitcount Grid Double', monospace",
-    titleWeight: 700,
+    titleWeight: 400,
     titleTracking: "0em",
-    bodyWeight: 700,
+    bodyWeight: 400,
   },
 };
 
