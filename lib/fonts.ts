@@ -8,6 +8,9 @@ export interface FontConfig {
   titleWeight: number;
   titleTracking: string;
   bodyWeight: number;
+  titleSize?: string;
+  numberSize?: string;
+  bodySize?: string;
 }
 
 export const FONTS: Record<SlideFont, FontConfig> = {
@@ -37,6 +40,9 @@ export const FONTS: Record<SlideFont, FontConfig> = {
     titleWeight: 400,
     titleTracking: "0em",
     bodyWeight: 400,
+    titleSize: "52px",
+    numberSize: "clamp(38px, 4.5vw, 56px)",
+    bodySize: "clamp(22px, 2.6vw, 32px)",
   },
   impact: {
     label: "Retro-digital",

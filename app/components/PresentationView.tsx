@@ -164,7 +164,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
               {template.memberName}
             </p>
             <h1 style={{
-              fontSize: "40px",
+              fontSize: fnt.titleSize ?? "40px",
               fontFamily: fnt.titleFamily,
               fontWeight: fnt.titleWeight,
               color: th.titleColor,
@@ -209,7 +209,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                         style={{ display: "flex", alignItems: "baseline", gap: 16, cursor: "pointer", transition: "opacity 200ms" }}
                       >
                         <span style={{
-                          fontSize: "clamp(31px, 3.5vw, 43px)",
+                          fontSize: fnt.numberSize ?? "clamp(31px, 3.5vw, 43px)",
                           fontFamily: fnt.titleFamily,
                           fontWeight: fnt.titleWeight,
                           minWidth: 48, flexShrink: 0, lineHeight: 1,
@@ -219,7 +219,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         <span style={{
-                          fontSize: "clamp(18px, 2vw, 25px)",
+                          fontSize: fnt.bodySize ?? "clamp(18px, 2vw, 25px)",
                           fontFamily: fnt.bodyFamily,
                           lineHeight: 1.4, fontWeight: fnt.bodyWeight,
                           color: done ? th.textSecondary : th.textColor,
