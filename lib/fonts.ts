@@ -33,7 +33,7 @@ export const FONTS: Record<SlideFont, FontConfig> = {
     label: "Innovadora",
     sample: "Aa",
     titleFamily: "var(--font-honk), 'Honk', sans-serif",
-    bodyFamily: "var(--font-inter), Inter, sans-serif",
+    bodyFamily: "var(--font-honk), 'Honk', sans-serif",
     titleWeight: 400,
     titleTracking: "0em",
     bodyWeight: 400,
