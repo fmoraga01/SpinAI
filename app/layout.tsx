@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Playfair_Display, Bitcount_Grid_Double } from "next/font/google";
+import { Inter, JetBrains_Mono, Playfair_Display, Bitcount_Grid_Double, Honk } from "next/font/google";
 import "./globals.css";
 import { DrawerProvider } from "./components/DrawerContext";
 import Drawer from "./components/Drawer";
@@ -23,6 +23,12 @@ const bitcountGridDouble = Bitcount_Grid_Double({
   weight: ["400"],
 });
 
+const honk = Honk({
+  variable: "--font-honk",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
 const playfair = Playfair_Display({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -36,7 +42,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} ${bitcountGridDouble.variable} h-full`}>
+    <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} ${bitcountGridDouble.variable} ${honk.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <PinGate>
           <DrawerProvider>
