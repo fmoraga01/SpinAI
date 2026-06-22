@@ -62,14 +62,9 @@ CRON_SECRET=
 
 ## Cómo funciona la notificación automática
 
-1. **GitHub Actions** se ejecuta cada lunes a las 12:00 UTC (9:00 AM Santiago)
-2. Llama al endpoint `GET /api/cron/notify` con el `CRON_SECRET`
-3. El endpoint consulta Supabase para encontrar el próximo asignado
-4. Envía el email al responsable (`to`) y al resto del equipo (`cc`) via Gmail
+Cada lunes a las 9:00 AM (hora Santiago) se ejecuta un job automático que consulta el próximo asignado en la base de datos y envía el email al responsable con copia al resto del equipo.
 
-Para activarlo necesitas configurar en GitHub → Settings → Secrets:
-- `APP_URL` — URL de tu app en Vercel
-- `CRON_SECRET` — mismo valor que en Vercel
+Para activarlo necesitas configurar dos secretos en GitHub Actions y la variable `CRON_SECRET` en Vercel con el mismo valor.
 
 ---
 
