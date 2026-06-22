@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Playfair_Display } from "next/font/google";
+import { Inter, JetBrains_Mono, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { DrawerProvider } from "./components/DrawerContext";
 import Drawer from "./components/Drawer";
@@ -17,6 +17,12 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "700"],
 });
 
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
 const playfair = Playfair_Display({
   variable: "--font-serif",
   subsets: ["latin"],
@@ -30,7 +36,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} h-full`}>
+    <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} ${playfair.variable} ${dmSans.variable} h-full`}>
       <body className="min-h-full flex flex-col">
         <PinGate>
           <DrawerProvider>

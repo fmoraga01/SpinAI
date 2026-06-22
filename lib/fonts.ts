@@ -41,11 +41,11 @@ export const FONTS: Record<SlideFont, FontConfig> = {
   impact: {
     label: "Impacto",
     sample: "Aa",
-    titleFamily: "var(--font-inter), Inter, sans-serif",
-    bodyFamily: "var(--font-inter), Inter, sans-serif",
-    titleWeight: 900,
-    titleTracking: "-0.04em",
-    bodyWeight: 500,
+    titleFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+    bodyFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+    titleWeight: 700,
+    titleTracking: "-0.03em",
+    bodyWeight: 700,
   },
 };
 
