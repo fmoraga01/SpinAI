@@ -101,7 +101,7 @@ interface Neuron {
 function makeNeurons(count: number, W: number, H: number): Neuron[] {
   return Array.from({ length: count }, () => ({
     x: Math.random() * W, y: Math.random() * H,
-    alpha: 0.05 + Math.random() * 0.1,
+    alpha: 0.15 + Math.random() * 0.2,
     alphaDir: Math.random() > 0.5 ? 1 : -1,
     alphaSpeed: 0.0002 + Math.random() * 0.0003,
     fireTimer: Math.random() * 400,
@@ -121,8 +121,8 @@ function drawNeural(
 
   for (const n of neurons) {
     n.alpha += n.alphaDir * n.alphaSpeed;
-    if (n.alpha > 0.15) { n.alpha = 0.15; n.alphaDir = -1; }
-    if (n.alpha < 0.03) { n.alpha = 0.03; n.alphaDir = 1; }
+    if (n.alpha > 0.38) { n.alpha = 0.38; n.alphaDir = -1; }
+    if (n.alpha < 0.10) { n.alpha = 0.10; n.alphaDir = 1; }
     n.fireTimer--;
     if (n.fireTimer <= 0 && !n.firing) {
       n.firing = true; n.fireAlpha = 0.7;
@@ -143,7 +143,7 @@ function drawNeural(
       const dist = Math.sqrt(dx * dx + dy * dy);
       if (dist < CONN) {
         const fireBoost = Math.max(a.fireAlpha, bk.fireAlpha) * 0.3;
-        const str = (1 - dist / CONN) * 0.06 + fireBoost;
+        const str = (1 - dist / CONN) * 0.18 + fireBoost;
         ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bk.x, bk.y);
         ctx.strokeStyle = `rgba(${r},${g},${b},${str})`;
         ctx.lineWidth = 0.5; ctx.stroke();
@@ -159,7 +159,7 @@ function drawNeural(
     if (n.firing && n.fireAlpha > 0.1) {
       const ringR = 6 + (0.7 - n.fireAlpha) * 18;
       ctx.beginPath(); ctx.arc(n.x, n.y, ringR, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${r},${g},${b},${n.fireAlpha * 0.25})`;
+      ctx.strokeStyle = `rgba(${r},${g},${b},${n.fireAlpha * 0.5})`;
       ctx.lineWidth = 1; ctx.stroke();
     }
 
