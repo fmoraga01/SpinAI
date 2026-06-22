@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Template } from "@/lib/types";
 import { THEMES } from "@/lib/themes";
+import { FONTS } from "@/lib/fonts";
 import SlideBackground from "./SlideBackground";
 
 interface Props {
@@ -23,6 +24,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
   const [crossed, setCrossed] = useState<Set<number>>(new Set());
 
   const th = THEMES[template.theme ?? "default"];
+  const fnt = FONTS[template.font ?? "sans"];
 
   function toggleCrossed(i: number) {
     setCrossed((prev) => {
@@ -163,8 +165,12 @@ export default function PresentationView({ template, date, onClose }: Props) {
             </p>
             <h1 style={{
               fontSize: "40px",
-              fontWeight: 700, color: th.titleColor,
-              lineHeight: 1.1, letterSpacing: "-0.02em", margin: 0,
+              fontFamily: fnt.titleFamily,
+              fontWeight: fnt.titleWeight,
+              color: th.titleColor,
+              lineHeight: 1.1,
+              letterSpacing: fnt.titleTracking,
+              margin: 0,
             }}>
               {template.title || "Sin título"}
             </h1>
@@ -212,7 +218,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
                         </span>
                         <span style={{
                           fontSize: "clamp(18px, 2vw, 25px)",
-                          lineHeight: 1.4, fontWeight: 500,
+                          fontFamily: fnt.bodyFamily,
+                          lineHeight: 1.4, fontWeight: fnt.bodyWeight,
                           color: done ? th.textSecondary : th.textColor,
                           textDecoration: done ? "line-through" : "none",
                           transition: "color 200ms, text-decoration 200ms",
