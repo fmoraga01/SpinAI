@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SpinAI
 
-## Getting Started
+> Asigna aleatoriamente quién conduce la reunión de equipo cada viernes. Justo, simple y sin discusiones.
 
-First, run the development server:
+![SpinAI Home](./public/screenshot.png)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## ¿Qué es SpinAI?
+
+SpinAI es una app interna para equipos que necesitan rotar el rol de facilitador en reuniones semanales. La ruleta decide, el calendario organiza, y el email notifica — todo en un solo lugar.
+
+---
+
+## Funcionalidades
+
+- **Ruleta de asignación** — gira y asigna aleatoriamente a cada integrante activo un viernes
+- **Calendario de asignados** — visualiza los próximos turnos con drag & drop para intercambiar fechas
+- **Preparación de láminas** — cada asignado puede preparar su agenda, puntos clave y notas antes de la reunión
+- **Vista de presentación** — modo pantalla completa con ítems tachables durante la reunión
+- **Notificación manual** — botón en el home para avisar al equipo quién presenta este viernes
+- **Notificación automática** — GitHub Actions envía el email cada lunes a las 9:00 AM automáticamente
+- **Log de cambios** — historial de todos los intercambios de turno realizados
+- **Acceso protegido** — PIN gate con JWT y cookie HttpOnly
+
+---
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | Next.js 16 · TypeScript · Tailwind CSS v4 |
+| Base de datos | Supabase (PostgreSQL) |
+| Email | Gmail SMTP via Nodemailer |
+| Automatización | GitHub Actions (cron semanal) |
+| Deploy | Vercel |
+
+---
+
+## Variables de entorno
+
+Crea un archivo `.env.local` con las siguientes variables:
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Auth
+PIN=
+JWT_SECRET=
+
+# Email
+GMAIL_USER=
+GMAIL_PASS=
+
+# Cron
+CRON_SECRET=
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Cómo funciona la notificación automática
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **GitHub Actions** se ejecuta cada lunes a las 12:00 UTC (9:00 AM Santiago)
+2. Llama al endpoint `GET /api/cron/notify` con el `CRON_SECRET`
+3. El endpoint consulta Supabase para encontrar el próximo asignado
+4. Envía el email al responsable (`to`) y al resto del equipo (`cc`) via Gmail
 
-## Learn More
+Para activarlo necesitas configurar en GitHub → Settings → Secrets:
+- `APP_URL` — URL de tu app en Vercel
+- `CRON_SECRET` — mismo valor que en Vercel
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Desarrollo local
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm install
+npm run dev
+```
 
-## Deploy on Vercel
+Abre [http://localhost:3000](http://localhost:3000)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Base de datos (Supabase)
+
+Tablas requeridas: `members`, `assignments`, `templates`, `assignment_logs`
+
+Para habilitar emails, agrega la columna de email a la tabla de miembros:
+
+```sql
+alter table members add column if not exists email text;
+```
