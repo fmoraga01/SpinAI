@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { loadData } from "@/lib/storage";
 import { useDrawer } from "./DrawerContext";
+import { EnvelopeIcon } from "@heroicons/react/24/outline";
 
 async function getNextFridayAssignment() {
   const { assignments, members } = await loadData();
@@ -57,7 +58,7 @@ export default function HeroChip() {
     notifyState === "ok" ? "✓ Enviado" :
     notifyState === "no_email" ? "⚠ Sin email" :
     notifyState === "error" ? "✕ Error" :
-    "✉ Notificar";
+    "Notificar";
 
   const notifyColor =
     notifyState === "ok" ? "#6EE7B7" :
@@ -126,6 +127,7 @@ export default function HeroChip() {
           }
         }}
       >
+        <EnvelopeIcon style={{ width: 13, height: 13, flexShrink: 0 }} />
         {notifyLabel}
       </button>
     </div>
