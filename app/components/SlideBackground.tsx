@@ -170,139 +170,119 @@ function drawNeural(
   ctx.restore();
 }
 
-// ─── Neural Network Architecture (Blueprint) ─────────────────────────────────
+// ─── Particle Constellation (Blueprint) ──────────────────────────────────────
 
-const LAYER_SIZES = [4, 6, 6, 5, 3];
-
-interface NNNode { x: number; y: number; glow: number; }
-interface NNPulse {
-  fromX: number; fromY: number; toX: number; toY: number;
-  toLayer: number; toNode: number; progress: number; speed: number;
+interface Attractor {
+  x: number; y: number; vx: number; vy: number;
+  ax: number; ay: number; // sinusoidal offset angles
 }
 
-let nnNodes: NNNode[][] = [];
-let nnPulses: NNPulse[] = [];
-let nnSpawnTimer = 0;
-let nnReady = false;
-
-function initNN(W: number, H: number): void {
-  nnNodes = [];
-  nnPulses = [];
-  const padX = W * 0.04;
-  const padY = H * 0.08;
-  const layerGap = (W - padX * 2) / (LAYER_SIZES.length - 1);
-  const maxNodes = Math.max(...LAYER_SIZES);
-  const nodeGap = (H - padY * 2) / (maxNodes - 1);
-  for (let l = 0; l < LAYER_SIZES.length; l++) {
-    const count = LAYER_SIZES[l];
-    const x = padX + l * layerGap;
-    const totalH = (count - 1) * nodeGap;
-    const startY = H / 2 - totalH / 2;
-    nnNodes.push(
-      Array.from({ length: count }, (_, n) => ({ x, y: startY + n * nodeGap, glow: 0 }))
-    );
-  }
-  nnReady = true;
+interface CParticle {
+  x: number; y: number; vx: number; vy: number;
+  alpha: number; alphaDir: number; alphaSpeed: number;
 }
 
-function spawnFromNode(layerIdx: number, nodeIdx: number): void {
-  if (layerIdx >= nnNodes.length - 1) return;
-  const from = nnNodes[layerIdx][nodeIdx];
-  nnNodes[layerIdx + 1].forEach((to, ni) => {
-    if (Math.random() > 0.25) {
-      nnPulses.push({
-        fromX: from.x, fromY: from.y, toX: to.x, toY: to.y,
-        toLayer: layerIdx + 1, toNode: ni,
-        progress: 0, speed: 0.005 + Math.random() * 0.004,
-      });
-    }
-  });
+function makeAttractors(count: number, W: number, H: number): Attractor[] {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
+    ax: Math.random() * Math.PI * 2, ay: Math.random() * Math.PI * 2,
+  }));
 }
 
-function drawNeuralNet(
+function makeCParticles(count: number, W: number, H: number): CParticle[] {
+  return Array.from({ length: count }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+    alpha: 0.1 + Math.random() * 0.2,
+    alphaDir: Math.random() > 0.5 ? 1 : -1,
+    alphaSpeed: 0.001 + Math.random() * 0.001,
+  }));
+}
+
+let attractors: Attractor[] = [];
+let cParticles: CParticle[] = [];
+let constellationReady = false;
+
+function drawConstellation(
   ctx: CanvasRenderingContext2D, dpr: number,
   canvas: HTMLCanvasElement,
   r: number, g: number, b: number,
 ): void {
   const W = canvas.offsetWidth;
   const H = canvas.offsetHeight;
-  if (!nnReady) initNN(W, H);
+
+  if (!constellationReady) {
+    attractors = makeAttractors(4, W, H);
+    cParticles = makeCParticles(55, W, H);
+    constellationReady = true;
+  }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save(); ctx.scale(dpr, dpr);
 
-  // Spawn cascade from input layer periodically
-  nnSpawnTimer++;
-  if (nnSpawnTimer > 90) {
-    nnSpawnTimer = 0;
-    const input = nnNodes[0];
-    const picks = [...Array(input.length).keys()]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 1 + Math.floor(Math.random() * 2));
-    for (const idx of picks) {
-      input[idx].glow = 1;
-      spawnFromNode(0, idx);
-    }
+  // Move attractors along slow sinusoidal paths
+  for (const a of attractors) {
+    a.ax += 0.003; a.ay += 0.002;
+    a.x += Math.cos(a.ax) * 0.4;
+    a.y += Math.sin(a.ay) * 0.35;
+    if (a.x < 0) a.x = W; if (a.x > W) a.x = 0;
+    if (a.y < 0) a.y = H; if (a.y > H) a.y = 0;
   }
 
-  // Draw all connections (dim baseline)
-  for (let l = 0; l < nnNodes.length - 1; l++) {
-    for (const fn of nnNodes[l]) {
-      for (const tn of nnNodes[l + 1]) {
-        ctx.beginPath(); ctx.moveTo(fn.x, fn.y); ctx.lineTo(tn.x, tn.y);
-        ctx.strokeStyle = `rgba(${r},${g},${b},0.07)`;
-        ctx.lineWidth = 0.5; ctx.stroke();
+  const GRAVITY = 0.012;
+  const MAX_SPEED = 1.2;
+  const CONN_DIST = 160;
+
+  // Update particles — attracted to nearest attractor
+  for (const p of cParticles) {
+    let nearestDist = Infinity;
+    let nearestA = attractors[0];
+    for (const a of attractors) {
+      const dx = a.x - p.x, dy = a.y - p.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < nearestDist) { nearestDist = d; nearestA = a; }
+    }
+
+    const dx = nearestA.x - p.x, dy = nearestA.y - p.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    // Attraction weakens at very close range to avoid clustering
+    const force = dist > 20 ? GRAVITY : 0;
+    p.vx += (dx / dist) * force;
+    p.vy += (dy / dist) * force;
+
+    // Soft speed cap
+    const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    if (speed > MAX_SPEED) { p.vx = (p.vx / speed) * MAX_SPEED; p.vy = (p.vy / speed) * MAX_SPEED; }
+
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+    p.alpha += p.alphaDir * p.alphaSpeed;
+    if (p.alpha > 0.35) { p.alpha = 0.35; p.alphaDir = -1; }
+    if (p.alpha < 0.08) { p.alpha = 0.08; p.alphaDir = 1; }
+  }
+
+  // Draw connections between close particles
+  for (let i = 0; i < cParticles.length; i++) {
+    for (let j = i + 1; j < cParticles.length; j++) {
+      const a = cParticles[i], bk = cParticles[j];
+      const dx = a.x - bk.x, dy = a.y - bk.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < CONN_DIST) {
+        const str = (1 - dist / CONN_DIST) * 0.18;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bk.x, bk.y);
+        ctx.strokeStyle = `rgba(${r},${g},${b},${str})`;
+        ctx.lineWidth = 0.6; ctx.stroke();
       }
     }
   }
 
-  // Update and draw pulses
-  for (let i = nnPulses.length - 1; i >= 0; i--) {
-    const p = nnPulses[i];
-    p.progress += p.speed;
-
-    if (p.progress >= 1) {
-      nnNodes[p.toLayer][p.toNode].glow = 0.9;
-      spawnFromNode(p.toLayer, p.toNode);
-      nnPulses.splice(i, 1);
-      continue;
-    }
-
-    const px = p.fromX + (p.toX - p.fromX) * p.progress;
-    const py = p.fromY + (p.toY - p.fromY) * p.progress;
-
-    // Trailing glow along the connection
-    const grad = ctx.createLinearGradient(p.fromX, p.fromY, p.toX, p.toY);
-    grad.addColorStop(Math.max(0, p.progress - 0.25), `rgba(${r},${g},${b},0)`);
-    grad.addColorStop(p.progress, `rgba(${r},${g},${b},0.45)`);
-    ctx.beginPath(); ctx.moveTo(p.fromX, p.fromY); ctx.lineTo(p.toX, p.toY);
-    ctx.strokeStyle = grad; ctx.lineWidth = 0.9; ctx.stroke();
-
-    // Pulse head
-    ctx.beginPath(); ctx.arc(px, py, 2.8, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${r},${g},${b},0.95)`; ctx.fill();
-    // Soft halo around head
-    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${r},${g},${b},0.18)`; ctx.fill();
-  }
-
-  // Draw nodes
-  for (const layer of nnNodes) {
-    for (const node of layer) {
-      node.glow *= 0.965;
-
-      if (node.glow > 0.05) {
-        ctx.beginPath(); ctx.arc(node.x, node.y, 12, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${node.glow * 0.12})`; ctx.fill();
-      }
-
-      ctx.beginPath(); ctx.arc(node.x, node.y, 6, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(${r},${g},${b},${0.22 + node.glow * 0.6})`;
-      ctx.lineWidth = 1; ctx.stroke();
-
-      ctx.beginPath(); ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${r},${g},${b},${0.35 + node.glow * 0.65})`; ctx.fill();
-    }
+  // Draw particles
+  for (const p of cParticles) {
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`; ctx.fill();
   }
 
   ctx.restore();
@@ -391,7 +371,7 @@ function drawSynaptic(
 
 interface Props {
   accent?: string;
-  variant?: "tokens" | "neural" | "neuralnet" | "synaptic";
+  variant?: "tokens" | "neural" | "constellation" | "synaptic";
 }
 
 export default function SlideBackground({ accent = "#2C40FF", variant = "tokens" }: Props) {
@@ -410,7 +390,7 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
     // Reset state on variant change
     particlesRef.current = [];
     neuronsRef.current = [];
-    nnReady = false;
+    constellationReady = false;
 
     function resize() {
       if (!canvas) return;
@@ -422,8 +402,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
         particlesRef.current = makeTokens(28, W, H);
       if (variant === "neural" && neuronsRef.current.length === 0)
         neuronsRef.current = makeNeurons(30, W, H);
-      if (variant === "neuralnet")
-        initNN(W, H);
+      if (variant === "constellation")
+        constellationReady = false;
       if (variant === "synaptic" && particlesRef.current.length === 0)
         particlesRef.current = makeSynaptic(22, W, H);
     }
@@ -436,8 +416,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
         drawTokens(ctx, dpr, canvas, particlesRef.current, r, g, b);
       else if (variant === "neural")
         drawNeural(ctx, dpr, canvas, neuronsRef.current, r, g, b);
-      else if (variant === "neuralnet")
-        drawNeuralNet(ctx, dpr, canvas, r, g, b);
+      else if (variant === "constellation")
+        drawConstellation(ctx, dpr, canvas, r, g, b);
       else if (variant === "synaptic")
         drawSynaptic(ctx, dpr, canvas, particlesRef.current, r, g, b);
       rafRef.current = requestAnimationFrame(loop);

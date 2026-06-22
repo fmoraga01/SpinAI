@@ -11,7 +11,7 @@ export interface ThemeConfig {
   titleColor: string;
   textColor: string;
   textSecondary: string;
-  animVariant: "tokens" | "neural" | "neuralnet" | "synaptic";
+  animVariant: "tokens" | "neural" | "constellation" | "synaptic";
 }
 
 export const THEMES: Record<SlideTheme, ThemeConfig> = {
@@ -52,7 +52,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     titleColor: "#f0f9ff",
     textColor: "#e0f2fe",
     textSecondary: "#7dd3fc",
-    animVariant: "neuralnet",
+    animVariant: "constellation",
   },
   warm: {
     label: "Warm",
