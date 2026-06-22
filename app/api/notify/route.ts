@@ -25,30 +25,30 @@ export async function POST(req: NextRequest) {
 
   const db = getSupabase();
 
-  // Fetch assignment
-  const { data: assignment, error: aErr } = await db
-    .from("assignments")
-    .select("member_id, member_name, date")
-    .eq("id", assignmentId)
-    .single();
+  // Fetch assignment + all active members in parallel
+  const [{ data: assignment, error: aErr }, { data: members, error: mErr }] = await Promise.all([
+    db.from("assignments").select("member_id, member_name, date").eq("id", assignmentId).single(),
+    db.from("members").select("id, email").eq("active", true),
+  ]);
+
   if (aErr || !assignment) {
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
   }
-
-  // Fetch member email
-  const { data: member, error: mErr } = await db
-    .from("members")
-    .select("email")
-    .eq("id", assignment.member_id)
-    .single();
-  if (mErr || !member) {
-    return NextResponse.json({ error: "Member not found" }, { status: 404 });
+  if (mErr) {
+    return NextResponse.json({ error: "Could not fetch members" }, { status: 500 });
   }
 
-  const email = member.email as string | null;
-  if (!email) {
+  // Assigned member email
+  const assignedMember = (members ?? []).find((m) => m.id === assignment.member_id);
+  const toEmail = (assignedMember?.email as string | null) ?? null;
+  if (!toEmail) {
     return NextResponse.json({ error: "no_email" }, { status: 422 });
   }
+
+  // CC: rest of active members with email
+  const ccEmails = (members ?? [])
+    .filter((m) => m.id !== assignment.member_id && m.email)
+    .map((m) => m.email as string);
 
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_PASS;
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td>
-                  <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7280;">SpinAI</p>
-                  <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Te toca esta semana</h1>
+                  <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6B7280;">SpinAI · Reunión de equipo</p>
+                  <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Recordatorio del viernes</h1>
                 </td>
               </tr>
             </table>
@@ -88,17 +88,19 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="padding:32px 40px;">
             <p style="margin:0 0 20px;font-size:15px;color:#D1D5DB;line-height:1.6;">
-              Hola <strong style="color:#ffffff;">${assignment.member_name}</strong>,
+              Hola equipo,
             </p>
             <p style="margin:0 0 24px;font-size:15px;color:#D1D5DB;line-height:1.6;">
-              Te recordamos que esta semana te corresponde <strong style="color:#ffffff;">liderar la reuni&#243;n de equipo del viernes</strong>.
+              Este viernes le toca a <strong style="color:#ffffff;">${assignment.member_name}</strong> liderar la reuni&#243;n de equipo. &#161;No olviden estar presentes!
             </p>
             <div style="background:#2C40FF0f;border:1px solid #2C40FF33;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
-              <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2C40FF;">Fecha asignada</p>
-              <p style="margin:0;font-size:18px;font-weight:600;color:#ffffff;text-transform:capitalize;">${formatted}</p>
+              <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2C40FF;">Fecha</p>
+              <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:#ffffff;text-transform:capitalize;">${formatted}</p>
+              <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2C40FF;">Responsable</p>
+              <p style="margin:0;font-size:18px;font-weight:600;color:#ffffff;">${assignment.member_name}</p>
             </div>
             <p style="margin:0 0 8px;font-size:14px;color:#9CA3AF;line-height:1.6;">
-              Recuerda preparar la l&#225;mina de presentaci&#243;n con anticipaci&#243;n. Puedes usar SpinAI para organizar tu agenda.
+              <strong style="color:#D1D5DB;">${assignment.member_name}</strong>, recuerda preparar la l&#225;mina de presentaci&#243;n con anticipaci&#243;n. Puedes usar SpinAI para organizar tu agenda.
             </p>
           </td>
         </tr>
@@ -123,8 +125,9 @@ export async function POST(req: NextRequest) {
   try {
     await transporter.sendMail({
       from: `SpinAI <${gmailUser}>`,
-      to: email,
-      subject: `⏰ Te toca el viernes — ${assignment.member_name}`,
+      to: toEmail,
+      cc: ccEmails.length > 0 ? ccEmails.join(", ") : undefined,
+      subject: `⏰ Reunión del viernes — ${assignment.member_name} presenta`,
       html,
     });
   } catch (err) {
