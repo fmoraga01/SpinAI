@@ -1,0 +1,16 @@
+name: Weekly Meeting Notification
+
+on:
+  schedule:
+    # Every Monday at 12:00 UTC = 9:00 AM Santiago (UTC-3 winter)
+    - cron: "0 12 * * 1"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send weekly notification
+        run: |
+          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/notify" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
