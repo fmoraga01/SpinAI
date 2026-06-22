@@ -209,7 +209,9 @@ export default function PresentationView({ template, date, onClose }: Props) {
                         style={{ display: "flex", alignItems: "baseline", gap: 16, cursor: "pointer", transition: "opacity 200ms" }}
                       >
                         <span style={{
-                          fontSize: "clamp(31px, 3.5vw, 43px)", fontWeight: 700,
+                          fontSize: "clamp(31px, 3.5vw, 43px)",
+                          fontFamily: fnt.titleFamily,
+                          fontWeight: fnt.titleWeight,
                           minWidth: 48, flexShrink: 0, lineHeight: 1,
                           color: done ? th.cardBorder : th.accent,
                           transition: "color 200ms",
