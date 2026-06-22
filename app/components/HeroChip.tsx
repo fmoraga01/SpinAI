@@ -28,7 +28,6 @@ export default function HeroChip() {
   const [assignment, setAssignment] = useState<{ id: string; memberName: string; date: string } | null>(null);
   const [mounted, setMounted] = useState(false);
   const [notifyState, setNotifyState] = useState<"idle" | "sending" | "ok" | "no_email" | "error">("idle");
-  const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
     getNextFridayAssignment().then((a) => { setAssignment(a); setMounted(true); });
@@ -41,7 +40,7 @@ export default function HeroChip() {
       const res = await fetch("/api/notify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assignmentId: assignment.id, testMode }),
+        body: JSON.stringify({ assignmentId: assignment.id }),
       });
       if (res.status === 422) setNotifyState("no_email");
       else if (!res.ok) setNotifyState("error");
@@ -68,8 +67,7 @@ export default function HeroChip() {
     "#4B5563";
 
   return (
-    <div style={{ display: "inline-flex", flexDirection: "column", gap: 8, alignItems: "flex-start" }}>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
         <span
           style={{
             display: "inline-flex",
@@ -132,50 +130,6 @@ export default function HeroChip() {
           <EnvelopeIcon style={{ width: 13, height: 13, flexShrink: 0 }} />
           {notifyLabel}
         </button>
-      </div>
-
-      {/* Toggle modo prueba */}
-      <label
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontSize: 11,
-          color: testMode ? "#FCD34D" : "#4B5563",
-          cursor: "pointer",
-          userSelect: "none",
-        }}
-      >
-        <span
-          onClick={() => setTestMode((v) => !v)}
-          style={{
-            width: 28,
-            height: 16,
-            borderRadius: 8,
-            background: testMode ? "#92400E55" : "#1f2333",
-            border: "1px solid " + (testMode ? "#FCD34D55" : "#374151"),
-            position: "relative",
-            display: "inline-block",
-            transition: "background 150ms, border-color 150ms",
-            flexShrink: 0,
-            cursor: "pointer",
-          }}
-        >
-          <span
-            style={{
-              position: "absolute",
-              top: 2,
-              left: testMode ? 13 : 2,
-              width: 10,
-              height: 10,
-              borderRadius: "50%",
-              background: testMode ? "#FCD34D" : "#4B5563",
-              transition: "left 150ms, background 150ms",
-            }}
-          />
-        </span>
-        Modo prueba — solo a mí
-      </label>
     </div>
   );
 }
