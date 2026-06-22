@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase";
-import { AppData, TeamMember, Assignment, Template, LogEntry } from "./types";
+import { AppData, TeamMember, Assignment, Template, LogEntry, SlideTheme } from "./types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -240,6 +240,7 @@ export async function loadTemplate(assignmentId: string): Promise<Template | nul
     agenda: data.agenda ?? [],
     keyPoints: data.key_points ?? [],
     notes: data.notes,
+    theme: (data.theme as SlideTheme) ?? "default",
   };
 }
 
@@ -252,6 +253,7 @@ export async function saveTemplate(template: Template): Promise<void> {
     agenda: template.agenda,
     key_points: template.keyPoints,
     notes: template.notes,
+    theme: template.theme,
     updated_at: new Date().toISOString(),
   };
 

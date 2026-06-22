@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Assignment, Template } from "@/lib/types";
+import { Assignment, Template, SlideTheme } from "@/lib/types";
+import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
 
 interface Props {
@@ -105,9 +106,67 @@ function ListEditor({
   );
 }
 
+function ThemePicker({ value, onChange }: { value: SlideTheme; onChange: (t: SlideTheme) => void }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
+        Diseño
+      </p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+        {THEME_ORDER.map((key) => {
+          const th = THEMES[key];
+          const selected = value === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              style={{
+                background: "transparent",
+                border: `1px solid ${selected ? "var(--color-primary)" : "var(--color-border)"}`,
+                borderRadius: "var(--radius-md)",
+                padding: 0,
+                cursor: "pointer",
+                overflow: "hidden",
+                transition: "border-color 150ms",
+                boxShadow: selected ? "0 0 0 1px var(--color-primary)" : "none",
+              }}
+            >
+              {/* Mini slide preview */}
+              <div style={{ background: th.bg, padding: "10px 10px 6px" }}>
+                {/* Accent bar simulating title */}
+                <div style={{ height: 3, width: "60%", background: th.accent, borderRadius: 2, marginBottom: 6, opacity: 0.9 }} />
+                {/* Content lines */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <div style={{ height: 2, width: "80%", background: th.textColor, borderRadius: 1, opacity: 0.25 }} />
+                  <div style={{ height: 2, width: "65%", background: th.textColor, borderRadius: 1, opacity: 0.18 }} />
+                  <div style={{ height: 2, width: "72%", background: th.textColor, borderRadius: 1, opacity: 0.18 }} />
+                </div>
+              </div>
+              {/* Label */}
+              <div style={{
+                padding: "5px 8px",
+                background: selected ? "#2C40FF12" : "var(--color-surface-elevated)",
+                borderTop: `1px solid ${selected ? "var(--color-primary)33" : "var(--color-border)"}`,
+                fontSize: 10,
+                fontWeight: selected ? 600 : 500,
+                color: selected ? "var(--color-primary)" : "#6B7280",
+                textAlign: "center",
+                transition: "background 150ms, color 150ms",
+              }}>
+                {th.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function TemplateEditor({ assignment, onBack, onPresent }: Props) {
   const [title, setTitle] = useState("");
   const [agenda, setAgenda] = useState<string[]>([""]);
+  const [theme, setTheme] = useState<SlideTheme>("default");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -118,6 +177,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       if (t) {
         setTitle(t.title);
         setAgenda(t.agenda.length > 0 ? t.agenda : [""]);
+        setTheme(t.theme ?? "default");
       }
       setLoading(false);
     });
@@ -132,6 +192,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       agenda: agenda.filter((a) => a.trim() !== ""),
       keyPoints: [],
       notes: "",
+      theme,
     };
   }
 
@@ -210,6 +271,8 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
         onChange={setAgenda}
       />
 
+      {/* Theme picker */}
+      <ThemePicker value={theme} onChange={setTheme} />
 
       {/* Actions */}
       <div className="flex gap-2 flex-wrap">

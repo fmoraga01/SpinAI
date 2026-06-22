@@ -8,8 +8,6 @@ const TOKEN_LABELS = [
   "emb", "attn", "0.7", "1.0", "res",
 ];
 
-const PRIMARY = "#2C40FF";
-
 interface Token {
   x: number;
   y: number;
@@ -42,7 +40,19 @@ function makeTokens(count: number, W: number, H: number): Token[] {
   });
 }
 
-export default function SlideBackground() {
+function hexToRgb(hex: string): [number, number, number] {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return [r, g, b];
+}
+
+interface Props {
+  accent?: string;
+  variant?: "tokens" | "grid" | "none";
+}
+
+export default function SlideBackground({ accent = "#2C40FF", variant = "tokens" }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tokensRef = useRef<Token[]>([]);
   const rafRef = useRef<number | null>(null);
@@ -52,6 +62,7 @@ export default function SlideBackground() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
     const dpr = window.devicePixelRatio || 1;
+    const [r, g, b] = hexToRgb(accent);
 
     function resize() {
       if (!canvas) return;
@@ -59,14 +70,14 @@ export default function SlideBackground() {
       const H = canvas.offsetHeight;
       canvas.width = W * dpr;
       canvas.height = H * dpr;
-      if (tokensRef.current.length === 0) {
+      if (variant === "tokens" && tokensRef.current.length === 0) {
         tokensRef.current = makeTokens(28, W, H);
       }
     }
 
     resize();
 
-    function frame() {
+    function frameTokens() {
       if (!canvas) return;
       const W = canvas.offsetWidth;
       const H = canvas.offsetHeight;
@@ -77,7 +88,6 @@ export default function SlideBackground() {
       const tokens = tokensRef.current;
       const CONNECTION_DIST = 140;
 
-      // Update positions
       for (const t of tokens) {
         t.x += t.vx;
         t.y += t.vy;
@@ -85,33 +95,30 @@ export default function SlideBackground() {
         if (t.x > W + 80) t.x = -40;
         if (t.y < -40) t.y = H + 20;
         if (t.y > H + 40) t.y = -20;
-
         t.alpha += t.alphaDir * t.alphaSpeed;
         if (t.alpha > 0.22) { t.alpha = 0.22; t.alphaDir = -1; }
         if (t.alpha < 0.04) { t.alpha = 0.04; t.alphaDir = 1; }
       }
 
-      // Draw connections (attention lines)
       for (let i = 0; i < tokens.length; i++) {
         for (let j = i + 1; j < tokens.length; j++) {
           const a = tokens[i];
-          const b = tokens[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
+          const bk = tokens[j];
+          const dx = a.x - bk.x;
+          const dy = a.y - bk.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < CONNECTION_DIST) {
             const strength = (1 - dist / CONNECTION_DIST) * 0.12;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.strokeStyle = `rgba(44, 64, 255, ${strength})`;
+            ctx.lineTo(bk.x, bk.y);
+            ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${strength})`;
             ctx.lineWidth = 0.6;
             ctx.stroke();
           }
         }
       }
 
-      // Draw tokens
       ctx.font = "500 10px 'Inter', monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -121,30 +128,60 @@ export default function SlideBackground() {
       for (const t of tokens) {
         const { x, y, w, text, alpha } = t;
         const half = w / 2;
-
-        // Background pill
         ctx.beginPath();
         ctx.roundRect(x - half, y - H_TOKEN / 2, w, H_TOKEN, RADIUS);
-        ctx.fillStyle = `rgba(44, 64, 255, ${alpha * 0.35})`;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 0.35})`;
         ctx.fill();
-
-        // Border
         ctx.beginPath();
         ctx.roundRect(x - half, y - H_TOKEN / 2, w, H_TOKEN, RADIUS);
-        ctx.strokeStyle = `rgba(44, 64, 255, ${alpha * 1.6})`;
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 1.6})`;
         ctx.lineWidth = 0.7;
         ctx.stroke();
-
-        // Text
-        ctx.fillStyle = `rgba(44, 64, 255, ${alpha * 2.2})`;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha * 2.2})`;
         ctx.fillText(text, x, y);
       }
 
       ctx.restore();
-      rafRef.current = requestAnimationFrame(frame);
+      rafRef.current = requestAnimationFrame(frameTokens);
     }
 
-    rafRef.current = requestAnimationFrame(frame);
+    function frameGrid() {
+      if (!canvas) return;
+      const W = canvas.offsetWidth;
+      const H = canvas.offsetHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      const CELL = 48;
+      ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.07)`;
+      ctx.lineWidth = 0.5;
+
+      for (let x = 0; x <= W; x += CELL) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+      }
+      for (let y = 0; y <= H; y += CELL) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      // dot at every intersection
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.18)`;
+      for (let x = 0; x <= W; x += CELL) {
+        for (let y = 0; y <= H; y += CELL) {
+          ctx.beginPath();
+          ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    if (variant === "tokens") {
+      rafRef.current = requestAnimationFrame(frameTokens);
+    } else if (variant === "grid") {
+      frameGrid();
+    }
 
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
@@ -153,7 +190,9 @@ export default function SlideBackground() {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, []);
+  }, [accent, variant]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (variant === "none") return null;
 
   return (
     <canvas

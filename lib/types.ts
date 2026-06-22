@@ -20,6 +20,8 @@ export interface AppData {
   assignments: Assignment[];
 }
 
+export type SlideTheme = "default" | "minimal" | "blueprint" | "warm";
+
 export interface Template {
   id?: string;
   assignmentId: string;
@@ -29,6 +31,7 @@ export interface Template {
   agenda: string[];
   keyPoints: string[];
   notes: string;
+  theme: SlideTheme;
 }
 
 export interface LogEntry {
