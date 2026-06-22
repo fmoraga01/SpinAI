@@ -170,79 +170,136 @@ function drawNeural(
   ctx.restore();
 }
 
-// ─── Radar Scan (Blueprint) ───────────────────────────────────────────────────
+// ─── Neural Network Architecture (Blueprint) ─────────────────────────────────
 
-interface RadarPulse { x: number; y: number; radius: number; alpha: number; }
+const LAYER_SIZES = [4, 6, 6, 5, 3];
 
-let radarY = 0;
-const radarPulses: RadarPulse[] = [];
+interface NNNode { x: number; y: number; glow: number; }
+interface NNPulse {
+  fromX: number; fromY: number; toX: number; toY: number;
+  toLayer: number; toNode: number; progress: number; speed: number;
+}
 
-function drawRadar(
+let nnNodes: NNNode[][] = [];
+let nnPulses: NNPulse[] = [];
+let nnSpawnTimer = 0;
+let nnReady = false;
+
+function initNN(W: number, H: number): void {
+  nnNodes = [];
+  nnPulses = [];
+  const padX = W * 0.12;
+  const layerGap = (W - padX * 2) / (LAYER_SIZES.length - 1);
+  for (let l = 0; l < LAYER_SIZES.length; l++) {
+    const count = LAYER_SIZES[l];
+    const x = padX + l * layerGap;
+    const totalH = (count - 1) * 68;
+    const startY = H / 2 - totalH / 2;
+    nnNodes.push(
+      Array.from({ length: count }, (_, n) => ({ x, y: startY + n * 68, glow: 0 }))
+    );
+  }
+  nnReady = true;
+}
+
+function spawnFromNode(layerIdx: number, nodeIdx: number): void {
+  if (layerIdx >= nnNodes.length - 1) return;
+  const from = nnNodes[layerIdx][nodeIdx];
+  nnNodes[layerIdx + 1].forEach((to, ni) => {
+    if (Math.random() > 0.25) {
+      nnPulses.push({
+        fromX: from.x, fromY: from.y, toX: to.x, toY: to.y,
+        toLayer: layerIdx + 1, toNode: ni,
+        progress: 0, speed: 0.005 + Math.random() * 0.004,
+      });
+    }
+  });
+}
+
+function drawNeuralNet(
   ctx: CanvasRenderingContext2D, dpr: number,
   canvas: HTMLCanvasElement,
   r: number, g: number, b: number,
 ): void {
   const W = canvas.offsetWidth;
   const H = canvas.offsetHeight;
+  if (!nnReady) initNN(W, H);
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save(); ctx.scale(dpr, dpr);
 
-  const CELL = 52;
-  const SCAN_SPEED = 0.6;
-  const SCAN_BAND = 60;
-
-  radarY = (radarY + SCAN_SPEED) % (H + SCAN_BAND);
-
-  // Grid lines
-  ctx.lineWidth = 0.5;
-  for (let x = 0; x <= W; x += CELL) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H);
-    ctx.strokeStyle = `rgba(${r},${g},${b},0.06)`; ctx.stroke();
-  }
-  for (let y = 0; y <= H; y += CELL) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y);
-    ctx.strokeStyle = `rgba(${r},${g},${b},0.06)`; ctx.stroke();
-  }
-
-  // Static dots at intersections
-  for (let x = 0; x <= W; x += CELL) {
-    for (let y = 0; y <= H; y += CELL) {
-      ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${r},${g},${b},0.14)`; ctx.fill();
+  // Spawn cascade from input layer periodically
+  nnSpawnTimer++;
+  if (nnSpawnTimer > 90) {
+    nnSpawnTimer = 0;
+    const input = nnNodes[0];
+    const picks = [...Array(input.length).keys()]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 1 + Math.floor(Math.random() * 2));
+    for (const idx of picks) {
+      input[idx].glow = 1;
+      spawnFromNode(0, idx);
     }
   }
 
-  // Spawn pulses when scan passes an intersection
-  for (let x = 0; x <= W; x += CELL) {
-    for (let y = 0; y <= H; y += CELL) {
-      const dist = radarY - y;
-      if (dist >= 0 && dist < SCAN_SPEED + 1) {
-        if (Math.random() > 0.35) {
-          radarPulses.push({ x, y, radius: 0, alpha: 0.7 });
-        }
+  // Draw all connections (dim baseline)
+  for (let l = 0; l < nnNodes.length - 1; l++) {
+    for (const fn of nnNodes[l]) {
+      for (const tn of nnNodes[l + 1]) {
+        ctx.beginPath(); ctx.moveTo(fn.x, fn.y); ctx.lineTo(tn.x, tn.y);
+        ctx.strokeStyle = `rgba(${r},${g},${b},0.07)`;
+        ctx.lineWidth = 0.5; ctx.stroke();
       }
     }
   }
 
-  // Scan band gradient
-  const grad = ctx.createLinearGradient(0, radarY - SCAN_BAND, 0, radarY);
-  grad.addColorStop(0, `rgba(${r},${g},${b},0)`);
-  grad.addColorStop(0.6, `rgba(${r},${g},${b},0.04)`);
-  grad.addColorStop(1, `rgba(${r},${g},${b},0.12)`);
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, radarY - SCAN_BAND, W, SCAN_BAND);
+  // Update and draw pulses
+  for (let i = nnPulses.length - 1; i >= 0; i--) {
+    const p = nnPulses[i];
+    p.progress += p.speed;
 
-  // Scan leading edge
-  ctx.beginPath(); ctx.moveTo(0, radarY); ctx.lineTo(W, radarY);
-  ctx.strokeStyle = `rgba(${r},${g},${b},0.35)`; ctx.lineWidth = 1; ctx.stroke();
+    if (p.progress >= 1) {
+      nnNodes[p.toLayer][p.toNode].glow = 0.9;
+      spawnFromNode(p.toLayer, p.toNode);
+      nnPulses.splice(i, 1);
+      continue;
+    }
 
-  // Pulses
-  for (let i = radarPulses.length - 1; i >= 0; i--) {
-    const p = radarPulses[i];
-    p.radius += 0.8; p.alpha -= 0.012;
-    if (p.alpha <= 0) { radarPulses.splice(i, 1); continue; }
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${p.alpha})`; ctx.lineWidth = 0.8; ctx.stroke();
+    const px = p.fromX + (p.toX - p.fromX) * p.progress;
+    const py = p.fromY + (p.toY - p.fromY) * p.progress;
+
+    // Trailing glow along the connection
+    const grad = ctx.createLinearGradient(p.fromX, p.fromY, p.toX, p.toY);
+    grad.addColorStop(Math.max(0, p.progress - 0.25), `rgba(${r},${g},${b},0)`);
+    grad.addColorStop(p.progress, `rgba(${r},${g},${b},0.45)`);
+    ctx.beginPath(); ctx.moveTo(p.fromX, p.fromY); ctx.lineTo(p.toX, p.toY);
+    ctx.strokeStyle = grad; ctx.lineWidth = 0.9; ctx.stroke();
+
+    // Pulse head
+    ctx.beginPath(); ctx.arc(px, py, 2.8, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},0.95)`; ctx.fill();
+    // Soft halo around head
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${r},${g},${b},0.18)`; ctx.fill();
+  }
+
+  // Draw nodes
+  for (const layer of nnNodes) {
+    for (const node of layer) {
+      node.glow *= 0.965;
+
+      if (node.glow > 0.05) {
+        ctx.beginPath(); ctx.arc(node.x, node.y, 12, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${node.glow * 0.12})`; ctx.fill();
+      }
+
+      ctx.beginPath(); ctx.arc(node.x, node.y, 6, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${r},${g},${b},${0.22 + node.glow * 0.6})`;
+      ctx.lineWidth = 1; ctx.stroke();
+
+      ctx.beginPath(); ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.35 + node.glow * 0.65})`; ctx.fill();
+    }
   }
 
   ctx.restore();
@@ -331,7 +388,7 @@ function drawSynaptic(
 
 interface Props {
   accent?: string;
-  variant?: "tokens" | "neural" | "radar" | "synaptic";
+  variant?: "tokens" | "neural" | "neuralnet" | "synaptic";
 }
 
 export default function SlideBackground({ accent = "#2C40FF", variant = "tokens" }: Props) {
@@ -350,8 +407,7 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
     // Reset state on variant change
     particlesRef.current = [];
     neuronsRef.current = [];
-    radarPulses.length = 0;
-    radarY = 0;
+    nnReady = false;
 
     function resize() {
       if (!canvas) return;
@@ -375,8 +431,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
         drawTokens(ctx, dpr, canvas, particlesRef.current, r, g, b);
       else if (variant === "neural")
         drawNeural(ctx, dpr, canvas, neuronsRef.current, r, g, b);
-      else if (variant === "radar")
-        drawRadar(ctx, dpr, canvas, r, g, b);
+      else if (variant === "neuralnet")
+        drawNeuralNet(ctx, dpr, canvas, r, g, b);
       else if (variant === "synaptic")
         drawSynaptic(ctx, dpr, canvas, particlesRef.current, r, g, b);
       rafRef.current = requestAnimationFrame(loop);
