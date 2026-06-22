@@ -101,7 +101,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
               borderRadius: "var(--radius-md)",
               background: th.accent,
               display: "flex", alignItems: "center", justifyContent: "center",
-              fontWeight: 700, fontSize: 13, color: "#fff",
+              fontWeight: 700, fontSize: 13, color: th.badgeText,
             }}
           >
             S

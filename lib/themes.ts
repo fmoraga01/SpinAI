@@ -12,6 +12,7 @@ export interface ThemeConfig {
   textColor: string;
   textSecondary: string;
   animVariant: "tokens" | "neural" | "constellation" | "synaptic";
+  badgeText: string;
 }
 
 export const THEMES: Record<SlideTheme, ThemeConfig> = {
@@ -27,6 +28,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     textColor: "#f3f4f6",
     textSecondary: "#9ca3af",
     animVariant: "tokens",
+    badgeText: "#fff",
   },
   minimal: {
     label: "Minimalista",
@@ -40,6 +42,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     textColor: "#e5e7eb",
     textSecondary: "#9ca3af",
     animVariant: "neural",
+    badgeText: "#111827",
   },
   blueprint: {
     label: "CoE AI",
@@ -53,6 +56,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     textColor: "#e0f2fe",
     textSecondary: "#7dd3fc",
     animVariant: "constellation",
+    badgeText: "#fff",
   },
   warm: {
     label: "HenryStyle",
@@ -66,6 +70,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     textColor: "#fef3c7",
     textSecondary: "#d97706",
     animVariant: "synaptic",
+    badgeText: "#fff",
   },
 };
 
