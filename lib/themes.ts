@@ -11,7 +11,7 @@ export interface ThemeConfig {
   titleColor: string;
   textColor: string;
   textSecondary: string;
-  animVariant: "tokens" | "grid" | "none";
+  animVariant: "tokens" | "neural" | "radar" | "synaptic";
 }
 
 export const THEMES: Record<SlideTheme, ThemeConfig> = {
@@ -39,7 +39,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     titleColor: "#ffffff",
     textColor: "#e5e7eb",
     textSecondary: "#9ca3af",
-    animVariant: "none",
+    animVariant: "neural",
   },
   blueprint: {
     label: "Blueprint",
@@ -52,7 +52,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     titleColor: "#f0f9ff",
     textColor: "#e0f2fe",
     textSecondary: "#7dd3fc",
-    animVariant: "grid",
+    animVariant: "radar",
   },
   warm: {
     label: "Warm",
@@ -65,7 +65,7 @@ export const THEMES: Record<SlideTheme, ThemeConfig> = {
     titleColor: "#fffbeb",
     textColor: "#fef3c7",
     textSecondary: "#d97706",
-    animVariant: "tokens",
+    animVariant: "synaptic",
   },
 };
 
