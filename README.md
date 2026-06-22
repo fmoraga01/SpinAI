@@ -2,7 +2,7 @@
 
 > Asigna aleatoriamente quién conduce la reunión de equipo cada viernes. Justo, simple y sin discusiones.
 
-![SpinAI Home](./public/screenshot.png)
+![SpinAI Home](./public/screen.png)
 
 ---
 
