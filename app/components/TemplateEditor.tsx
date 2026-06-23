@@ -242,7 +242,7 @@ function SizePicker({ value, onChange }: { value: SlideSize; onChange: (s: Slide
               }}
             >
               <div style={{
-                fontSize: key === "sm" ? 14 : key === "md" ? 18 : 23,
+                fontSize: 18,
                 fontWeight: 700,
                 color: selected ? "var(--color-primary)" : "var(--color-text-primary)",
                 lineHeight: 1, marginBottom: 4,
