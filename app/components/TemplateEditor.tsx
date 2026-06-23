@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Assignment, Template, SlideTheme, SlideFont } from "@/lib/types";
+import { Assignment, Template, SlideTheme, SlideFont, SlideSize } from "@/lib/types";
 import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
+import { SIZES, SIZE_ORDER } from "@/lib/sizes";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
 
 interface Props {
@@ -216,11 +217,60 @@ function FontPicker({ value, onChange }: { value: SlideFont; onChange: (f: Slide
   );
 }
 
+function SizePicker({ value, onChange }: { value: SlideSize; onChange: (s: SlideSize) => void }) {
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
+        Tamaño de fuente
+      </p>
+      <div style={{ display: "flex", gap: 8 }}>
+        {SIZE_ORDER.map((key) => {
+          const s = SIZES[key];
+          const selected = value === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              style={{
+                flex: 1, padding: "10px 8px",
+                background: selected ? "#2C40FF12" : "var(--color-surface-elevated)",
+                border: `1px solid ${selected ? "var(--color-primary)" : "var(--color-border)"}`,
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer", textAlign: "center",
+                transition: "border-color 150ms, background 150ms",
+                boxShadow: selected ? "0 0 0 1px var(--color-primary)" : "none",
+              }}
+            >
+              <div style={{
+                fontSize: key === "sm" ? 14 : key === "md" ? 18 : 23,
+                fontWeight: 700,
+                color: selected ? "var(--color-primary)" : "var(--color-text-primary)",
+                lineHeight: 1, marginBottom: 4,
+                transition: "color 150ms",
+              }}>
+                {s.key}
+              </div>
+              <div style={{
+                fontSize: 10, fontWeight: selected ? 600 : 500,
+                color: selected ? "var(--color-primary)" : "#6B7280",
+                transition: "color 150ms",
+              }}>
+                {s.label}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function TemplateEditor({ assignment, onBack, onPresent }: Props) {
   const [title, setTitle] = useState("");
   const [agenda, setAgenda] = useState<string[]>([""]);
   const [theme, setTheme] = useState<SlideTheme>("default");
   const [font, setFont] = useState<SlideFont>("sans");
+  const [size, setSize] = useState<SlideSize>("md");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -233,6 +283,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
         setAgenda(t.agenda.length > 0 ? t.agenda : [""]);
         setTheme(t.theme ?? "default");
         setFont(t.font ?? "sans");
+        setSize(t.size ?? "md");
       }
       setLoading(false);
     });
@@ -249,6 +300,7 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       notes: "",
       theme,
       font,
+      size,
     };
   }
 
@@ -332,6 +384,9 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
 
       {/* Font picker */}
       <FontPicker value={font} onChange={setFont} />
+
+      {/* Size picker */}
+      <SizePicker value={size} onChange={setSize} />
 
       {/* Actions */}
       <div className="flex gap-2 flex-wrap">

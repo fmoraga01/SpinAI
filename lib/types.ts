@@ -22,6 +22,7 @@ export interface AppData {
 
 export type SlideTheme = "default" | "minimal" | "blueprint" | "warm";
 export type SlideFont = "sans" | "mono" | "serif" | "impact";
+export type SlideSize = "sm" | "md" | "lg";
 
 export interface Template {
   id?: string;
@@ -34,6 +35,7 @@ export interface Template {
   notes: string;
   theme: SlideTheme;
   font: SlideFont;
+  size: SlideSize;
 }
 
 export interface LogEntry {

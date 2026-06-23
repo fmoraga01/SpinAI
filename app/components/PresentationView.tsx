@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Template } from "@/lib/types";
 import { THEMES } from "@/lib/themes";
 import { FONTS } from "@/lib/fonts";
+import { SIZES, scaleSize } from "@/lib/sizes";
 import SlideBackground from "./SlideBackground";
 
 interface Props {
@@ -25,6 +26,10 @@ export default function PresentationView({ template, date, onClose }: Props) {
 
   const th = THEMES[template.theme ?? "default"];
   const fnt = FONTS[template.font ?? "sans"];
+  const szCfg = SIZES[template.size ?? "md"];
+  const ts = szCfg.titleScale;
+  const ns = szCfg.numberScale;
+  const bs = szCfg.bodyScale;
 
   function toggleCrossed(i: number) {
     setCrossed((prev) => {
@@ -164,7 +169,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
               {template.memberName}
             </p>
             <h1 style={{
-              fontSize: fnt.titleSize ?? "40px",
+              fontSize: scaleSize(fnt.titleSize ?? "40px", ts),
               fontFamily: fnt.titleFamily,
               fontWeight: fnt.titleWeight,
               color: fnt.syntaxTitle ?? th.titleColor,
@@ -209,7 +214,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                         style={{ display: "flex", alignItems: "baseline", gap: 16, cursor: "pointer", transition: "opacity 200ms" }}
                       >
                         <span style={{
-                          fontSize: fnt.numberSize ?? "clamp(31px, 3.5vw, 43px)",
+                          fontSize: scaleSize(fnt.numberSize ?? "clamp(31px, 3.5vw, 43px)", ns),
                           fontFamily: fnt.titleFamily,
                           fontWeight: fnt.titleWeight,
                           minWidth: 48, flexShrink: 0, lineHeight: 1,
@@ -219,7 +224,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                           {String(i + 1).padStart(2, "0")}
                         </span>
                         <span style={{
-                          fontSize: fnt.bodySize ?? "clamp(18px, 2vw, 25px)",
+                          fontSize: scaleSize(fnt.bodySize ?? "clamp(18px, 2vw, 25px)", bs),
                           fontFamily: fnt.bodyFamily,
                           lineHeight: 1.4, fontWeight: fnt.bodyWeight,
                           color: done ? th.textSecondary : (fnt.syntaxPalette ? fnt.syntaxPalette[i % fnt.syntaxPalette.length] : th.textColor),
@@ -256,7 +261,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                     <li key={i} style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                       <span style={{ color: th.accent, fontSize: 10, flexShrink: 0, paddingTop: 4 }}>◆</span>
                       <span style={{
-                        fontSize: "clamp(18px, 2vw, 25px)",
+                        fontSize: scaleSize("clamp(18px, 2vw, 25px)", bs),
                         color: th.textColor, lineHeight: 1.4, fontWeight: 500,
                       }}>
                         {point}
@@ -285,7 +290,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
                   Notas
                 </span>
                 <p style={{
-                  fontSize: "clamp(14px, 1.4vw, 18px)",
+                  fontSize: scaleSize("clamp(14px, 1.4vw, 18px)", bs),
                   color: th.textSecondary, lineHeight: 1.8,
                   margin: 0, whiteSpace: "pre-wrap",
                 }}>
