@@ -223,7 +223,7 @@ function SizePicker({ value, onChange }: { value: SlideSize; onChange: (s: Slide
       <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
         Tamaño de fuente
       </p>
-      <div style={{ display: "flex", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
         {SIZE_ORDER.map((key) => {
           const s = SIZES[key];
           const selected = value === key;
@@ -232,7 +232,7 @@ function SizePicker({ value, onChange }: { value: SlideSize; onChange: (s: Slide
               key={key}
               onClick={() => onChange(key)}
               style={{
-                flex: 1, padding: "10px 8px",
+                padding: "10px 8px",
                 background: selected ? "#2C40FF12" : "var(--color-surface-elevated)",
                 border: `1px solid ${selected ? "var(--color-primary)" : "var(--color-border)"}`,
                 borderRadius: "var(--radius-md)",
