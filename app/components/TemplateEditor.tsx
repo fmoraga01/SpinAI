@@ -112,7 +112,7 @@ function ThemePicker({ value, onChange }: { value: SlideTheme; onChange: (t: Sli
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
-        Diseño
+        Plantillas
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
         {THEME_ORDER.map((key) => {
