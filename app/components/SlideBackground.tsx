@@ -477,12 +477,15 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
             toIdx: Math.floor(Math.random() * NN_LAYERS[layer + 1]),
             t: 0, speed: 0.45 + Math.random() * 0.35,
           });
-          if (Math.random() > 0.5) nnPulsesRef.current.push({
-            layer: Math.floor(Math.random() * (NN_LAYERS.length - 1)),
-            fromIdx: Math.floor(Math.random() * NN_LAYERS[0]),
-            toIdx: Math.floor(Math.random() * NN_LAYERS[1]),
-            t: 0, speed: 0.45 + Math.random() * 0.35,
-          });
+          if (Math.random() > 0.5) {
+            const layer2 = Math.floor(Math.random() * (NN_LAYERS.length - 1));
+            nnPulsesRef.current.push({
+              layer: layer2,
+              fromIdx: Math.floor(Math.random() * NN_LAYERS[layer2]),
+              toIdx: Math.floor(Math.random() * NN_LAYERS[layer2 + 1]),
+              t: 0, speed: 0.45 + Math.random() * 0.35,
+            });
+          }
           spawnTimer = 0.2 + Math.random() * 0.35;
         }
         drawNNFrame(ctx, dpr, canvas, nnNodesRef.current, nnPulsesRef.current, dt, time / 1000, r, g, b);
