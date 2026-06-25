@@ -12,13 +12,10 @@ function hexToRgb(hex: string): [number, number, number] {
   ];
 }
 
-// ─── Tokens (Default) ────────────────────────────────────────────────────────
+// ─── Neural Network (Default) ─────────────────────────────────────────────────
 
-const TOKEN_LABELS = [
-  "→", "◎", "01", "10", "∇", "λ", "∑", "⊕", "∞",
-  "T+1", "n", "∅", "⟩", "⟨", "AI", "LLM", "ctx",
-  "emb", "attn", "0.7", "1.0", "res",
-];
+const NN_LAYERS = [5, 8, 6, 9, 6, 4];
+const NODE_R = 4;
 
 interface Particle {
   x: number; y: number; vx: number; vy: number;
@@ -26,67 +23,115 @@ interface Particle {
   alpha: number; alphaDir: number; alphaSpeed: number;
 }
 
-function makeTokens(count: number, W: number, H: number): Particle[] {
-  return Array.from({ length: count }, () => {
-    const text = TOKEN_LABELS[Math.floor(Math.random() * TOKEN_LABELS.length)];
-    const speed = 0.12 + Math.random() * 0.18;
-    const angle = Math.random() * Math.PI * 2;
-    return {
-      x: Math.random() * W, y: Math.random() * H,
-      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-      text, w: text.length * 8 + 20,
-      alpha: 0.08 + Math.random() * 0.14,
-      alphaDir: Math.random() > 0.5 ? 1 : -1,
-      alphaSpeed: 0.0004 + Math.random() * 0.0006,
-    };
+interface NNNode {
+  x: number; y: number;
+  activation: number;
+  idlePhase: number;
+}
+
+interface NNPulse {
+  layer: number; fromIdx: number; toIdx: number;
+  t: number; speed: number;
+}
+
+function buildNNNodes(W: number, H: number): NNNode[][] {
+  const xStart = W * 0.05;
+  const xEnd = W * 0.97;
+  const xStep = (xEnd - xStart) / (NN_LAYERS.length - 1);
+  return NN_LAYERS.map((count, li) => {
+    const x = xStart + li * xStep;
+    const spacing = H / (count + 1);
+    return Array.from({ length: count }, (_, ni) => ({
+      x, y: spacing * (ni + 1),
+      activation: 0,
+      idlePhase: Math.random() * Math.PI * 2,
+    }));
   });
 }
 
-function drawTokens(
+function drawNNFrame(
   ctx: CanvasRenderingContext2D, dpr: number,
-  canvas: HTMLCanvasElement, tokens: Particle[],
+  canvas: HTMLCanvasElement,
+  nodes: NNNode[][], pulses: NNPulse[],
+  dt: number, time: number,
   r: number, g: number, b: number,
 ): void {
-  const W = canvas.offsetWidth;
-  const H = canvas.offsetHeight;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.scale(dpr, dpr);
 
-  const CONN = 140;
-  for (const t of tokens) {
-    t.x += t.vx; t.y += t.vy;
-    if (t.x < -80) t.x = W + 40; if (t.x > W + 80) t.x = -40;
-    if (t.y < -40) t.y = H + 20; if (t.y > H + 40) t.y = -20;
-    t.alpha += t.alphaDir * t.alphaSpeed;
-    if (t.alpha > 0.22) { t.alpha = 0.22; t.alphaDir = -1; }
-    if (t.alpha < 0.04) { t.alpha = 0.04; t.alphaDir = 1; }
-  }
+  if (!nodes.length) { ctx.restore(); return; }
 
-  for (let i = 0; i < tokens.length; i++) {
-    for (let j = i + 1; j < tokens.length; j++) {
-      const a = tokens[i], b2 = tokens[j];
-      const dx = a.x - b2.x, dy = a.y - b2.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < CONN) {
-        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b2.x, b2.y);
-        ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - dist / CONN) * 0.12})`;
-        ctx.lineWidth = 0.6; ctx.stroke();
+  // Update pulses & activate destination nodes
+  for (const p of pulses) p.t = Math.min(1, p.t + dt * p.speed);
+  for (const p of pulses.filter(p => p.t >= 1)) {
+    nodes[p.layer + 1][p.toIdx].activation = 1;
+  }
+  pulses.splice(0, pulses.length, ...pulses.filter(p => p.t < 1));
+
+  // Decay activations
+  for (const layer of nodes)
+    for (const n of layer)
+      n.activation = Math.max(0, n.activation - dt * 1.8);
+
+  // Edges
+  for (let li = 0; li < nodes.length - 1; li++) {
+    for (const a of nodes[li]) {
+      for (const bk of nodes[li + 1]) {
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bk.x, bk.y);
+        ctx.strokeStyle = `rgba(${r},${g},${b},0.055)`;
+        ctx.lineWidth = 0.5; ctx.stroke();
       }
     }
   }
 
-  ctx.font = "500 10px 'Inter', monospace";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  for (const t of tokens) {
-    const { x, y, w, text, alpha } = t;
-    const half = w / 2;
-    ctx.beginPath(); ctx.roundRect(x - half, y - 9, w, 18, 4);
-    ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 0.35})`; ctx.fill();
-    ctx.beginPath(); ctx.roundRect(x - half, y - 9, w, 18, 4);
-    ctx.strokeStyle = `rgba(${r},${g},${b},${alpha * 1.6})`; ctx.lineWidth = 0.7; ctx.stroke();
-    ctx.fillStyle = `rgba(${r},${g},${b},${alpha * 2.2})`; ctx.fillText(text, x, y);
+  // Pulses
+  for (const p of pulses) {
+    const from = nodes[p.layer][p.fromIdx];
+    const to = nodes[p.layer + 1][p.toIdx];
+    const px = from.x + (to.x - from.x) * p.t;
+    const py = from.y + (to.y - from.y) * p.t;
+
+    ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y);
+    ctx.strokeStyle = `rgba(${r},${g},${b},${0.12 + (1 - Math.abs(p.t - 0.5) * 2) * 0.2})`;
+    ctx.lineWidth = 0.8; ctx.stroke();
+
+    const grd = ctx.createRadialGradient(px, py, 0, px, py, 10);
+    grd.addColorStop(0, `rgba(${r},${g},${b},0.55)`);
+    grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(px, py, 10, 0, Math.PI * 2); ctx.fill();
+
+    ctx.beginPath(); ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${Math.min(255, r + 116)},${Math.min(255, g + 116)},255,1)`;
+    ctx.fill();
   }
+
+  // Nodes
+  for (const layer of nodes) {
+    for (const n of layer) {
+      const idle = 0.5 + 0.5 * Math.sin(time * 0.6 + n.idlePhase);
+      const act = n.activation;
+      const glow = act + idle * 0.15;
+      const nr = NODE_R + act * 2.5;
+
+      if (glow > 0.05) {
+        const halo = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, 22);
+        halo.addColorStop(0, `rgba(${r},${g},${b},${glow * 0.35})`);
+        halo.addColorStop(1, `rgba(${r},${g},${b},0)`);
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(n.x, n.y, 22, 0, Math.PI * 2); ctx.fill();
+      }
+
+      ctx.beginPath(); ctx.arc(n.x, n.y, nr, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${r},${g},${b},${0.1 + glow * 0.25})`; ctx.fill();
+
+      ctx.beginPath(); ctx.arc(n.x, n.y, nr, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(${r},${g},${b},${0.22 + glow * 0.55})`;
+      ctx.lineWidth = 0.8 + act * 0.8; ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 
@@ -377,6 +422,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const neuronsRef = useRef<Neuron[]>([]);
+  const nnNodesRef = useRef<NNNode[][]>([]);
+  const nnPulsesRef = useRef<NNPulse[]>([]);
   const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -389,6 +436,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
     // Reset state on variant change
     particlesRef.current = [];
     neuronsRef.current = [];
+    nnNodesRef.current = [];
+    nnPulsesRef.current = [];
     constellationReady = false;
 
     function resize() {
@@ -397,8 +446,8 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
       canvas.height = canvas.offsetHeight * dpr;
       const W = canvas.offsetWidth;
       const H = canvas.offsetHeight;
-      if ((variant === "tokens") && particlesRef.current.length === 0)
-        particlesRef.current = makeTokens(28, W, H);
+      if (variant === "tokens")
+        nnNodesRef.current = buildNNNodes(W, H);
       if (variant === "neural" && neuronsRef.current.length === 0)
         neuronsRef.current = makeNeurons(30, W, H);
       if (variant === "constellation")
@@ -409,11 +458,35 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
 
     resize();
 
-    function loop() {
+    let lastTime = -1;
+    let spawnTimer = 0;
+
+    function loop(time: number) {
       if (!canvas) return;
-      if (variant === "tokens")
-        drawTokens(ctx, dpr, canvas, particlesRef.current, r, g, b);
-      else if (variant === "neural")
+      const dt = lastTime < 0 ? 0 : Math.min((time - lastTime) / 1000, 0.05);
+      lastTime = time;
+
+      if (variant === "tokens") {
+        // Spawn pulses
+        spawnTimer -= dt;
+        if (spawnTimer <= 0) {
+          const layer = Math.floor(Math.random() * (NN_LAYERS.length - 1));
+          nnPulsesRef.current.push({
+            layer,
+            fromIdx: Math.floor(Math.random() * NN_LAYERS[layer]),
+            toIdx: Math.floor(Math.random() * NN_LAYERS[layer + 1]),
+            t: 0, speed: 0.45 + Math.random() * 0.35,
+          });
+          if (Math.random() > 0.5) nnPulsesRef.current.push({
+            layer: Math.floor(Math.random() * (NN_LAYERS.length - 1)),
+            fromIdx: Math.floor(Math.random() * NN_LAYERS[0]),
+            toIdx: Math.floor(Math.random() * NN_LAYERS[1]),
+            t: 0, speed: 0.45 + Math.random() * 0.35,
+          });
+          spawnTimer = 0.2 + Math.random() * 0.35;
+        }
+        drawNNFrame(ctx, dpr, canvas, nnNodesRef.current, nnPulsesRef.current, dt, time / 1000, r, g, b);
+      } else if (variant === "neural")
         drawNeural(ctx, dpr, canvas, neuronsRef.current, r, g, b);
       else if (variant === "constellation")
         drawConstellation(ctx, dpr, canvas, r, g, b);
