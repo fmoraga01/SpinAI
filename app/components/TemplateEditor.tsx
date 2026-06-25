@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Assignment, Template, SlideTheme, SlideFont, SlideSize } from "@/lib/types";
 import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
@@ -29,6 +29,9 @@ function ListEditor({
   placeholder: string;
   onChange: (items: string[]) => void;
 }) {
+  const dragIndex = useRef<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
   function update(index: number, value: string) {
     const next = [...items];
     next[index] = value;
@@ -43,6 +46,31 @@ function ListEditor({
     onChange(items.filter((_, i) => i !== index));
   }
 
+  function onDragStart(i: number) {
+    dragIndex.current = i;
+  }
+
+  function onDragOver(e: React.DragEvent, i: number) {
+    e.preventDefault();
+    setDragOver(i);
+  }
+
+  function onDrop(i: number) {
+    const from = dragIndex.current;
+    if (from === null || from === i) { setDragOver(null); return; }
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+    next.splice(i, 0, moved);
+    onChange(next);
+    dragIndex.current = null;
+    setDragOver(null);
+  }
+
+  function onDragEnd() {
+    dragIndex.current = null;
+    setDragOver(null);
+  }
+
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
@@ -50,7 +78,31 @@ function ListEditor({
       </p>
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="flex items-center gap-2">
+          <div
+            key={i}
+            draggable
+            onDragStart={() => onDragStart(i)}
+            onDragOver={(e) => onDragOver(e, i)}
+            onDrop={() => onDrop(i)}
+            onDragEnd={onDragEnd}
+            className="flex items-center gap-2"
+            style={{
+              borderRadius: "var(--radius-md)",
+              outline: dragOver === i ? "2px solid var(--color-primary)" : "2px solid transparent",
+              transition: "outline 100ms",
+              opacity: dragIndex.current === i ? 0.4 : 1,
+            }}
+          >
+            {/* Drag handle */}
+            <span
+              style={{
+                cursor: "grab", color: "#9CA3AF", fontSize: 12,
+                flexShrink: 0, userSelect: "none", paddingLeft: 2,
+              }}
+              title="Arrastrar para reordenar"
+            >
+              ⠿
+            </span>
             <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
               {i + 1}
             </span>
