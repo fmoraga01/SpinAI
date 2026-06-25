@@ -83,6 +83,7 @@ function ListEditor({
             draggable
             onDragStart={() => onDragStart(i)}
             onDragOver={(e) => onDragOver(e, i)}
+            onDragLeave={() => setDragOver(null)}
             onDrop={() => onDrop(i)}
             onDragEnd={onDragEnd}
             className="flex items-center gap-2"
