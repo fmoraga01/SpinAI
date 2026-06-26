@@ -32,18 +32,31 @@ export async function loadData(): Promise<AppData> {
     db.from("assignments").select("*").order("date"),
   ]);
 
-  const memberIds = new Set((members ?? []).map((r) => r.id as string));
+  const memberMap = new Map((members ?? []).map((r) => [r.id as string, r.name as string]));
   const allAssignments = (assignments ?? []).map(rowToAssignment);
 
   // Remove orphaned assignments whose member no longer exists
-  const orphans = allAssignments.filter((a) => !memberIds.has(a.memberId));
+  const orphans = allAssignments.filter((a) => !memberMap.has(a.memberId));
   if (orphans.length > 0) {
     await db.from("assignments").delete().in("id", orphans.map((a) => a.id!));
   }
 
+  const valid = allAssignments.filter((a) => memberMap.has(a.memberId));
+
+  // Sync stale member_name in assignments (handles renames that happened before propagation fix)
+  const stale = valid.filter((a) => memberMap.get(a.memberId) !== a.memberName);
+  if (stale.length > 0) {
+    await Promise.all(
+      stale.map((a) =>
+        db.from("assignments").update({ member_name: memberMap.get(a.memberId) }).eq("id", a.id!)
+      )
+    );
+    stale.forEach((a) => { a.memberName = memberMap.get(a.memberId)!; });
+  }
+
   return {
     members: (members ?? []).map(rowToMember),
-    assignments: allAssignments.filter((a) => memberIds.has(a.memberId)),
+    assignments: valid,
   };
 }
 
