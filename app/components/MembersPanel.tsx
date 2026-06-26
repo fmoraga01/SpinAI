@@ -9,13 +9,16 @@ interface Props {
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
   onUpdateEmail: (id: string, email: string) => void;
+  onUpdateName: (id: string, name: string) => void;
 }
 
-export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpdateEmail }: Props) {
+export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpdateEmail, onUpdateName }: Props) {
   const [name, setName] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [nameDraft, setNameDraft] = useState("");
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -24,9 +27,21 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
     setName("");
   }
 
+  function startEditName(m: TeamMember) {
+    setEditingName(m.id);
+    setNameDraft(m.name);
+    setEditingEmail(null);
+  }
+
+  function saveName(id: string) {
+    if (nameDraft.trim()) onUpdateName(id, nameDraft.trim());
+    setEditingName(null);
+  }
+
   function startEditEmail(m: TeamMember) {
     setEditingEmail(m.id);
     setEmailDraft(m.email ?? "");
+    setEditingName(null);
   }
 
   function saveEmail(id: string) {
@@ -130,15 +145,44 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
                   )}
                 </button>
                 <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <span
-                    className="text-sm font-medium"
-                    style={{
-                      color: m.active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-                      opacity: m.active ? 1 : 0.5,
-                    }}
-                  >
-                    {m.name}
-                  </span>
+                  {editingName === m.id ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={nameDraft}
+                      onChange={(e) => setNameDraft(e.target.value)}
+                      onBlur={() => saveName(m.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveName(m.id);
+                        if (e.key === "Escape") setEditingName(null);
+                      }}
+                      placeholder="Nombre del integrante"
+                      style={{
+                        fontSize: 13, fontWeight: 500,
+                        background: "var(--color-surface)",
+                        border: "1px solid var(--color-primary)",
+                        borderRadius: 4,
+                        padding: "2px 6px",
+                        color: "var(--color-text-primary)",
+                        outline: "none",
+                        width: 160,
+                      }}
+                    />
+                  ) : (
+                    <button
+                      onClick={() => startEditName(m)}
+                      title="Editar nombre"
+                      style={{
+                        fontSize: 13, fontWeight: 500,
+                        color: m.active ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                        opacity: m.active ? 1 : 0.5,
+                        background: "transparent", border: "none",
+                        padding: 0, cursor: "pointer", textAlign: "left",
+                      }}
+                    >
+                      {m.name}
+                    </button>
+                  )}
                   {editingEmail === m.id ? (
                     <input
                       autoFocus

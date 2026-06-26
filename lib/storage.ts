@@ -60,6 +60,14 @@ export async function addMember(name: string): Promise<TeamMember> {
   return rowToMember(data);
 }
 
+export async function updateMemberName(id: string, name: string): Promise<void> {
+  const { error } = await getSupabase()
+    .from("members")
+    .update({ name: name.trim() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export async function updateMemberEmail(id: string, email: string): Promise<void> {
   const { error } = await getSupabase()
     .from("members")

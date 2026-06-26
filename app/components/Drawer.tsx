@@ -9,6 +9,7 @@ import {
   toggleMember,
   removeMember,
   updateMemberEmail,
+  updateMemberName,
   removeAssignment,
   confirmBulkAssignment,
   BulkAssignmentPreview,
@@ -207,6 +208,7 @@ export default function Drawer() {
                   onToggle={async (id) => { await toggleMember(id); await refresh(); }}
                   onRemove={async (id) => { await removeMember(id); await refresh(); }}
                   onUpdateEmail={async (id, email) => { await updateMemberEmail(id, email); await refresh(); }}
+                  onUpdateName={async (id, name) => { await updateMemberName(id, name); await refresh(); }}
                 />
               )}
               {drawer === "ruleta" && (
