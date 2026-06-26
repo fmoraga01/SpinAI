@@ -61,11 +61,16 @@ export async function addMember(name: string): Promise<TeamMember> {
 }
 
 export async function updateMemberName(id: string, name: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from("members")
-    .update({ name: name.trim() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  const db = getSupabase();
+  const trimmed = name.trim();
+  const [{ error: e1 }, { error: e2 }, { error: e3 }] = await Promise.all([
+    db.from("members").update({ name: trimmed }).eq("id", id),
+    db.from("assignments").update({ member_name: trimmed }).eq("member_id", id),
+    db.from("templates").update({ member_name: trimmed }).eq("member_id", id),
+  ]);
+  if (e1) throw new Error(e1.message);
+  if (e2) throw new Error(e2.message);
+  if (e3) throw new Error(e3.message);
 }
 
 export async function updateMemberEmail(id: string, email: string): Promise<void> {
