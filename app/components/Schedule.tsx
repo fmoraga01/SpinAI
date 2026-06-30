@@ -211,18 +211,6 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
                         ◈ Lámina
                       </button>
                     )}
-                    <button
-                      onClick={() => onRemove(a.id)}
-                      title="Eliminar"
-                      style={{
-                        color: "#374151", cursor: "pointer",
-                        background: "transparent", border: "none", padding: "4px", fontSize: 12,
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-primary)")}
-                      onMouseLeave={(e) => (e.currentTarget.style.color = "#374151")}
-                    >
-                      ✕
-                    </button>
                   </div>
                 </div>
               );
