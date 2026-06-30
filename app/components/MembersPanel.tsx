@@ -5,7 +5,7 @@ import { TeamMember } from "@/lib/types";
 
 interface Props {
   members: TeamMember[];
-  onAdd: (name: string) => void;
+  onAdd: (name: string, email?: string) => void;
   onToggle: (id: string) => void;
   onRemove: (id: string) => void;
   onUpdateEmail: (id: string, email: string) => void;
@@ -14,6 +14,7 @@ interface Props {
 
 export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpdateEmail, onUpdateName }: Props) {
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [editingEmail, setEditingEmail] = useState<string | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
@@ -23,8 +24,9 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
   function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) return;
-    onAdd(name.trim());
+    onAdd(name.trim(), email.trim() || undefined);
     setName("");
+    setEmail("");
   }
 
   function startEditName(m: TeamMember) {
@@ -62,24 +64,43 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
   return (
     <div>
       {/* Input */}
-      <form onSubmit={handleAdd} className="flex gap-2 mb-5">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre del integrante..."
-          className="flex-1 text-sm outline-none placeholder:text-[#4B5563]"
-          style={{
-            background: "var(--color-surface-elevated)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "var(--radius-md)",
-            padding: "8px 12px",
-            color: "var(--color-text-primary)",
-            transition: "border-color 150ms ease",
-          }}
-          onFocus={(e) => (e.target.style.borderColor = "#2C40FF")}
-          onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
-        />
+      <form onSubmit={handleAdd} className="flex gap-2 mb-5 items-start">
+        <div className="flex-1 flex flex-col gap-2">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre del integrante..."
+            className="text-sm outline-none placeholder:text-[#4B5563]"
+            style={{
+              background: "var(--color-surface-elevated)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "8px 12px",
+              color: "var(--color-text-primary)",
+              transition: "border-color 150ms ease",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#2C40FF")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email (opcional)"
+            className="text-sm outline-none placeholder:text-[#4B5563]"
+            style={{
+              background: "var(--color-surface-elevated)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "8px 12px",
+              color: "var(--color-text-primary)",
+              transition: "border-color 150ms ease",
+            }}
+            onFocus={(e) => (e.target.style.borderColor = "#2C40FF")}
+            onBlur={(e) => (e.target.style.borderColor = "var(--color-border)")}
+          />
+        </div>
         <button
           type="submit"
           disabled={!name.trim()}
@@ -92,6 +113,7 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
             padding: "8px 16px",
             cursor: name.trim() ? "pointer" : "not-allowed",
             boxShadow: name.trim() ? "var(--shadow-glow-sm)" : "none",
+            alignSelf: "stretch",
           }}
         >
           Agregar

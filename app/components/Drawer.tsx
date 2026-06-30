@@ -204,7 +204,7 @@ export default function Drawer() {
               {drawer === "equipo" && (
                 <MembersPanel
                   members={data.members}
-                  onAdd={async (name) => { await addMember(name); await refresh(); }}
+                  onAdd={async (name, email) => { await addMember(name, email); await refresh(); }}
                   onToggle={async (id) => { await toggleMember(id); await refresh(); }}
                   onRemove={async (id) => { await removeMember(id); await refresh(); }}
                   onUpdateEmail={async (id, email) => { await updateMemberEmail(id, email); await refresh(); }}

@@ -68,11 +68,11 @@ function nextFridayAfter(dateStr: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export async function addMember(name: string): Promise<TeamMember> {
+export async function addMember(name: string, email?: string): Promise<TeamMember> {
   const db = getSupabase();
   const { data, error } = await db
     .from("members")
-    .insert({ name: name.trim(), active: true })
+    .insert({ name: name.trim(), email: email?.trim() || null, active: true })
     .select()
     .single();
 
