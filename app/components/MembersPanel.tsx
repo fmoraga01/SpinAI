@@ -64,8 +64,8 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
   return (
     <div>
       {/* Input */}
-      <form onSubmit={handleAdd} className="flex gap-2 mb-5 items-start">
-        <div className="flex-1 flex flex-col gap-2">
+      <form onSubmit={handleAdd} className="flex flex-col gap-2 mb-5">
+        <div className="flex flex-col gap-2">
           <input
             type="text"
             value={name}
@@ -113,7 +113,7 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
             padding: "8px 16px",
             cursor: name.trim() ? "pointer" : "not-allowed",
             boxShadow: name.trim() ? "var(--shadow-glow-sm)" : "none",
-            alignSelf: "stretch",
+            width: "100%",
           }}
         >
           Agregar
