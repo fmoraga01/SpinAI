@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
 
   const assignment = assignments[0];
 
+  // Skip unassigned slots
+  if (!assignment.member_id || !assignment.member_name) {
+    return NextResponse.json({ skipped: "next assignment has no member assigned" });
+  }
+
   // Fetch all active members with email
   const { data: members, error: mErr } = await db
     .from("members")

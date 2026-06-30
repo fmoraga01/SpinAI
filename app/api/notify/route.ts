@@ -34,6 +34,9 @@ export async function POST(req: NextRequest) {
   if (aErr || !assignment) {
     return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
   }
+  if (!assignment.member_id || !assignment.member_name) {
+    return NextResponse.json({ error: "unassigned_slot" }, { status: 422 });
+  }
   if (mErr) {
     return NextResponse.json({ error: "Could not fetch members" }, { status: 500 });
   }

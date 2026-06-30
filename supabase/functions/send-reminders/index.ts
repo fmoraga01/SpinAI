@@ -41,6 +41,9 @@ Deno.serve(async (req) => {
   const results = [];
 
   for (const assignment of assignments) {
+    // Skip unassigned slots
+    if (!assignment.member_id || !assignment.member_name) continue;
+
     // Obtener email del integrante
     const { data: member } = await supabase
       .from("members")
