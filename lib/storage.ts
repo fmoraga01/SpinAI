@@ -16,8 +16,8 @@ function rowToMember(row: Record<string, unknown>): TeamMember {
 function rowToAssignment(row: Record<string, unknown>): Assignment {
   return {
     id: row.id as string,
-    memberId: row.member_id as string,
-    memberName: row.member_name as string,
+    memberId: (row.member_id as string | null) ?? null,
+    memberName: (row.member_name as string | null) ?? null,
     date: row.date as string,
     createdAt: row.created_at as string,
   };
@@ -35,23 +35,23 @@ export async function loadData(): Promise<AppData> {
   const memberMap = new Map((members ?? []).map((r) => [r.id as string, r.name as string]));
   const allAssignments = (assignments ?? []).map(rowToAssignment);
 
-  // Remove orphaned assignments whose member no longer exists
-  const orphans = allAssignments.filter((a) => !memberMap.has(a.memberId));
+  // Remove orphaned assignments: assigned to a member_id that no longer exists
+  const orphans = allAssignments.filter((a) => a.memberId && !memberMap.has(a.memberId));
   if (orphans.length > 0) {
     await db.from("assignments").delete().in("id", orphans.map((a) => a.id!));
   }
 
-  const valid = allAssignments.filter((a) => memberMap.has(a.memberId));
+  const valid = allAssignments.filter((a) => !a.memberId || memberMap.has(a.memberId));
 
-  // Sync stale member_name in assignments (handles renames that happened before propagation fix)
-  const stale = valid.filter((a) => memberMap.get(a.memberId) !== a.memberName);
+  // Sync stale member_name in assignments (handles renames before propagation fix)
+  const stale = valid.filter((a) => a.memberId && memberMap.get(a.memberId) !== a.memberName);
   if (stale.length > 0) {
     await Promise.all(
       stale.map((a) =>
-        db.from("assignments").update({ member_name: memberMap.get(a.memberId) }).eq("id", a.id!)
+        db.from("assignments").update({ member_name: memberMap.get(a.memberId!) }).eq("id", a.id!)
       )
     );
-    stale.forEach((a) => { a.memberName = memberMap.get(a.memberId)!; });
+    stale.forEach((a) => { a.memberName = memberMap.get(a.memberId!)!; });
   }
 
   return {
@@ -118,7 +118,14 @@ async function clearLogsIfNoAssignments(db: ReturnType<typeof getSupabase>): Pro
 
 export async function removeMember(id: string): Promise<void> {
   const db = getSupabase();
-  await db.from("assignments").delete().eq("member_id", id);
+  // Mark future assignments as unassigned instead of deleting them
+  const today = new Date().toISOString().slice(0, 10);
+  await db.from("assignments")
+    .update({ member_id: null, member_name: null })
+    .eq("member_id", id)
+    .gte("date", today);
+  // Delete past assignments (no longer relevant)
+  await db.from("assignments").delete().eq("member_id", id).lt("date", today);
   const { error } = await db.from("members").delete().eq("id", id);
   if (error) throw new Error(error.message);
   await clearLogsIfNoAssignments(db);
@@ -216,11 +223,22 @@ export async function buildBulkAssignmentPreview(): Promise<BulkAssignmentPrevie
   const activeMembers = data.members.filter((m) => m.active);
   if (activeMembers.length === 0) return [];
 
-  const assignedDates = new Set(data.assignments.map((a) => a.date));
+  const today = new Date().toISOString().slice(0, 10);
+  // Unassigned future slots (member removed) — fill these first
+  const unassignedDates = data.assignments
+    .filter((a) => !a.memberId && a.date >= today)
+    .map((a) => a.date)
+    .sort();
+  // Already assigned future dates — skip these
+  const takenDates = new Set(
+    data.assignments.filter((a) => a.memberId).map((a) => a.date)
+  );
 
   const needed = activeMembers.length;
-  const candidates = getNextFridays(needed + assignedDates.size + 4);
-  const available = candidates.filter((d) => !assignedDates.has(d)).slice(0, needed);
+  const newFridays = getNextFridays(needed + data.assignments.length + 4)
+    .filter((d) => !takenDates.has(d) && !unassignedDates.includes(d));
+
+  const available = [...unassignedDates, ...newFridays].slice(0, needed);
 
   // Fisher-Yates shuffle
   const shuffled = [...activeMembers];
@@ -237,14 +255,31 @@ export async function buildBulkAssignmentPreview(): Promise<BulkAssignmentPrevie
 }
 
 export async function confirmBulkAssignment(previews: BulkAssignmentPreview[]): Promise<void> {
-  const rows = previews.map((p) => ({
-    member_id: p.memberId,
-    member_name: p.memberName,
-    date: p.date,
-  }));
+  const db = getSupabase();
+  // Fetch existing unassigned slots to know which dates need UPDATE vs INSERT
+  const { data: unassigned } = await db
+    .from("assignments")
+    .select("id, date")
+    .is("member_id", null);
+  const unassignedByDate = new Map((unassigned ?? []).map((r) => [r.date as string, r.id as string]));
 
-  const { error } = await getSupabase().from("assignments").insert(rows);
-  if (error) throw new Error(error.message);
+  const toUpdate = previews.filter((p) => unassignedByDate.has(p.date));
+  const toInsert = previews.filter((p) => !unassignedByDate.has(p.date));
+
+  await Promise.all([
+    ...toUpdate.map((p) =>
+      db.from("assignments")
+        .update({ member_id: p.memberId, member_name: p.memberName })
+        .eq("id", unassignedByDate.get(p.date)!)
+    ),
+    toInsert.length > 0
+      ? db.from("assignments").insert(toInsert.map((p) => ({
+          member_id: p.memberId,
+          member_name: p.memberName,
+          date: p.date,
+        }))).then(({ error }) => { if (error) throw new Error(error.message); })
+      : Promise.resolve(),
+  ]);
 }
 
 // ─── Templates ────────────────────────────────────────────────────────────────

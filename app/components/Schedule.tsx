@@ -49,6 +49,8 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
     }
     const a = upcoming[from];
     const b = upcoming[targetIndex];
+    // Don't swap if either slot is unassigned
+    if (!a.memberId || !b.memberId) { setOverIndex(null); return; }
     setOverIndex(null);
     dragIndex.current = null;
     setSwapping(true);
@@ -128,12 +130,13 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
           <div className="space-y-2">
             {upcoming.map((a, i) => {
               const isNext = i === 0;
+              const isUnassigned = !a.memberId;
               const isDragging = dragIndex.current === i;
               const isOver = overIndex === i && dragIndex.current !== i;
               return (
                 <div
                   key={a.id}
-                  draggable={!swapping}
+                  draggable={!swapping && !isUnassigned}
                   onDragStart={() => { dragIndex.current = i; }}
                   onDragEnd={() => { dragIndex.current = null; setOverIndex(null); }}
                   onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
@@ -141,64 +144,73 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
                   onDrop={() => handleDrop(i)}
                   className="flex items-center gap-3"
                   style={{
-                    background: isOver ? "#2C40FF0f" : isNext ? "#2C40FF0f" : "var(--color-surface-elevated)",
-                    border: "1px solid " + (isOver ? "var(--color-primary)" : isNext ? "#2C40FF33" : "var(--color-border)"),
+                    background: isOver ? "#2C40FF0f" : isUnassigned ? "transparent" : isNext ? "#2C40FF0f" : "var(--color-surface-elevated)",
+                    border: "1px solid " + (isOver ? "var(--color-primary)" : isUnassigned ? "var(--color-border)" : isNext ? "#2C40FF33" : "var(--color-border)"),
                     borderRadius: "var(--radius-md)",
                     padding: "10px 12px",
-                    opacity: isDragging ? 0.4 : 1,
-                    cursor: swapping ? "wait" : "grab",
+                    opacity: isDragging ? 0.4 : isUnassigned ? 0.6 : 1,
+                    cursor: isUnassigned ? "default" : swapping ? "wait" : "grab",
                     transition: "opacity 150ms, border-color 150ms, background 150ms",
+                    borderStyle: isUnassigned ? "dashed" : "solid",
                   }}
                 >
-                  {/* Drag handle */}
-                  <span style={{ fontSize: 10, color: "#4B5563", flexShrink: 0, cursor: "grab", lineHeight: 1 }}>⠿</span>
+                  <span style={{ fontSize: 10, color: "#4B5563", flexShrink: 0, cursor: isUnassigned ? "default" : "grab", lineHeight: 1 }}>
+                    {isUnassigned ? "·" : "⠿"}
+                  </span>
                   <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
                     {i + 1}
                   </span>
                   <div
                     style={{
                       flexShrink: 0, width: 28, height: 28, borderRadius: "var(--radius-md)",
-                      background: isNext ? "#2C40FF22" : "var(--color-surface)",
-                      border: "1px solid " + (isNext ? "#2C40FF55" : "#1f2333"),
+                      background: isUnassigned ? "transparent" : isNext ? "#2C40FF22" : "var(--color-surface)",
+                      border: "1px dashed " + (isUnassigned ? "#4B5563" : isNext ? "#2C40FF55" : "#1f2333"),
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      color: isNext ? "#2C40FF" : "#9CA3AF",
+                      color: isUnassigned ? "#4B5563" : isNext ? "#2C40FF" : "#9CA3AF",
                       fontWeight: 600, fontSize: 10,
                     }}
                   >
-                    {getInitials(a.memberName)}
+                    {isUnassigned ? "?" : getInitials(a.memberName ?? "")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: "var(--color-text-primary)" }}>
-                      {a.memberName}
+                    <p className="text-sm font-semibold truncate" style={{ color: isUnassigned ? "#4B5563" : "var(--color-text-primary)" }}>
+                      {isUnassigned ? "Sin asignar" : a.memberName}
                     </p>
                     <p className="text-xs capitalize" style={{ color: "#4B5563" }}>
                       {formatDate(a.date)}
-                      {isNext && (
+                      {isNext && !isUnassigned && (
                         <span className="ml-2 font-medium" style={{ color: "var(--color-primary)" }}>
                           · Próximo
+                        </span>
+                      )}
+                      {isUnassigned && (
+                        <span className="ml-2 font-medium" style={{ color: "#F59E0B" }}>
+                          · Gira la ruleta para asignar
                         </span>
                       )}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onPrepare(a)}
-                      title="Preparar lámina"
-                      style={{
-                        display: "flex", alignItems: "center", gap: 4,
-                        padding: "4px 8px", cursor: "pointer",
-                        background: "transparent",
-                        border: "1px solid var(--color-border)",
-                        borderRadius: "var(--radius-md)",
-                        color: "#4B5563", fontSize: 11, fontWeight: 500,
-                        transition: "border-color 150ms, color 150ms",
-                        whiteSpace: "nowrap",
-                      }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#4B5563"; }}
-                    >
-                      ◈ Lámina
-                    </button>
+                    {!isUnassigned && (
+                      <button
+                        onClick={() => onPrepare(a)}
+                        title="Preparar lámina"
+                        style={{
+                          display: "flex", alignItems: "center", gap: 4,
+                          padding: "4px 8px", cursor: "pointer",
+                          background: "transparent",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "var(--radius-md)",
+                          color: "#4B5563", fontSize: 11, fontWeight: 500,
+                          transition: "border-color 150ms, color 150ms",
+                          whiteSpace: "nowrap",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#4B5563"; }}
+                      >
+                        ◈ Lámina
+                      </button>
+                    )}
                     <button
                       onClick={() => onRemove(a.id)}
                       title="Eliminar"
@@ -248,7 +260,7 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
                     color: "#9CA3AF", fontWeight: 600, fontSize: 10,
                   }}
                 >
-                  {getInitials(a.memberName)}
+                  {getInitials(a.memberName ?? "")}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate" style={{ color: "var(--color-text-secondary)" }}>

@@ -11,7 +11,7 @@ async function getNextFridayAssignment() {
   const memberIds = new Set(members.map((m) => m.id));
 
   const upcoming = assignments
-    .filter((a) => new Date(a.date + "T12:00:00") >= today && memberIds.has(a.memberId))
+    .filter((a) => a.memberId && new Date(a.date + "T12:00:00") >= today && memberIds.has(a.memberId))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return upcoming[0] ?? null;
@@ -24,7 +24,7 @@ function formatShortDate(dateStr: string): string {
 
 export default function HeroChip() {
   const { drawer } = useDrawer();
-  const [assignment, setAssignment] = useState<{ id: string; memberName: string; date: string } | null>(null);
+  const [assignment, setAssignment] = useState<{ id: string; memberName: string | null; date: string } | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

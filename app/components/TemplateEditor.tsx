@@ -345,8 +345,8 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
   function buildTemplate(): Template {
     return {
       assignmentId: assignment.id,
-      memberId: assignment.memberId,
-      memberName: assignment.memberName,
+      memberId: assignment.memberId ?? "",
+      memberName: assignment.memberName ?? "",
       title,
       agenda: agenda.filter((a) => a.trim() !== ""),
       keyPoints: [],

@@ -9,8 +9,8 @@ export interface TeamMember {
 
 export interface Assignment {
   id: string;
-  memberId: string;
-  memberName: string;
+  memberId: string | null;
+  memberName: string | null;
   date: string; // ISO date string (Friday)
   createdAt: string;
 }

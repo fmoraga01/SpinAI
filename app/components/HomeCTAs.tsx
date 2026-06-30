@@ -22,7 +22,7 @@ export default function HomeCTAs() {
   useEffect(() => {
     loadData().then(({ assignments, members }) => {
       const memberIds = new Set(members.map((m) => m.id));
-      const valid = assignments.filter((a) => memberIds.has(a.memberId));
+      const valid = assignments.filter((a) => a.memberId && memberIds.has(a.memberId));
       setNext(getNextAssignment(valid));
       setMounted(true);
     });
