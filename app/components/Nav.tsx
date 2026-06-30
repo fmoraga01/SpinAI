@@ -83,6 +83,20 @@ export default function Nav() {
                   cursor: "pointer",
                   transition: "all 150ms ease",
                 }}
+                onMouseEnter={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.color = "var(--color-text-primary)";
+                    e.currentTarget.style.background = "#ffffff0a";
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) {
+                    e.currentTarget.style.color = "var(--color-tertiary)";
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.borderColor = "transparent";
+                  }
+                }}
               >
                 {label}
               </button>
