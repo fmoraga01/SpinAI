@@ -62,15 +62,41 @@ export async function loadData(): Promise<AppData> {
 
 // ─── Members ─────────────────────────────────────────────────────────────────
 
+function nextFridayAfter(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  d.setDate(d.getDate() + 7);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export async function addMember(name: string): Promise<TeamMember> {
-  const { data, error } = await getSupabase()
+  const db = getSupabase();
+  const { data, error } = await db
     .from("members")
     .insert({ name: name.trim(), active: true })
     .select()
     .single();
 
   if (error) throw new Error(error.message);
-  return rowToMember(data);
+  const member = rowToMember(data);
+
+  // Find the last assigned date and place the new member one Friday after it
+  const { data: lastRow } = await db
+    .from("assignments")
+    .select("date")
+    .order("date", { ascending: false })
+    .limit(1);
+
+  const nextDate = lastRow && lastRow.length > 0
+    ? nextFridayAfter(lastRow[0].date as string)
+    : getNextFridays(1)[0];
+
+  await db.from("assignments").insert({
+    member_id: member.id,
+    member_name: member.name,
+    date: nextDate,
+  });
+
+  return member;
 }
 
 export async function updateMemberName(id: string, name: string): Promise<void> {
