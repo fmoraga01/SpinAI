@@ -1,0 +1,9 @@
+{
+  "allowedTools": [
+    "mcp__Vercel__get_deployment",
+    "mcp__Vercel__get_deployment_build_logs",
+    "mcp__Vercel__list_deployments",
+    "mcp__Vercel__list_projects",
+    "mcp__Vercel__list_teams"
+  ]
+}
