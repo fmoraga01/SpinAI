@@ -85,9 +85,9 @@ export default function Nav() {
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
-                    e.currentTarget.style.color = "var(--color-text-primary)";
-                    e.currentTarget.style.background = "#ffffff0a";
-                    e.currentTarget.style.borderColor = "var(--color-border)";
+                    e.currentTarget.style.color = "var(--color-primary)";
+                    e.currentTarget.style.background = "#2C40FF1a";
+                    e.currentTarget.style.borderColor = "#2C40FF55";
                   }
                 }}
                 onMouseLeave={(e) => {
