@@ -124,9 +124,18 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
     <div className="space-y-5">
       {upcoming.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
-            Próximos viernes
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#4B5563" }}>
+              Próximos viernes
+            </p>
+            <span style={{
+              fontSize: 10, fontWeight: 600, color: "var(--color-primary)",
+              background: "#2C40FF15", border: "1px solid #2C40FF33",
+              borderRadius: 4, padding: "1px 6px", lineHeight: "16px",
+            }}>
+              {upcoming.length}
+            </span>
+          </div>
           <div className="space-y-2">
             {upcoming.map((a, i) => {
               const isNext = i === 0;
