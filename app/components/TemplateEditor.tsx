@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Assignment, Template, SlideTheme, SlideFont, SlideSize } from "@/lib/types";
 import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
@@ -29,7 +29,7 @@ function ListEditor({
   placeholder: string;
   onChange: (items: string[]) => void;
 }) {
-  const dragIndex = useRef<number | null>(null);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
 
   function update(index: number, value: string) {
@@ -47,7 +47,7 @@ function ListEditor({
   }
 
   function onDragStart(i: number) {
-    dragIndex.current = i;
+    setDragIndex(i);
   }
 
   function onDragOver(e: React.DragEvent, i: number) {
@@ -56,18 +56,18 @@ function ListEditor({
   }
 
   function onDrop(i: number) {
-    const from = dragIndex.current;
+    const from = dragIndex;
     if (from === null || from === i) { setDragOver(null); return; }
     const next = [...items];
     const [moved] = next.splice(from, 1);
     next.splice(i, 0, moved);
     onChange(next);
-    dragIndex.current = null;
+    setDragIndex(null);
     setDragOver(null);
   }
 
   function onDragEnd() {
-    dragIndex.current = null;
+    setDragIndex(null);
     setDragOver(null);
   }
 
@@ -91,7 +91,7 @@ function ListEditor({
               borderRadius: "var(--radius-md)",
               outline: dragOver === i ? "2px solid var(--color-primary)" : "2px solid transparent",
               transition: "outline 100ms",
-              opacity: dragIndex.current === i ? 0.4 : 1,
+              opacity: dragIndex === i ? 0.4 : 1,
             }}
           >
             {/* Drag handle */}

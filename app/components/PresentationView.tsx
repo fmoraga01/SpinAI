@@ -20,7 +20,9 @@ function formatDate(dateStr: string): string {
 
 export default function PresentationView({ template, date, onClose }: Props) {
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   const [crossed, setCrossed] = useState<Set<number>>(new Set());
 
@@ -34,7 +36,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
   function toggleCrossed(i: number) {
     setCrossed((prev) => {
       const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
       return next;
     });
   }

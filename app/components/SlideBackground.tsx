@@ -159,8 +159,6 @@ function drawNeural(
   canvas: HTMLCanvasElement, neurons: Neuron[],
   r: number, g: number, b: number,
 ): void {
-  const W = canvas.offsetWidth;
-  const H = canvas.offsetHeight;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save(); ctx.scale(dpr, dpr);
 
@@ -507,7 +505,7 @@ export default function SlideBackground({ accent = "#2C40FF", variant = "tokens"
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       ro.disconnect();
     };
-  }, [accent, variant]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [accent, variant]);
 
   return (
     <canvas

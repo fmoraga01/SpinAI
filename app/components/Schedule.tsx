@@ -1,13 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Assignment } from "@/lib/types";
 import { useDrawer } from "./DrawerContext";
 import { swapAssignmentMembers } from "@/lib/storage";
 
 interface Props {
   assignments: Assignment[];
-  onRemove: (id: string) => void;
   onPrepare: (assignment: Assignment) => void;
   onRefresh: () => void;
 }
@@ -31,18 +30,18 @@ function isPast(dateStr: string): boolean {
   return new Date(dateStr + "T12:00:00") < today;
 }
 
-export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }: Props) {
+export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
   const { switchDrawer } = useDrawer();
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
 
-  const dragIndex = useRef<number | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const [swapping, setSwapping] = useState(false);
 
   async function handleDrop(targetIndex: number) {
-    const from = dragIndex.current;
+    const from = draggingIndex;
     if (from === null || from === targetIndex) {
       setOverIndex(null);
       return;
@@ -52,7 +51,7 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
     // Don't swap if either slot is unassigned
     if (!a.memberId || !b.memberId) { setOverIndex(null); return; }
     setOverIndex(null);
-    dragIndex.current = null;
+    setDraggingIndex(null);
     setSwapping(true);
     try {
       await swapAssignmentMembers(a.id, b.id);
@@ -140,14 +139,14 @@ export default function Schedule({ assignments, onRemove, onPrepare, onRefresh }
             {upcoming.map((a, i) => {
               const isNext = i === 0;
               const isUnassigned = !a.memberId;
-              const isDragging = dragIndex.current === i;
-              const isOver = overIndex === i && dragIndex.current !== i;
+              const isDragging = draggingIndex === i;
+              const isOver = overIndex === i && draggingIndex !== i;
               return (
                 <div
                   key={a.id}
                   draggable={!swapping && !isUnassigned}
-                  onDragStart={() => { dragIndex.current = i; }}
-                  onDragEnd={() => { dragIndex.current = null; setOverIndex(null); }}
+                  onDragStart={() => setDraggingIndex(i)}
+                  onDragEnd={() => { setDraggingIndex(null); setOverIndex(null); }}
                   onDragOver={(e) => { e.preventDefault(); setOverIndex(i); }}
                   onDragLeave={() => setOverIndex(null)}
                   onDrop={() => handleDrop(i)}

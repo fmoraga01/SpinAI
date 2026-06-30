@@ -10,7 +10,6 @@ import {
   removeMember,
   updateMemberEmail,
   updateMemberName,
-  removeAssignment,
   confirmBulkAssignment,
   BulkAssignmentPreview,
 } from "@/lib/storage";
@@ -49,19 +48,26 @@ export default function Drawer() {
 
   useEffect(() => {
     if (drawer) {
-      setMounted(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-    } else {
+      const raf = requestAnimationFrame(() => {
+        setMounted(true);
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    const raf = requestAnimationFrame(() => {
       setVisible(false);
       setEditingAssignment(null);
-      const t = setTimeout(() => setMounted(false), 320);
-      return () => clearTimeout(t);
-    }
+    });
+    const t = setTimeout(() => setMounted(false), 320);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+    };
   }, [drawer]);
 
   useEffect(() => {
     if (!drawer) return;
-    setLoading(true);
+    requestAnimationFrame(() => setLoading(true));
     loadData().then((d) => {
       setData(d);
       setLoading(false);
@@ -224,7 +230,6 @@ export default function Drawer() {
               {drawer === "historial" && (
                 <Schedule
                   assignments={data.assignments}
-                  onRemove={async (id) => { await removeAssignment(id); await refresh(); }}
                   onPrepare={(assignment) => setEditingAssignment(assignment)}
                   onRefresh={refresh}
                 />
