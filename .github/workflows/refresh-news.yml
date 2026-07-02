@@ -1,0 +1,16 @@
+name: Refresh AI News
+
+on:
+  schedule:
+    # Every 3 hours
+    - cron: "0 */3 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  refresh-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh news feed
+        run: |
+          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/refresh-news" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
