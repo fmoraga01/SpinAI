@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Nav from "../components/Nav";
 import { loadNews } from "@/lib/news";
 import { NewsItem } from "@/lib/types";
+import { SUBSCRIPTION_SOURCES } from "@/lib/newsSources";
 
 function formatRelative(isoStr: string): string {
   const diff = Date.now() - new Date(isoStr).getTime();
@@ -76,7 +77,7 @@ function NewsCard({ item }: { item: NewsItem }) {
           />
         )}
         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6, justifyContent: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <span
               style={{
                 fontSize: 11,
@@ -90,6 +91,23 @@ function NewsCard({ item }: { item: NewsItem }) {
             >
               {item.source}
             </span>
+            {SUBSCRIPTION_SOURCES.has(item.source) && (
+              <span
+                title="Este artículo puede requerir una suscripción para leerse completo"
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  color: "#F59E0B",
+                  background: "#F59E0B15",
+                  border: "1px solid #F59E0B33",
+                  borderRadius: "var(--radius-md)",
+                  padding: "2px 7px",
+                  flexShrink: 0,
+                }}
+              >
+                Suscripción requerida
+              </span>
+            )}
             <span title={new Date(item.publishedAt).toLocaleString("es-CL")} style={{ fontSize: 11, color: "#4B5563", fontWeight: 500 }}>
               {formatRelative(item.publishedAt)}
             </span>
