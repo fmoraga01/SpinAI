@@ -50,7 +50,7 @@ export default function Home() {
             }}
           >
             SpinAI asigna aleatoriamente quién conduce la reunión de equipo cada
-            viernes. Justo, simple y sin discusiones.
+            viernes. Justo, simple y sin discusiones
           </p>
 
           {/* CTAs */}
