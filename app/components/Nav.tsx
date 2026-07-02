@@ -12,9 +12,45 @@ function hasUpcomingAssignments(assignments: { date: string }[]): boolean {
   return assignments.some((a) => new Date(a.date + "T12:00:00") >= today);
 }
 
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        padding: "6px 14px",
+        borderRadius: "var(--radius-md)",
+        fontSize: 14,
+        fontWeight: 500,
+        color: active ? "#fff" : "var(--color-tertiary)",
+        background: active ? "#2C40FF22" : "transparent",
+        border: "1px solid " + (active ? "#2C40FF55" : "transparent"),
+        textDecoration: "none",
+        transition: "all 150ms ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = "var(--color-primary)";
+          e.currentTarget.style.background = "#2C40FF1a";
+          e.currentTarget.style.borderColor = "#2C40FF55";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!active) {
+          e.currentTarget.style.color = "var(--color-tertiary)";
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.borderColor = "transparent";
+        }
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 export default function Nav() {
   const { drawer, openDrawer } = useDrawer();
   const pathname = usePathname();
+  const homeActive = pathname === "/";
   const noticiasActive = pathname?.startsWith("/noticias") ?? false;
   const [rouletteVisible, setRouletteVisible] = useState<boolean | null>(null);
 
@@ -69,36 +105,8 @@ export default function Nav() {
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
-          <Link
-            href="/noticias"
-            style={{
-              padding: "6px 14px",
-              borderRadius: "var(--radius-md)",
-              fontSize: 14,
-              fontWeight: 500,
-              color: noticiasActive ? "#fff" : "var(--color-tertiary)",
-              background: noticiasActive ? "#2C40FF22" : "transparent",
-              border: "1px solid " + (noticiasActive ? "#2C40FF55" : "transparent"),
-              textDecoration: "none",
-              transition: "all 150ms ease",
-            }}
-            onMouseEnter={(e) => {
-              if (!noticiasActive) {
-                e.currentTarget.style.color = "var(--color-primary)";
-                e.currentTarget.style.background = "#2C40FF1a";
-                e.currentTarget.style.borderColor = "#2C40FF55";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!noticiasActive) {
-                e.currentTarget.style.color = "var(--color-tertiary)";
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.borderColor = "transparent";
-              }
-            }}
-          >
-            Noticias de IA
-          </Link>
+          <NavLink href="/" active={homeActive}>Home</NavLink>
+          <NavLink href="/noticias" active={noticiasActive}>Noticias de IA</NavLink>
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
             return (
