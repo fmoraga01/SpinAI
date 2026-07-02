@@ -1,6 +1,5 @@
--- SpinAI · esquema de base de datos
--- Ejecutar en el SQL editor de un proyecto Supabase nuevo (ej. spinai-dev)
--- para dejarlo con la misma estructura que producción.
+-- SpinAI · esquema inicial
+-- Corresponde al estado base usado tanto en producción como en dev.
 
 create extension if not exists pgcrypto;
 
