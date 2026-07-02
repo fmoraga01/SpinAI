@@ -49,8 +49,8 @@ export default function Home() {
               marginBottom: 48,
             }}
           >
-            SpinAI asigna aleatoriamente quién conduce la reunión de equipo cada
-            viernes. Justo, simple y sin discusiones
+            Automatiza la organización de las reuniones del equipo: asigna
+            responsables, prepara la agenda y deja todo listo antes del viernes.
           </p>
 
           {/* CTAs */}
