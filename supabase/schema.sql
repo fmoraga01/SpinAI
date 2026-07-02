@@ -56,3 +56,26 @@ create table if not exists assignment_logs (
 );
 
 create index if not exists assignment_logs_created_at_idx on assignment_logs (created_at desc);
+
+-- ─── row level security ─────────────────────────────────────────────────────
+-- La app protege el acceso en la capa de aplicación (PIN + JWT en
+-- middleware.ts), no vía Supabase Auth: el cliente usa la anon key
+-- directamente para leer/insertar/actualizar/borrar en las 4 tablas.
+-- Estas políticas replican ese mismo comportamiento en dev.
+
+alter table members enable row level security;
+alter table assignments enable row level security;
+alter table templates enable row level security;
+alter table assignment_logs enable row level security;
+
+create policy "anon full access" on members
+  for all to anon using (true) with check (true);
+
+create policy "anon full access" on assignments
+  for all to anon using (true) with check (true);
+
+create policy "anon full access" on templates
+  for all to anon using (true) with check (true);
+
+create policy "anon full access" on assignment_logs
+  for all to anon using (true) with check (true);
