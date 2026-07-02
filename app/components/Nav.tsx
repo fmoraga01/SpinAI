@@ -66,6 +66,28 @@ export default function Nav() {
 
         {/* Nav links */}
         <nav className="flex items-center gap-1">
+          <Link
+            href="/noticias"
+            style={{
+              padding: "6px 14px",
+              borderRadius: "var(--radius-md)",
+              fontSize: 14,
+              fontWeight: 500,
+              color: "var(--color-tertiary)",
+              textDecoration: "none",
+              transition: "all 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = "var(--color-primary)";
+              e.currentTarget.style.background = "#2C40FF1a";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "var(--color-tertiary)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            Noticias
+          </Link>
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
             return (
