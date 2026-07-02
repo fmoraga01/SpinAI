@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDrawer, DrawerView } from "./DrawerContext";
 import { loadData } from "@/lib/storage";
@@ -13,6 +14,8 @@ function hasUpcomingAssignments(assignments: { date: string }[]): boolean {
 
 export default function Nav() {
   const { drawer, openDrawer } = useDrawer();
+  const pathname = usePathname();
+  const noticiasActive = pathname?.startsWith("/noticias") ?? false;
   const [rouletteVisible, setRouletteVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -73,20 +76,28 @@ export default function Nav() {
               borderRadius: "var(--radius-md)",
               fontSize: 14,
               fontWeight: 500,
-              color: "var(--color-tertiary)",
+              color: noticiasActive ? "#fff" : "var(--color-tertiary)",
+              background: noticiasActive ? "#2C40FF22" : "transparent",
+              border: "1px solid " + (noticiasActive ? "#2C40FF55" : "transparent"),
               textDecoration: "none",
               transition: "all 150ms ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.color = "var(--color-primary)";
-              e.currentTarget.style.background = "#2C40FF1a";
+              if (!noticiasActive) {
+                e.currentTarget.style.color = "var(--color-primary)";
+                e.currentTarget.style.background = "#2C40FF1a";
+                e.currentTarget.style.borderColor = "#2C40FF55";
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "var(--color-tertiary)";
-              e.currentTarget.style.background = "transparent";
+              if (!noticiasActive) {
+                e.currentTarget.style.color = "var(--color-tertiary)";
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.borderColor = "transparent";
+              }
             }}
           >
-            Noticias
+            Noticias de IA
           </Link>
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
