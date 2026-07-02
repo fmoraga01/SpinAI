@@ -3,12 +3,38 @@ import Parser from "rss-parser";
 import { getSupabase } from "@/lib/supabase";
 import { NEWS_SOURCES } from "@/lib/newsSources";
 
-const parser = new Parser({ timeout: 10000 });
+interface MediaTag {
+  $?: { url?: string; medium?: string };
+}
 
-function extractImage(item: Parser.Item): string | null {
+interface ItemWithMedia extends Parser.Item {
+  "media:content"?: MediaTag[];
+  "media:thumbnail"?: MediaTag[];
+}
+
+const parser: Parser<Record<string, unknown>, ItemWithMedia> = new Parser({
+  timeout: 10000,
+  customFields: {
+    item: [
+      ["media:content", "media:content", { keepArray: true }],
+      ["media:thumbnail", "media:thumbnail", { keepArray: true }],
+    ],
+  },
+});
+
+function firstMediaUrl(tags: MediaTag[] | undefined): string | null {
+  const withUrl = tags?.find((tag) => tag.$?.url && (!tag.$.medium || tag.$.medium === "image"));
+  return withUrl?.$?.url ?? null;
+}
+
+function extractImage(item: ItemWithMedia): string | null {
   if (item.enclosure?.url && item.enclosure.type?.startsWith("image")) {
     return item.enclosure.url;
   }
+  const mediaContent = firstMediaUrl(item["media:content"]);
+  if (mediaContent) return mediaContent;
+  const mediaThumbnail = firstMediaUrl(item["media:thumbnail"]);
+  if (mediaThumbnail) return mediaThumbnail;
   const match = (item.content ?? "").match(/<img[^>]+src="([^"]+)"/i);
   return match ? match[1] : null;
 }
