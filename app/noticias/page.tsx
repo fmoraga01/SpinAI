@@ -265,7 +265,7 @@ export default function NoticiasPage() {
                 opacity: loadingMore ? 0.6 : 1,
               }}
             >
-              {loadingMore ? "Cargando..." : "Cargar más"}
+              {loadingMore ? "Cargando..." : "Cargar más noticias"}
             </button>
           </div>
         )}
