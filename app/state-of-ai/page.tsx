@@ -6,8 +6,10 @@ import Scatter from "./Scatter";
 import Ranking from "./Ranking";
 import Timeline from "./Timeline";
 import Companies from "./Companies";
+import Summary from "./Summary";
+import Trends from "./Trends";
 import { usePrefersReducedMotion } from "./useReducedMotion";
-import { AiModel, bestVariantPerSlug, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
+import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 
 function CountUp({ value, decimals = 1 }: { value: number; decimals?: number }) {
   const reduced = usePrefersReducedMotion();
@@ -167,6 +169,8 @@ export default function StateOfAiPage() {
 
     return { leader, labLeader, labLeaderCount, releases30, bestValue, latest, updatedAt };
   }, [deduped, models, now]);
+
+  const summary = useMemo(() => buildExecutiveSummary(deduped, now), [deduped, now]);
 
   function toggleCompare(id: string) {
     setSelectedIds((prev) =>
@@ -367,6 +371,18 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
+            {/* Resumen automático */}
+            {summary && (
+              <section style={{ marginBottom: 56 }}>
+                <SectionHeading
+                  kicker="Resumen"
+                  title="¿Qué está pasando ahora mismo?"
+                  subtitle="Generado automáticamente a partir del snapshot más reciente — sin intervención manual."
+                />
+                <Summary summary={summary} />
+              </section>
+            )}
+
             {/* Ranking + comparador integrado */}
             <section style={{ marginBottom: 56 }}>
               <SectionHeading
@@ -400,6 +416,16 @@ export default function StateOfAiPage() {
                 subtitle="Los lanzamientos más recientes evaluados por Artificial Analysis, en orden cronológico."
               />
               <Timeline models={deduped} />
+            </section>
+
+            {/* Tendencias */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="Tendencias"
+                title="¿El ecosistema se está acelerando?"
+                subtitle="Cantidad de modelos nuevos evaluados por mes de lanzamiento, en los últimos 6 meses."
+              />
+              <Trends models={deduped} />
             </section>
 
             {/* Empresas */}
