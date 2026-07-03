@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Nav from "../components/Nav";
 import Scatter from "./Scatter";
 import Ranking from "./Ranking";
+import Timeline from "./Timeline";
+import Companies from "./Companies";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 
@@ -388,6 +390,26 @@ export default function StateOfAiPage() {
                 subtitle={`La pregunta no es cuál es el mejor modelo, sino cuál da más por tu presupuesto. ${stats.bestValue ? `Hoy, ${stats.bestValue.name} ofrece ${formatIndex(stats.bestValue.intelligenceIndex)} puntos de inteligencia por ${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens.` : ""}`}
               />
               <Scatter models={deduped} />
+            </section>
+
+            {/* Timeline */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="Historia"
+                title="¿Qué ha pasado últimamente?"
+                subtitle="Los lanzamientos más recientes evaluados por Artificial Analysis, en orden cronológico."
+              />
+              <Timeline models={deduped} />
+            </section>
+
+            {/* Empresas */}
+            <section style={{ marginBottom: 40 }}>
+              <SectionHeading
+                kicker="Empresas"
+                title="¿Quién está liderando la carrera?"
+                subtitle="Laboratorios ordenados por el índice de inteligencia promedio de sus modelos evaluados."
+              />
+              <Companies models={deduped} />
             </section>
 
             {/* Atribución (requerida por los términos de Artificial Analysis) */}
