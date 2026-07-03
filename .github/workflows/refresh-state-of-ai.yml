@@ -1,0 +1,16 @@
+name: Refresh State of AI
+
+on:
+  schedule:
+    # Daily at 09:00 UTC = 6:00 AM Santiago
+    - cron: "0 9 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  refresh-state-of-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh AI models snapshot
+        run: |
+          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/refresh-state-of-ai" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"

@@ -52,6 +52,7 @@ export default function Nav() {
   const pathname = usePathname();
   const homeActive = pathname === "/";
   const noticiasActive = pathname?.startsWith("/noticias") ?? false;
+  const stateOfAiActive = pathname?.startsWith("/state-of-ai") ?? false;
   const [rouletteVisible, setRouletteVisible] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -108,6 +109,7 @@ export default function Nav() {
         <nav className="flex items-center gap-1">
           <NavLink href="/" active={homeActive}>Home</NavLink>
           <NavLink href="/noticias" active={noticiasActive}>Noticias de IA</NavLink>
+          <NavLink href="/state-of-ai" active={stateOfAiActive}>State of AI</NavLink>
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
             return (
