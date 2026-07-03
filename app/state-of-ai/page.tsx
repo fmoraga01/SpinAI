@@ -1,25 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Nav from "../components/Nav";
 import Scatter from "./Scatter";
 import Ranking from "./Ranking";
-import Comparator from "./Comparator";
+import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
-
-function subscribeReducedMotion(callback: () => void) {
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  mq.addEventListener("change", callback);
-  return () => mq.removeEventListener("change", callback);
-}
-
-function usePrefersReducedMotion(): boolean {
-  return useSyncExternalStore(
-    subscribeReducedMotion,
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-    () => true // en SSR, sin animación
-  );
-}
 
 function CountUp({ value, decimals = 1 }: { value: number; decimals?: number }) {
   const reduced = usePrefersReducedMotion();
@@ -185,11 +171,6 @@ export default function StateOfAiPage() {
       prev.includes(id) ? prev.filter((x) => x !== id) : prev.length >= 4 ? prev : [...prev, id]
     );
   }
-
-  const selectedModels = useMemo(
-    () => selectedIds.map((id) => deduped.find((m) => m.id === id)).filter((m): m is AiModel => !!m),
-    [selectedIds, deduped]
-  );
 
   const tileStyle: React.CSSProperties = {
     background: "var(--color-surface-elevated)",
@@ -384,39 +365,29 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
-            {/* Ranking */}
+            {/* Ranking + comparador integrado */}
             <section style={{ marginBottom: 56 }}>
               <SectionHeading
                 kicker="Ranking"
                 title="¿Qué modelos lideran hoy?"
-                subtitle="Los principales modelos ordenados por el índice de inteligencia de Artificial Analysis. Ordena por cualquier columna o filtra por laboratorio."
+                subtitle="Los principales modelos ordenados por el índice de inteligencia de Artificial Analysis. Ordena por cualquier columna, filtra por laboratorio, y agrega hasta 4 a la comparación de abajo con el botón «+»."
               />
-              <Ranking models={deduped} selectedIds={selectedIds} onToggleCompare={toggleCompare} />
+              <Ranking
+                models={deduped}
+                selectedIds={selectedIds}
+                onToggleCompare={toggleCompare}
+                onSelectPreset={setSelectedIds}
+              />
             </section>
 
             {/* Scatter */}
-            <section style={{ marginBottom: 56 }}>
+            <section style={{ marginBottom: 40 }}>
               <SectionHeading
                 kicker="Eficiencia"
                 title="El trade-off que importa: inteligencia vs precio"
                 subtitle={`La pregunta no es cuál es el mejor modelo, sino cuál da más por tu presupuesto. ${stats.bestValue ? `Hoy, ${stats.bestValue.name} ofrece ${formatIndex(stats.bestValue.intelligenceIndex)} puntos de inteligencia por ${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens.` : ""}`}
               />
               <Scatter models={deduped} />
-            </section>
-
-            {/* Comparador */}
-            <section style={{ marginBottom: 40 }}>
-              <SectionHeading
-                kicker="Comparador"
-                title="Compara los modelos que te interesan"
-                subtitle="Hasta 4 modelos lado a lado: inteligencia, precio, velocidad y latencia, con el mejor valor de cada fila destacado."
-              />
-              <Comparator
-                selected={selectedModels}
-                allModels={deduped}
-                onToggle={toggleCompare}
-                onSelectPreset={setSelectedIds}
-              />
             </section>
 
             {/* Atribución (requerida por los términos de Artificial Analysis) */}
