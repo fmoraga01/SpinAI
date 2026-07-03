@@ -266,7 +266,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
       {/* Comparación integrada — vive en la misma sección que el ranking */}
       <div ref={comparatorRef} style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid var(--color-border)" }}>
         <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
-          Comparar seleccionados
+          Comparar modelos seleccionados
         </p>
         <Comparator
           selected={selectedModels}
