@@ -2,7 +2,7 @@ import { AiModel, formatIndex, formatPrice } from "@/lib/stateOfAi";
 
 const MARK = "#5B6CFF";
 const MIN_CAPABILITY = 0.75; // % del índice del líder para contar como "capaz"
-const MAX_PICKS = 3;
+const MAX_PICKS = 6;
 
 interface Pick {
   model: AiModel;
