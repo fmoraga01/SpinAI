@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Nav from "../components/Nav";
-import ValueLeaderboard from "./ValueLeaderboard";
+import ValuePicks from "./ValuePicks";
 import Ranking from "./Ranking";
 import Timeline from "./Timeline";
 import Companies from "./Companies";
@@ -418,7 +418,7 @@ export default function StateOfAiPage() {
                 title="El trade-off que importa: inteligencia vs precio"
                 subtitle={`La pregunta no es cuál es el mejor modelo, sino cuál da más por tu presupuesto. ${stats.bestValue ? `Hoy, ${stats.bestValue.name} ofrece ${formatIndex(stats.bestValue.intelligenceIndex)} puntos de inteligencia por ${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens.` : ""}`}
               />
-              <ValueLeaderboard models={deduped} />
+              <ValuePicks models={deduped} leader={stats.leader} />
             </section>
 
             {/* Tendencias */}
