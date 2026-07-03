@@ -423,11 +423,9 @@ export default function StateOfAiPage() {
 
             {/* Tendencias */}
             <section style={{ marginBottom: 56 }}>
-              <SectionHeading
-                kicker="Tendencias"
-                title="¿El ecosistema se está acelerando?"
-                subtitle="Cantidad de modelos nuevos evaluados por mes de lanzamiento, en los últimos 6 meses."
-              />
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 24px" }}>
+                Tendencias
+              </p>
               <Trends models={deduped} />
             </section>
 
