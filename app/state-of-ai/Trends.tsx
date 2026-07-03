@@ -21,10 +21,10 @@ export default function Trends({ models }: { models: AiModel[] }) {
 
   return (
     <figure style={{ margin: 0 }}>
-      <h3 style={{ fontSize: 18, fontWeight: 600, color: "#fff", margin: "0 0 4px", letterSpacing: "-0.01em" }}>
+      <h3 style={{ fontSize: 24, fontWeight: 600, color: "#fff", margin: "0 0 6px", letterSpacing: "-0.015em" }}>
         {growing ? "El ritmo de lanzamientos se acelera" : "El ritmo de lanzamientos se mantiene"}
       </h3>
-      <p style={{ fontSize: 13, color: "var(--color-tertiary)", margin: "0 0 20px", lineHeight: "19px" }}>
+      <p style={{ fontSize: 14, color: "var(--color-tertiary)", margin: "0 0 22px", lineHeight: "21px", maxWidth: 560 }}>
         Modelos nuevos evaluados por Artificial Analysis, por mes de lanzamiento.
       </p>
       <div style={{ overflowX: "auto" }}>
