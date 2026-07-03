@@ -5,11 +5,11 @@ import { getSupabase } from "@/lib/supabase";
 const ARXIV_URL =
   "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=30";
 
-interface AuthorTag {
-  name?: string;
-}
+type AuthorTag = { name?: string } | string;
 interface ArxivItem extends Parser.Item {
-  author?: AuthorTag[];
+  // xml2js solo envuelve en array cuando hay >1 <author>; con un único
+  // autor llega como objeto suelto, no como array de un elemento.
+  author?: AuthorTag[] | AuthorTag;
 }
 
 const parser: Parser<Record<string, unknown>, ArxivItem> = new Parser({
@@ -22,6 +22,13 @@ const parser: Parser<Record<string, unknown>, ArxivItem> = new Parser({
 function extractArxivId(link: string): string {
   const match = link.match(/abs\/([^/]+)$/);
   return match ? match[1] : link;
+}
+
+function extractAuthorNames(author: ArxivItem["author"]): string[] {
+  const list = Array.isArray(author) ? author : author ? [author] : [];
+  return list
+    .map((a) => (typeof a === "string" ? a : a?.name))
+    .filter((n): n is string => !!n);
 }
 
 export async function GET(req: NextRequest) {
@@ -43,7 +50,7 @@ export async function GET(req: NextRequest) {
     .map((item) => ({
       arxiv_id: extractArxivId(item.link!),
       title: item.title!.trim().replace(/\s+/g, " "),
-      authors: (item.author ?? []).map((a) => a.name).filter((n): n is string => !!n),
+      authors: extractAuthorNames(item.author),
       summary: item.summary?.trim().replace(/\s+/g, " ").slice(0, 500) || null,
       url: item.link!,
       published_at: item.isoDate ?? (item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString()),
