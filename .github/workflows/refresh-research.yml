@@ -1,0 +1,16 @@
+name: Refresh Research Papers
+
+on:
+  schedule:
+    # Daily at 10:00 UTC = 7:00 AM Santiago
+    - cron: "0 10 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  refresh-research:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh arXiv papers snapshot
+        run: |
+          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/refresh-research" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"

@@ -8,8 +8,11 @@ import Timeline from "./Timeline";
 import Companies from "./Companies";
 import Summary from "./Summary";
 import Trends from "./Trends";
+import Research from "./Research";
+import CategoryGrid from "./CategoryGrid";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
+import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
 
 function CountUp({ value, decimals = 1 }: { value: number; decimals?: number }) {
   const reduced = usePrefersReducedMotion();
@@ -429,13 +432,43 @@ export default function StateOfAiPage() {
             </section>
 
             {/* Empresas */}
-            <section style={{ marginBottom: 40 }}>
+            <section style={{ marginBottom: 56 }}>
               <SectionHeading
                 kicker="Empresas"
                 title="¿Quién está liderando la carrera?"
                 subtitle="Laboratorios ordenados por el índice de inteligencia promedio de sus modelos evaluados."
               />
               <Companies models={deduped} />
+            </section>
+
+            {/* Investigación */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="Investigación"
+                title="¿Qué se está publicando ahora?"
+                subtitle="Papers recientes de arXiv en inteligencia artificial (categoría cs.AI)."
+              />
+              <Research />
+            </section>
+
+            {/* AI Landscape */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="AI Landscape"
+                title="El mapa del ecosistema"
+                subtitle="Una selección curada de las piezas que componen el ecosistema de IA hoy — no exhaustiva, sí representativa."
+              />
+              <CategoryGrid categories={AI_LANDSCAPE} />
+            </section>
+
+            {/* Agentes de IA */}
+            <section style={{ marginBottom: 40 }}>
+              <SectionHeading
+                kicker="Agentes de IA"
+                title="La ola agéntica"
+                subtitle="Frameworks, protocolos y plataformas que definen cómo se construyen agentes hoy."
+              />
+              <CategoryGrid categories={AI_AGENTS} />
             </section>
 
             {/* Atribución (requerida por los términos de Artificial Analysis) */}
