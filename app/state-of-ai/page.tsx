@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Nav from "../components/Nav";
-import Scatter from "./Scatter";
+import ValueLeaderboard from "./ValueLeaderboard";
 import Ranking from "./Ranking";
 import Timeline from "./Timeline";
 import Companies from "./Companies";
@@ -411,14 +411,14 @@ export default function StateOfAiPage() {
               />
             </section>
 
-            {/* Scatter */}
+            {/* Eficiencia */}
             <section style={{ marginBottom: 40 }}>
               <SectionHeading
                 kicker="Eficiencia"
                 title="El trade-off que importa: inteligencia vs precio"
                 subtitle={`La pregunta no es cuál es el mejor modelo, sino cuál da más por tu presupuesto. ${stats.bestValue ? `Hoy, ${stats.bestValue.name} ofrece ${formatIndex(stats.bestValue.intelligenceIndex)} puntos de inteligencia por ${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens.` : ""}`}
               />
-              <Scatter models={deduped} />
+              <ValueLeaderboard models={deduped} />
             </section>
 
             {/* Tendencias */}
