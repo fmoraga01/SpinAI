@@ -60,6 +60,60 @@ function relativeDate(dateStr: string): string {
   return months === 1 ? "Hace 1 mes" : `Hace ${months} meses`;
 }
 
+function PulseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12h4l2.5-7 4 14 2.5-7H21" />
+    </svg>
+  );
+}
+function LayersIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z" />
+      <path d="m2.5 13 9.5 5 9.5-5" />
+      <path d="m2.5 18 9.5 5 9.5-5" />
+    </svg>
+  );
+}
+function LabIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 2v6.5L4 19a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-10.5V2" />
+      <path d="M8 2h8" />
+      <path d="M7 15h10" />
+    </svg>
+  );
+}
+
+function StatTile({
+  icon, accent, value, label, index, large,
+}: { icon: React.ReactNode; accent: string; value: string | number; label: string; index: number; large?: boolean }) {
+  return (
+    <div
+      className="soa-stat-tile"
+      style={{
+        background: "var(--color-surface-elevated)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        padding: large ? "22px 22px" : "18px 20px",
+        // @ts-expect-error custom property for CSS stagger delay
+        "--soa-i": index,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, color: accent }}>
+        {icon}
+      </div>
+      <p style={{ fontSize: large ? 30 : 20, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
+        {value}
+      </p>
+      <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "5px 0 0", lineHeight: "18px" }}>
+        {label}
+      </p>
+    </div>
+  );
+}
+
 function SectionHeading({ kicker, title, subtitle }: { kicker: string; title: string; subtitle: string }) {
   return (
     <div style={{ marginBottom: 24 }}>
@@ -184,52 +238,116 @@ export default function StateOfAiPage() {
 
         {!loading && stats && (
           <>
+            <style>{`
+              @media (prefers-reduced-motion: no-preference) {
+                .soa-atmosphere::before, .soa-atmosphere::after {
+                  animation: soa-drift-a 14s ease-in-out infinite alternate;
+                }
+                .soa-atmosphere::after { animation-name: soa-drift-b; animation-duration: 18s; }
+                @keyframes soa-drift-a { to { transform: translate(4%, 6%) scale(1.08); } }
+                @keyframes soa-drift-b { to { transform: translate(-5%, -4%) scale(0.94); } }
+
+                .soa-stat-tile {
+                  opacity: 0;
+                  transform: translateY(8px);
+                  animation: soa-reveal 380ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+                  animation-delay: calc(var(--soa-i) * 90ms);
+                }
+                @keyframes soa-reveal { to { opacity: 1; transform: translateY(0); } }
+              }
+              .soa-stat-tile {
+                transition: transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out;
+              }
+              .soa-stat-tile:hover {
+                transform: translateY(-3px);
+                border-color: rgba(91,108,255,0.35);
+                box-shadow: 0 12px 24px -8px rgba(0,0,0,0.5), 0 0 28px -10px rgba(91,108,255,0.18);
+              }
+              .soa-launch-row {
+                border-left: 2px solid transparent;
+                transition: border-color 150ms ease-out, transform 150ms ease-out;
+              }
+              .soa-launch-row:hover {
+                border-left-color: #5B6CFF;
+                transform: translateX(2px);
+              }
+            `}</style>
+
             {/* Hero figure: modelo líder */}
             <div
               style={{
                 ...tileStyle,
-                padding: "28px 28px",
-                marginBottom: 12,
-                background: "linear-gradient(135deg, #141724 0%, #10131d 100%)",
+                position: "relative",
+                overflow: "hidden",
+                padding: "44px 32px 36px",
+                marginBottom: 16,
+                boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -24px rgba(0,0,0,0.6)",
               }}
             >
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 10px" }}>
-                Modelo líder en inteligencia
-              </p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap" }}>
-                <span style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 600, color: "#fff", letterSpacing: "-0.02em" }}>
-                  {stats.leader.name}
-                </span>
-                <span style={{ fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 600, color: "#5B6CFF", letterSpacing: "-0.01em" }}>
-                  <CountUp value={stats.leader.intelligenceIndex!} />
-                </span>
+              <div
+                className="soa-atmosphere"
+                aria-hidden="true"
+                style={{ position: "absolute", inset: 0, overflow: "hidden", filter: "blur(60px)", pointerEvents: "none" }}
+              >
+                <span style={{ position: "absolute", width: "40%", paddingBottom: "40%", borderRadius: "50%", background: "#2C40FF", opacity: 0.14, top: "-12%", left: "-6%" }} />
+                <span style={{ position: "absolute", width: "34%", paddingBottom: "34%", borderRadius: "50%", background: "#5B6CFF", opacity: 0.1, top: "8%", right: "-8%" }} />
               </div>
-              <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "8px 0 0" }}>
-                {stats.leader.creatorName} lidera el índice de inteligencia de Artificial Analysis
-                {stats.leader.releaseDate ? `, con un modelo lanzado ${relativeDate(stats.leader.releaseDate).toLowerCase()}` : ""}.
-              </p>
+
+              <div style={{ position: "relative", zIndex: 1 }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
+                  Modelo líder en inteligencia
+                </p>
+                <p style={{ fontSize: 17, fontWeight: 500, color: "var(--color-text-secondary)", margin: "0 0 2px", letterSpacing: "-0.005em" }}>
+                  {stats.leader.name}
+                </p>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+                  <span
+                    style={{
+                      fontSize: "clamp(64px, 9vw, 120px)",
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      letterSpacing: "-0.03em",
+                      color: "#5B6CFF",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    <CountUp value={stats.leader.intelligenceIndex!} />
+                  </span>
+                  <span style={{ fontSize: 14, fontWeight: 500, color: "var(--color-tertiary)" }}>
+                    índice de inteligencia
+                  </span>
+                </div>
+                <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "12px 0 0" }}>
+                  {stats.leader.creatorName} lidera el ranking de Artificial Analysis
+                  {stats.leader.releaseDate ? `, con un modelo lanzado ${relativeDate(stats.leader.releaseDate).toLowerCase()}` : ""}.
+                </p>
+              </div>
             </div>
 
-            {/* Stat tiles */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 12 }}>
-              <div style={tileStyle}>
-                <p style={{ fontSize: 22, fontWeight: 600, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums" }}>{deduped.length}</p>
-                <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "4px 0 0", lineHeight: "18px" }}>
-                  modelos evaluados en el snapshot actual
-                </p>
-              </div>
-              <div style={tileStyle}>
-                <p style={{ fontSize: 22, fontWeight: 600, color: "#fff", margin: 0 }}>{stats.labLeader}</p>
-                <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "4px 0 0", lineHeight: "18px" }}>
-                  laboratorio con más modelos en el top 20 ({stats.labLeaderCount})
-                </p>
-              </div>
-              <div style={tileStyle}>
-                <p style={{ fontSize: 22, fontWeight: 600, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums" }}>{stats.releases30}</p>
-                <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "4px 0 0", lineHeight: "18px" }}>
-                  modelos lanzados en los últimos 30 días
-                </p>
-              </div>
+            {/* Stat tiles — tamaño asimétrico, un acento propio por tile */}
+            <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-3" style={{ marginBottom: 16 }}>
+              <StatTile
+                icon={<PulseIcon />}
+                accent="#C97A34"
+                value={stats.releases30}
+                label="modelos lanzados en los últimos 30 días"
+                index={0}
+                large
+              />
+              <StatTile
+                icon={<LayersIcon />}
+                accent="#5B6CFF"
+                value={deduped.length}
+                label="modelos evaluados en el snapshot actual"
+                index={1}
+              />
+              <StatTile
+                icon={<LabIcon />}
+                accent="#1F9E6D"
+                value={stats.labLeader}
+                label={`laboratorio con más modelos en el top 20 (${stats.labLeaderCount})`}
+                index={2}
+              />
             </div>
 
             {/* Últimos lanzamientos */}
@@ -241,12 +359,13 @@ export default function StateOfAiPage() {
                 {stats.latest.map((m, i) => (
                   <div
                     key={m.id}
+                    className="soa-launch-row"
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: 12,
-                      padding: "10px 0",
+                      padding: "10px 0 10px 10px",
                       borderBottom: i < stats.latest.length - 1 ? "1px solid var(--color-border)" : "none",
                     }}
                   >
