@@ -380,7 +380,7 @@ export default function StateOfAiPage() {
                 <SectionHeading
                   kicker="Resumen"
                   title="¿Qué está pasando ahora mismo?"
-                  subtitle="Generado automáticamente a partir del snapshot más reciente — sin intervención manual."
+                  subtitle="Una vista rápida de los acontecimientos más importantes del ecosistema, actualizada automáticamente con la información más reciente."
                 />
                 <Summary summary={summary} />
               </section>
