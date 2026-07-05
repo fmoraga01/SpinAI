@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Nav from "../components/Nav";
+import AnimatedGrid from "../components/AnimatedGrid";
 import ValuePicks from "./ValuePicks";
 import Ranking from "./Ranking";
 import Timeline from "./Timeline";
@@ -210,7 +211,11 @@ export default function StateOfAiPage() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
+    <div style={{ minHeight: "100vh", background: "var(--color-bg)", position: "relative" }}>
+      <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
+        <AnimatedGrid />
+      </div>
+      <div style={{ position: "relative", zIndex: 1 }}>
       <Nav />
       <div className="max-w-5xl mx-auto px-6" style={{ paddingTop: 56, paddingBottom: 80 }}>
 
@@ -519,6 +524,7 @@ export default function StateOfAiPage() {
             </p>
           </>
         )}
+      </div>
       </div>
     </div>
   );
