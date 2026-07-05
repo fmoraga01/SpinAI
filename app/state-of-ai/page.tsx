@@ -232,10 +232,45 @@ export default function StateOfAiPage() {
         </p>
 
         {loading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="animate-pulse" style={{ height: 88, borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />
-            ))}
+          <div>
+            {/* Hero card */}
+            <div className="animate-pulse" style={{ ...tileStyle, padding: "44px 32px 36px", marginBottom: 16 }}>
+              <div style={{ width: 150, height: 11, borderRadius: 4, background: "var(--color-border)", marginBottom: 16 }} />
+              <div style={{ width: 200, height: 15, borderRadius: 4, background: "var(--color-border)", marginBottom: 18 }} />
+              <div style={{ width: 260, height: 56, borderRadius: 8, background: "var(--color-border)" }} />
+            </div>
+
+            {/* Stat tiles */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="animate-pulse" style={{ ...tileStyle, padding: "20px 22px" }}>
+                  <div style={{ width: "75%", height: 13, borderRadius: 4, background: "var(--color-border)", marginBottom: 14 }} />
+                  <div style={{ width: "45%", height: 26, borderRadius: 4, background: "var(--color-border)" }} />
+                </div>
+              ))}
+            </div>
+
+            {/* Últimos lanzamientos */}
+            <div className="animate-pulse" style={tileStyle}>
+              <div style={{ width: 140, height: 11, borderRadius: 4, background: "var(--color-border)", marginBottom: 16 }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "10px 0",
+                      borderBottom: i < 3 ? "1px solid var(--color-border)" : "none",
+                    }}
+                  >
+                    <div style={{ width: 170 - i * 12, height: 13, borderRadius: 4, background: "var(--color-border)" }} />
+                    <div style={{ width: 88, height: 20, borderRadius: 4, background: "var(--color-border)" }} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
