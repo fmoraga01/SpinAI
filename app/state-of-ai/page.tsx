@@ -433,7 +433,7 @@ export default function StateOfAiPage() {
               <SectionHeading
                 kicker="Ranking"
                 title="¿Qué modelos lideran hoy?"
-                subtitle="Los principales modelos ordenados por el índice de inteligencia de Artificial Analysis. Ordena por cualquier columna, filtra por laboratorio, y agrega hasta 4 a la comparación de abajo con el botón «+»."
+                subtitle="Los principales modelos ordenados por el índice de inteligencia de Artificial Analysis. Ordena por cualquier columna, filtra por laboratorio, y agrega hasta 4 a la comparación con el botón «+»."
               />
               <Ranking
                 models={deduped}

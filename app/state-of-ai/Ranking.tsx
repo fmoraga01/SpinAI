@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { AiModel, formatIndex, formatPrice, formatReleaseDate } from "@/lib/stateOfAi";
 import { usePrefersReducedMotion } from "./useReducedMotion";
-import Comparator from "./Comparator";
+import ComparatorDrawer from "./ComparatorDrawer";
 
 const MARK = "#5B6CFF";
 const PAGE_SIZE = 15;
@@ -58,7 +58,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
   const [creatorFilter, setCreatorFilter] = useState<string | null>(null);
   const [page, setPage] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
-  const comparatorRef = useRef<HTMLDivElement>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const creators = useMemo(() => {
     const counts = new Map<string, number>();
@@ -104,10 +104,6 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
     () => selectedIds.map((id) => models.find((m) => m.id === id)).filter((m): m is AiModel => !!m),
     [selectedIds, models]
   );
-
-  function scrollToComparator() {
-    comparatorRef.current?.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
-  }
 
   const thStyle: React.CSSProperties = {
     fontSize: 11,
@@ -263,18 +259,15 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
 
       <PaginationBar page={safePage} totalPages={totalPages} total={sortedFiltered.length} pageSize={PAGE_SIZE} onChange={setPage} />
 
-      {/* Comparación integrada — vive en la misma sección que el ranking */}
-      <div ref={comparatorRef} style={{ marginTop: 28, paddingTop: 24, borderTop: "1px solid var(--color-border)" }}>
-        <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
-          Comparar modelos seleccionados
-        </p>
-        <Comparator
-          selected={selectedModels}
-          allModels={models}
-          onToggle={onToggleCompare}
-          onSelectPreset={onSelectPreset}
-        />
-      </div>
+      <ComparatorDrawer
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        reducedMotion={reducedMotion}
+        selected={selectedModels}
+        allModels={models}
+        onToggle={onToggleCompare}
+        onSelectPreset={onSelectPreset}
+      />
 
       {/* Barra de selección flotante */}
       {selectedIds.length > 0 && (
@@ -330,7 +323,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
             ))}
           </div>
           <button
-            onClick={scrollToComparator}
+            onClick={() => setCompareOpen(true)}
             style={{
               fontSize: 12.5,
               fontWeight: 600,
@@ -344,7 +337,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
               flexShrink: 0,
             }}
           >
-            Ver comparación ↓
+            Ver comparación
           </button>
         </div>
       )}
