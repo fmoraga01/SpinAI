@@ -286,6 +286,7 @@ export default function StateOfAiPage() {
             <div
               style={{
                 ...tileStyle,
+                background: "rgba(20,23,36,0.7)",
                 position: "relative",
                 overflow: "hidden",
                 padding: "44px 32px 36px",
