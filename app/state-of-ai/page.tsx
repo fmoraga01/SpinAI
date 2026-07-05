@@ -343,8 +343,8 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
-            {/* Stat tiles — precio/calidad 25% más grande, laboratorio 15% más grande */}
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.25fr_1.15fr] gap-3" style={{ marginBottom: 16 }}>
+            {/* Stat tiles — precio/calidad ~19% más grande, laboratorio 15% más grande */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.19fr_1.15fr] gap-3" style={{ marginBottom: 16 }}>
               <StatTile
                 value={stats.releases30}
                 label="Modelos lanzados en los últimos 30 días"
