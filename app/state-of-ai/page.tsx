@@ -201,13 +201,6 @@ export default function StateOfAiPage() {
           <>
             <style>{`
               @media (prefers-reduced-motion: no-preference) {
-                .soa-atmosphere::before, .soa-atmosphere::after {
-                  animation: soa-drift-a 14s ease-in-out infinite alternate;
-                }
-                .soa-atmosphere::after { animation-name: soa-drift-b; animation-duration: 18s; }
-                @keyframes soa-drift-a { to { transform: translate(4%, 6%) scale(1.08); } }
-                @keyframes soa-drift-b { to { transform: translate(-5%, -4%) scale(0.94); } }
-
                 .soa-stat-tile {
                   opacity: 0;
                   transform: translateY(8px);
@@ -245,15 +238,6 @@ export default function StateOfAiPage() {
                 boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -24px rgba(0,0,0,0.6)",
               }}
             >
-              <div
-                className="soa-atmosphere"
-                aria-hidden="true"
-                style={{ position: "absolute", inset: 0, overflow: "hidden", filter: "blur(60px)", pointerEvents: "none" }}
-              >
-                <span style={{ position: "absolute", width: "40%", paddingBottom: "40%", borderRadius: "50%", background: "#2C40FF", opacity: 0.14, top: "-12%", left: "-6%" }} />
-                <span style={{ position: "absolute", width: "34%", paddingBottom: "34%", borderRadius: "50%", background: "#5B6CFF", opacity: 0.1, top: "8%", right: "-8%" }} />
-              </div>
-
               <div style={{ position: "relative", zIndex: 1 }}>
                 <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
                   Modelo líder en inteligencia
