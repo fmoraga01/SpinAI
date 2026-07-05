@@ -26,9 +26,13 @@ interface AnimatedGridProps {
   // pensado para convivir con texto a la izquierda). "background": ocupa todo
   // el ancho, pensado para usarse como fondo de página completo.
   variant?: "hero" | "background";
+  // Multiplica la opacidad real del dibujo (vía ctx.globalAlpha). A diferencia
+  // de aplicar `opacity` en un div contenedor, esto sí escala el brillo real
+  // de trazos que ya son muy tenues (0.05–0.3 de alpha base).
+  intensity?: number;
 }
 
-export default function AnimatedGrid({ variant = "hero" }: AnimatedGridProps) {
+export default function AnimatedGrid({ variant = "hero", intensity = 1 }: AnimatedGridProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -91,6 +95,7 @@ export default function AnimatedGrid({ variant = "hero" }: AnimatedGridProps) {
       ctx.clearRect(0, 0, canvas!.width, canvas!.height);
       ctx.save();
       ctx.scale(dpr, dpr);
+      ctx.globalAlpha = intensity;
 
       if (!nodes.length) { ctx.restore(); rafId = requestAnimationFrame(frame); return; }
 
@@ -206,11 +211,11 @@ export default function AnimatedGrid({ variant = "hero" }: AnimatedGridProps) {
       cancelAnimationFrame(rafId);
       ro.disconnect();
     };
-  }, [variant]);
+  }, [variant, intensity]);
 
   const mask =
     variant === "background"
-      ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 12%, rgba(0,0,0,0.7) 80%, transparent 100%)"
+      ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.9) 8%, rgba(0,0,0,0.9) 92%, transparent 100%)"
       : "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)";
 
   return (
