@@ -19,7 +19,11 @@ export interface AiModel {
 }
 
 function toNumber(value: unknown): number | null {
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
+  // ojo: Number(null) da 0, no NaN — hay que descartar null/undefined antes
+  // de convertir, o un valor NULL de la DB termina mostrándose como "0.0".
+  if (value === null || value === undefined) return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
 }
 
 function rowToModel(row: Record<string, unknown>): AiModel {
@@ -30,14 +34,14 @@ function rowToModel(row: Record<string, unknown>): AiModel {
     creatorName: (row.creator_name as string | null) ?? null,
     creatorSlug: (row.creator_slug as string | null) ?? null,
     releaseDate: (row.release_date as string | null) ?? null,
-    intelligenceIndex: toNumber(Number(row.intelligence_index)),
-    codingIndex: toNumber(Number(row.coding_index)),
-    mathIndex: toNumber(Number(row.math_index)),
-    priceInput1m: toNumber(Number(row.price_input_1m)),
-    priceOutput1m: toNumber(Number(row.price_output_1m)),
-    priceBlended1m: toNumber(Number(row.price_blended_1m)),
-    tokensPerSecond: toNumber(Number(row.tokens_per_second)),
-    ttftSeconds: toNumber(Number(row.ttft_seconds)),
+    intelligenceIndex: toNumber(row.intelligence_index),
+    codingIndex: toNumber(row.coding_index),
+    mathIndex: toNumber(row.math_index),
+    priceInput1m: toNumber(row.price_input_1m),
+    priceOutput1m: toNumber(row.price_output_1m),
+    priceBlended1m: toNumber(row.price_blended_1m),
+    tokensPerSecond: toNumber(row.tokens_per_second),
+    ttftSeconds: toNumber(row.ttft_seconds),
     fetchedAt: row.fetched_at as string,
   };
 }
