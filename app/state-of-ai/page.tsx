@@ -109,7 +109,7 @@ function StatTile({
         "--soa-i": index,
       }}
     >
-      <p style={{ fontSize: 17, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "22px" }}>
+      <p style={{ fontSize: 14, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "19px" }}>
         {label}
       </p>
       <p style={{ fontSize: 42, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
