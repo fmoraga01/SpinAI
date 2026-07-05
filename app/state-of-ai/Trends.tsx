@@ -8,6 +8,11 @@ const W = 640;
 const H = 180;
 const M = { top: 24, right: 12, bottom: 28, left: 12 };
 
+function roundedTopBarPath(x: number, y: number, w: number, h: number, radius: number): string {
+  const r = Math.max(0, Math.min(radius, h, w / 2));
+  return `M${x},${y + h} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${y + h} Z`;
+}
+
 export default function Trends({ models }: { models: AiModel[] }) {
   const data = useMemo(() => monthlyReleaseCounts(models, 6), [models]);
   const max = Math.max(1, ...data.map((d) => d.count));
@@ -42,7 +47,7 @@ export default function Trends({ models }: { models: AiModel[] }) {
             return (
               <g key={d.key}>
                 {d.count > 0 && (
-                  <rect x={x} y={y} width={barWidth} height={barH} rx={4} ry={4} fill={MARK} opacity={0.85} />
+                  <path d={roundedTopBarPath(x, y, barWidth, barH, 4)} fill={MARK} opacity={0.85} />
                 )}
                 {d.count > 0 && (
                   <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize={12} fontWeight={600} fill="#D1D5DB" style={{ fontVariantNumeric: "tabular-nums" }}>
