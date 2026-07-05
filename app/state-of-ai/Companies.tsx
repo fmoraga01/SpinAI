@@ -40,14 +40,29 @@ export default function Companies({ models }: { models: AiModel[] }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <style>{`
+        .soa-company-card {
+          transition: border-color 150ms ease-out, transform 150ms ease-out;
+        }
+        .soa-company-card:hover {
+          border-color: rgba(91,108,255,0.4);
+          transform: translateY(-2px);
+        }
+      `}</style>
       {companies.map((c) => (
-        <div
+        <a
           key={c.name}
+          href={`https://artificialanalysis.ai/models/${c.topModel.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="soa-company-card"
           style={{
+            display: "block",
             background: "var(--color-surface-elevated)",
             border: "1px solid var(--color-border)",
             borderRadius: "var(--radius-md)",
             padding: "18px 20px",
+            textDecoration: "none",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
@@ -76,7 +91,7 @@ export default function Companies({ models }: { models: AiModel[] }) {
               {c.topModel.name}
             </p>
           </div>
-        </div>
+        </a>
       ))}
     </div>
   );
