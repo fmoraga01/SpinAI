@@ -14,6 +14,10 @@ import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
 
+function stripMaxSuffix(name: string): string {
+  return name.replace(/\s*\(max\)\s*$/i, "");
+}
+
 function InfoTooltip({ text, children }: { text: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
 
@@ -347,7 +351,7 @@ export default function StateOfAiPage() {
                 index={0}
               />
               <StatTile
-                value={stats.bestValue ? stats.bestValue.name : "—"}
+                value={stats.bestValue ? stripMaxSuffix(stats.bestValue.name) : "—"}
                 label={`Mejor relación precio/calidad${stats.bestValue ? ` (${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens)` : ""}`}
                 index={1}
               />
