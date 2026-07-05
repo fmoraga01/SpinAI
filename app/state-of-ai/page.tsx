@@ -54,8 +54,8 @@ function relativeDate(dateStr: string): string {
 }
 
 function StatTile({
-  value, label, index, large,
-}: { value: string | number; label: string; index: number; large?: boolean }) {
+  value, label, index,
+}: { value: string | number; label: string; index: number }) {
   return (
     <div
       className="soa-stat-tile"
@@ -63,7 +63,7 @@ function StatTile({
         background: "var(--color-surface-elevated)",
         border: "1px solid var(--color-border)",
         borderRadius: "var(--radius-md)",
-        padding: large ? "22px 22px" : "18px 20px",
+        padding: "20px 22px",
         // @ts-expect-error custom property for CSS stagger delay
         "--soa-i": index,
       }}
@@ -71,7 +71,7 @@ function StatTile({
       <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "18px" }}>
         {label}
       </p>
-      <p style={{ fontSize: large ? 30 : 20, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
+      <p style={{ fontSize: 24, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
         {value}
       </p>
     </div>
@@ -285,13 +285,12 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
-            {/* Stat tiles — tamaño asimétrico */}
-            <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-3" style={{ marginBottom: 16 }}>
+            {/* Stat tiles — mismo tamaño */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
               <StatTile
                 value={stats.releases30}
                 label="modelos lanzados en los últimos 30 días"
                 index={0}
-                large
               />
               <StatTile
                 value={deduped.length}
