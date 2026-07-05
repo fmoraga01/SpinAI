@@ -14,6 +14,47 @@ import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
 
+function InfoTooltip({ text, children }: { text: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <span
+      style={{ position: "relative", display: "inline-flex" }}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={() => setOpen(false)}
+    >
+      {children}
+      {open && (
+        <span
+          role="tooltip"
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 10px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 240,
+            padding: "10px 12px",
+            background: "#1A1D2E",
+            border: "1px solid var(--color-border-bright)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "0 12px 24px -8px rgba(0,0,0,0.6)",
+            fontSize: 12.5,
+            fontWeight: 400,
+            lineHeight: "18px",
+            color: "var(--color-text-secondary)",
+            zIndex: 20,
+            pointerEvents: "none",
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function CountUp({ value, decimals = 1 }: { value: number; decimals?: number }) {
   const reduced = usePrefersReducedMotion();
   const [display, setDisplay] = useState(0);
@@ -258,35 +299,37 @@ export default function StateOfAiPage() {
                   >
                     <CountUp value={stats.leader.intelligenceIndex!} />
                   </span>
-                  <span
-                    title="El índice de inteligencia de Artificial Analysis combina el desempeño de un modelo en múltiples benchmarks de razonamiento, conocimiento y programación en un solo puntaje comparable."
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 13,
-                      fontWeight: 500,
-                      color: "var(--color-primary)",
-                      background: "#2C40FF15",
-                      border: "1px solid #2C40FF33",
-                      borderRadius: "var(--radius-md)",
-                      padding: "4px 12px",
-                      cursor: "help",
-                    }}
-                  >
+                  <InfoTooltip text="El índice de inteligencia de Artificial Analysis combina el desempeño de un modelo en múltiples benchmarks de razonamiento, conocimiento y programación en un solo puntaje comparable.">
                     <span
+                      tabIndex={0}
                       style={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: "50%",
-                        background: "var(--color-primary)",
-                        boxShadow: "var(--shadow-glow-sm)",
-                        display: "inline-block",
-                        flexShrink: 0,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 8,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--color-primary)",
+                        background: "#2C40FF15",
+                        border: "1px solid #2C40FF33",
+                        borderRadius: "var(--radius-md)",
+                        padding: "4px 12px",
+                        cursor: "help",
                       }}
-                    />
-                    Índice de inteligencia
-                  </span>
+                    >
+                      <span
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: "var(--color-primary)",
+                          boxShadow: "var(--shadow-glow-sm)",
+                          display: "inline-block",
+                          flexShrink: 0,
+                        }}
+                      />
+                      Índice de inteligencia
+                    </span>
+                  </InfoTooltip>
                 </div>
                 <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "12px 0 0" }}>
                   {stats.leader.creatorName} lidera el ranking de Artificial Analysis
