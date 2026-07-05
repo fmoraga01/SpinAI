@@ -94,7 +94,7 @@ export default function ComparatorDrawer({
           }}
         >
           <h2 className="text-sm font-semibold uppercase tracking-widest" style={{ color: "var(--color-text-secondary)" }}>
-            Comparar modelos seleccionados
+            Modelos seleccionados
           </h2>
           <button
             onClick={onClose}
