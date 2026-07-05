@@ -375,8 +375,11 @@ export default function StateOfAiPage() {
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
                 {stats.latest.map((m, i) => (
-                  <div
+                  <a
                     key={m.id}
+                    href={`https://artificialanalysis.ai/models/${m.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="soa-launch-row"
                     style={{
                       display: "flex",
@@ -385,6 +388,7 @@ export default function StateOfAiPage() {
                       gap: 12,
                       padding: "10px 0 10px 10px",
                       borderBottom: i < stats.latest.length - 1 ? "1px solid var(--color-border)" : "none",
+                      textDecoration: "none",
                     }}
                   >
                     <div style={{ minWidth: 0 }}>
@@ -396,16 +400,8 @@ export default function StateOfAiPage() {
                         Índice de inteligencia {formatIndex(m.intelligenceIndex)}
                       </span>
                       <span style={{ fontSize: 11.5, color: "#4B5563", whiteSpace: "nowrap" }}>{relativeDate(m.releaseDate!)}</span>
-                      <a
-                        href={`https://artificialanalysis.ai/models/${m.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-tertiary)", whiteSpace: "nowrap", textDecoration: "none" }}
-                      >
-                        Ver ficha ↗
-                      </a>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             </div>
