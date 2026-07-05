@@ -34,7 +34,7 @@ function InfoTooltip({ text, children }: { text: string; children: React.ReactNo
             bottom: "calc(100% + 10px)",
             left: "50%",
             transform: "translateX(-50%)",
-            width: 240,
+            width: 270,
             padding: "10px 12px",
             background: "#1A1D2E",
             border: "1px solid var(--color-border-bright)",
@@ -299,7 +299,8 @@ export default function StateOfAiPage() {
                   >
                     <CountUp value={stats.leader.intelligenceIndex!} />
                   </span>
-                  <InfoTooltip text="El índice de inteligencia de Artificial Analysis combina el desempeño de un modelo en múltiples benchmarks de razonamiento, conocimiento y programación en un solo puntaje comparable.">
+                  <InfoTooltip text="Puntaje de Artificial Analysis que combina 9 evaluaciones independientes en razonamiento, conocimiento general, matemáticas y programación (p. ej. GPQA Diamond, Humanity's Last Exam, SciCode) en un solo número comparable.">
+
                     <span
                       tabIndex={0}
                       style={{
