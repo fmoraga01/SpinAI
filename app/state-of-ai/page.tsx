@@ -53,35 +53,9 @@ function relativeDate(dateStr: string): string {
   return months === 1 ? "Hace 1 mes" : `Hace ${months} meses`;
 }
 
-function PulseIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12h4l2.5-7 4 14 2.5-7H21" />
-    </svg>
-  );
-}
-function LayersIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3 2.5 8 12 13l9.5-5L12 3Z" />
-      <path d="m2.5 13 9.5 5 9.5-5" />
-      <path d="m2.5 18 9.5 5 9.5-5" />
-    </svg>
-  );
-}
-function LabIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 2v6.5L4 19a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-10.5V2" />
-      <path d="M8 2h8" />
-      <path d="M7 15h10" />
-    </svg>
-  );
-}
-
 function StatTile({
-  icon, accent, value, label, index, large,
-}: { icon: React.ReactNode; accent: string; value: string | number; label: string; index: number; large?: boolean }) {
+  value, label, index, large,
+}: { value: string | number; label: string; index: number; large?: boolean }) {
   return (
     <div
       className="soa-stat-tile"
@@ -94,14 +68,11 @@ function StatTile({
         "--soa-i": index,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, color: accent }}>
-        {icon}
-      </div>
+      <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "18px" }}>
+        {label}
+      </p>
       <p style={{ fontSize: large ? 30 : 20, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
         {value}
-      </p>
-      <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "5px 0 0", lineHeight: "18px" }}>
-        {label}
       </p>
     </div>
   );
@@ -314,26 +285,20 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
-            {/* Stat tiles — tamaño asimétrico, un acento propio por tile */}
+            {/* Stat tiles — tamaño asimétrico */}
             <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr_1fr] gap-3" style={{ marginBottom: 16 }}>
               <StatTile
-                icon={<PulseIcon />}
-                accent="#C97A34"
                 value={stats.releases30}
                 label="modelos lanzados en los últimos 30 días"
                 index={0}
                 large
               />
               <StatTile
-                icon={<LayersIcon />}
-                accent="#5B6CFF"
                 value={deduped.length}
                 label="modelos evaluados en el snapshot actual"
                 index={1}
               />
               <StatTile
-                icon={<LabIcon />}
-                accent="#1F9E6D"
                 value={stats.labLeader}
                 label={`laboratorio con más modelos en el top 20 (${stats.labLeaderCount})`}
                 index={2}
