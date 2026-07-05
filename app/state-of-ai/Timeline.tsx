@@ -74,10 +74,10 @@ export default function Timeline({ models }: { models: AiModel[] }) {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
                     <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-primary)", background: "#2C40FF15", border: "1px solid #2C40FF33", borderRadius: "var(--radius-md)", padding: "2px 7px", fontVariantNumeric: "tabular-nums" }}>
-                      {formatIndex(m.intelligenceIndex)}
+                      Índice de inteligencia {formatIndex(m.intelligenceIndex)}
                     </span>
                     <span style={{ fontSize: 11.5, color: "var(--color-tertiary)", fontVariantNumeric: "tabular-nums" }}>
-                      {formatPrice(m.priceBlended1m)}/1M
+                      {formatPrice(m.priceBlended1m)}/1M tokens
                     </span>
                   </div>
                 </div>
