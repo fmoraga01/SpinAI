@@ -146,7 +146,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
 
       <PaginationBar page={safePage} totalPages={totalPages} total={sortedFiltered.length} pageSize={PAGE_SIZE} onChange={setPage} />
 
-      <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", marginTop: 10 }}>
+      <div style={{ overflowX: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)", marginTop: 10, background: "var(--color-bg)" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead>
             <tr style={{ background: "var(--color-surface-elevated)", borderBottom: "1px solid var(--color-border)" }}>
@@ -189,7 +189,7 @@ export default function Ranking({ models, selectedIds, onToggleCompare, onSelect
                   key={m.id}
                   style={{
                     borderBottom: "1px solid var(--color-border)",
-                    background: selected ? "#2C40FF0d" : "transparent",
+                    background: selected ? "#2C40FF0d" : "var(--color-bg)",
                     boxShadow: selected ? "inset 3px 0 0 0 var(--color-primary)" : "none",
                     transition: "background 150ms ease, box-shadow 150ms ease",
                   }}
