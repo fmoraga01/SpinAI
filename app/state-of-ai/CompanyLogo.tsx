@@ -1,13 +1,9 @@
-"use client";
-
-import { useState } from "react";
-import { companyLogoUrl } from "@/lib/companyLogos";
+import { companyLogo } from "@/lib/companyLogos";
 
 export default function CompanyLogo({ slug, name }: { slug: string | null; name: string }) {
-  const [failed, setFailed] = useState(false);
-  const url = companyLogoUrl(slug);
+  const logo = companyLogo(slug);
 
-  if (!url || failed) {
+  if (!logo) {
     return (
       <div
         style={{
@@ -30,14 +26,18 @@ export default function CompanyLogo({ slug, name }: { slug: string | null; name:
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url}
-      alt=""
+    <svg
+      viewBox={logo.viewBox}
       width={20}
       height={20}
-      onError={() => setFailed(true)}
-      style={{ width: 20, height: 20, objectFit: "contain", flexShrink: 0 }}
-    />
+      fill="#fff"
+      fillRule="evenodd"
+      style={{ flexShrink: 0 }}
+      aria-hidden="true"
+    >
+      {logo.paths.map((d, i) => (
+        <path key={i} d={d} />
+      ))}
+    </svg>
   );
 }
