@@ -21,7 +21,14 @@ interface Pulse {
   speed: number;
 }
 
-export default function AnimatedGrid() {
+interface AnimatedGridProps {
+  // "hero": ancla a la derecha y se desvanece hacia la izquierda (uso original,
+  // pensado para convivir con texto a la izquierda). "background": ocupa todo
+  // el ancho, pensado para usarse como fondo de página completo.
+  variant?: "hero" | "background";
+}
+
+export default function AnimatedGrid({ variant = "hero" }: AnimatedGridProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -40,7 +47,7 @@ export default function AnimatedGrid() {
     function buildNodes() {
       pulses = [];
       const layerCount = LAYERS.length;
-      const xStart = W * 0.28;
+      const xStart = variant === "background" ? W * 0.03 : W * 0.28;
       const xEnd = W * 0.97;
       const xStep = (xEnd - xStart) / (layerCount - 1);
 
@@ -199,7 +206,12 @@ export default function AnimatedGrid() {
       cancelAnimationFrame(rafId);
       ro.disconnect();
     };
-  }, []);
+  }, [variant]);
+
+  const mask =
+    variant === "background"
+      ? "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 12%, rgba(0,0,0,0.7) 80%, transparent 100%)"
+      : "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)";
 
   return (
     <canvas
@@ -209,10 +221,8 @@ export default function AnimatedGrid() {
         inset: 0,
         width: "100%",
         height: "100%",
-        maskImage:
-          "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to left, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.4) 60%, transparent 100%)",
+        maskImage: mask,
+        WebkitMaskImage: mask,
         pointerEvents: "none",
       }}
     />
