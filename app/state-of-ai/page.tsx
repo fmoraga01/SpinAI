@@ -391,11 +391,19 @@ export default function StateOfAiPage() {
                       <p style={{ fontSize: 13.5, fontWeight: 600, color: "#fff", margin: 0 }}>{m.name}</p>
                       <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "1px 0 0" }}>{m.creatorName}</p>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                      <span style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-primary)", background: "#2C40FF15", border: "1px solid #2C40FF33", borderRadius: "var(--radius-md)", padding: "2px 8px", fontVariantNumeric: "tabular-nums" }}>
-                        Índice {formatIndex(m.intelligenceIndex)}
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <span style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-primary)", background: "#2C40FF15", border: "1px solid #2C40FF33", borderRadius: "var(--radius-md)", padding: "2px 8px", fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>
+                        Índice de inteligencia {formatIndex(m.intelligenceIndex)}
                       </span>
                       <span style={{ fontSize: 11.5, color: "#4B5563", whiteSpace: "nowrap" }}>{relativeDate(m.releaseDate!)}</span>
+                      <a
+                        href={`https://artificialanalysis.ai/models/${m.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-tertiary)", whiteSpace: "nowrap", textDecoration: "none" }}
+                      >
+                        Ver ficha ↗
+                      </a>
                     </div>
                   </div>
                 ))}
