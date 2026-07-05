@@ -339,8 +339,8 @@ export default function StateOfAiPage() {
               </div>
             </div>
 
-            {/* Stat tiles — mismo tamaño */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
+            {/* Stat tiles — laboratorio 15% más grande */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1.15fr] gap-3" style={{ marginBottom: 16 }}>
               <StatTile
                 value={stats.releases30}
                 label="Modelos lanzados en los últimos 30 días"
