@@ -347,8 +347,8 @@ export default function StateOfAiPage() {
                 index={0}
               />
               <StatTile
-                value={deduped.length}
-                label="Modelos evaluados en el snapshot actual"
+                value={stats.bestValue ? stats.bestValue.name : "—"}
+                label={`Mejor relación precio/calidad${stats.bestValue ? ` (${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens)` : ""}`}
                 index={1}
               />
               <StatTile
