@@ -213,7 +213,7 @@ export default function StateOfAiPage() {
   return (
     <div style={{ minHeight: "100vh", background: "var(--color-bg)", position: "relative" }}>
       <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
-        <AnimatedGrid variant="background" intensity={0.5} />
+        <AnimatedGrid variant="background" intensity={0.1} />
       </div>
       <div style={{ position: "relative", zIndex: 1 }}>
       <Nav />
