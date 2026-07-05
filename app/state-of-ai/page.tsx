@@ -289,9 +289,8 @@ export default function StateOfAiPage() {
                 <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                   <span
                     style={{
-                      fontFamily: "var(--font-retro), 'Bitcount Grid Double', monospace",
                       fontSize: "clamp(64px, 9vw, 120px)",
-                      fontWeight: 400,
+                      fontWeight: 800,
                       lineHeight: 1,
                       letterSpacing: "-0.03em",
                       color: "#fff",
