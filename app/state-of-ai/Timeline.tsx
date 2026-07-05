@@ -33,6 +33,16 @@ export default function Timeline({ models }: { models: AiModel[] }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      <style>{`
+        .soa-timeline-row {
+          transition: border-color 150ms ease-out, transform 150ms ease-out, background 150ms ease-out;
+        }
+        .soa-timeline-row:hover {
+          border-color: rgba(91,108,255,0.4);
+          background: var(--color-surface-elevated-hover, var(--color-surface-elevated));
+          transform: translateX(2px);
+        }
+      `}</style>
       {groups.map((group, gi) => (
         <div key={group.key} style={{ display: "flex", gap: 20 }}>
           {/* Riel de tiempo */}
@@ -55,8 +65,12 @@ export default function Timeline({ models }: { models: AiModel[] }) {
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {group.items.map((m) => (
-                <div
+                <a
                   key={m.id}
+                  href={`https://artificialanalysis.ai/models/${m.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="soa-timeline-row"
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -66,19 +80,15 @@ export default function Timeline({ models }: { models: AiModel[] }) {
                     border: "1px solid var(--color-border)",
                     borderRadius: "var(--radius-md)",
                     padding: "10px 14px",
+                    textDecoration: "none",
                   }}
                 >
                   <div style={{ minWidth: 0 }}>
                     <p style={{ fontSize: 13.5, fontWeight: 600, color: "#fff", margin: 0 }}>{m.name}</p>
                     <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "1px 0 0" }}>{m.creatorName}</p>
-                    <a
-                      href={`https://artificialanalysis.ai/models/${m.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-tertiary)", whiteSpace: "nowrap", textDecoration: "none", display: "inline-block", margin: "4px 0 0" }}
-                    >
+                    <span style={{ fontSize: 11.5, fontWeight: 500, color: "var(--color-tertiary)", whiteSpace: "nowrap", display: "inline-block", margin: "4px 0 0" }}>
                       Ver ficha ↗
-                    </a>
+                    </span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0, flexWrap: "wrap", justifyContent: "flex-end" }}>
                     <span style={{ fontSize: 11, fontWeight: 500, color: "var(--color-primary)", background: "#2C40FF15", border: "1px solid #2C40FF33", borderRadius: "var(--radius-md)", padding: "2px 7px", fontVariantNumeric: "tabular-nums" }}>
@@ -88,7 +98,7 @@ export default function Timeline({ models }: { models: AiModel[] }) {
                       {formatPrice(m.priceBlended1m)}/1M tokens
                     </span>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>
