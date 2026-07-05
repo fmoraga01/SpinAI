@@ -299,7 +299,7 @@ export default function StateOfAiPage() {
                   >
                     <CountUp value={stats.leader.intelligenceIndex!} />
                   </span>
-                  <InfoTooltip text="Puntaje de 0 a 100 de Artificial Analysis que combina 9 evaluaciones independientes en razonamiento, conocimiento general, matemáticas y programación (p. ej. GPQA Diamond, Humanity's Last Exam, SciCode) en un solo número comparable.">
+                  <InfoTooltip text="Puntaje de 0 a 100 de Artificial Analysis que combina 9 evaluaciones independientes en razonamiento, conocimiento general, matemáticas y programación en un solo número comparable.">
 
                     <span
                       tabIndex={0}
