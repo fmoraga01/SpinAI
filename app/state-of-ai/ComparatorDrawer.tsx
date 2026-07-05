@@ -72,7 +72,7 @@ export default function ComparatorDrawer({
           right: 0,
           bottom: 0,
           zIndex: 50,
-          width: "min(720px, 100vw)",
+          width: "min(936px, 100vw)",
           background: "var(--color-surface)",
           borderLeft: "1px solid var(--color-border)",
           display: "flex",
