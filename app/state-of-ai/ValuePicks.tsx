@@ -43,14 +43,29 @@ export default function ValuePicks({ models, leader }: { models: AiModel[]; lead
         índice {formatIndex(leader.intelligenceIndex)} a {formatPrice(leader.priceBlended1m)}/1M tokens.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <style>{`
+          .soa-value-pick {
+            transition: border-color 150ms ease-out, transform 150ms ease-out;
+          }
+          .soa-value-pick:hover {
+            border-color: rgba(91,108,255,0.4);
+            transform: translateY(-2px);
+          }
+        `}</style>
         {picks.map((p) => (
-          <div
+          <a
             key={p.model.id}
+            href={`https://artificialanalysis.ai/models/${p.model.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="soa-value-pick"
             style={{
+              display: "block",
               background: "var(--color-surface-elevated)",
               border: "1px solid var(--color-border)",
               borderRadius: "var(--radius-md)",
               padding: "18px 20px",
+              textDecoration: "none",
             }}
           >
             <span
@@ -105,7 +120,7 @@ export default function ValuePicks({ models, leader }: { models: AiModel[]; lead
                 </span>
               </div>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </div>
