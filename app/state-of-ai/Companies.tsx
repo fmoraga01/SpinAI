@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import { AiModel, formatIndex } from "@/lib/stateOfAi";
+import CompanyLogo from "./CompanyLogo";
 
 interface CompanyStats {
   name: string;
+  slug: string | null;
   modelCount: number;
   topModel: AiModel;
   latestRelease: string | null;
@@ -25,7 +27,8 @@ export default function Companies({ models }: { models: AiModel[] }) {
         const topModel = [...withIndex].sort((a, b) => b.intelligenceIndex! - a.intelligenceIndex!)[0] ?? list[0];
         const releases = list.filter((m) => m.releaseDate).map((m) => m.releaseDate!);
         const latestRelease = releases.length > 0 ? releases.sort().at(-1)! : null;
-        return { name, modelCount: list.length, topModel, latestRelease };
+        const slug = list.find((m) => m.creatorSlug)?.creatorSlug ?? null;
+        return { name, slug, modelCount: list.length, topModel, latestRelease };
       })
       .sort((a, b) => (b.topModel.intelligenceIndex ?? -Infinity) - (a.topModel.intelligenceIndex ?? -Infinity))
       .slice(0, 9);
@@ -47,7 +50,10 @@ export default function Companies({ models }: { models: AiModel[] }) {
             padding: "18px 20px",
           }}
         >
-          <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 4px" }}>{c.name}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <CompanyLogo slug={c.slug} name={c.name} />
+            <p style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: 0 }}>{c.name}</p>
+          </div>
           <p style={{ fontSize: 12, color: "var(--color-tertiary)", margin: "0 0 14px" }}>
             {c.modelCount} {c.modelCount === 1 ? "modelo evaluado" : "modelos evaluados"}
           </p>
