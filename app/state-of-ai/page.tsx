@@ -109,7 +109,7 @@ function StatTile({
         "--soa-i": index,
       }}
     >
-      <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "18px" }}>
+      <p style={{ fontSize: 17, color: "var(--color-tertiary)", margin: "0 0 10px", lineHeight: "22px" }}>
         {label}
       </p>
       <p style={{ fontSize: 42, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
@@ -343,17 +343,17 @@ export default function StateOfAiPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3" style={{ marginBottom: 16 }}>
               <StatTile
                 value={stats.releases30}
-                label="modelos lanzados en los últimos 30 días"
+                label="Modelos lanzados en los últimos 30 días"
                 index={0}
               />
               <StatTile
                 value={deduped.length}
-                label="modelos evaluados en el snapshot actual"
+                label="Modelos evaluados en el snapshot actual"
                 index={1}
               />
               <StatTile
                 value={stats.labLeader}
-                label={`laboratorio con más modelos en el top 20 (${stats.labLeaderCount})`}
+                label={`Laboratorio con más modelos en el top 20 (${stats.labLeaderCount})`}
                 index={2}
               />
             </div>
