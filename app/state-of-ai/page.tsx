@@ -259,6 +259,7 @@ export default function StateOfAiPage() {
                     <CountUp value={stats.leader.intelligenceIndex!} />
                   </span>
                   <span
+                    title="El índice de inteligencia de Artificial Analysis combina el desempeño de un modelo en múltiples benchmarks de razonamiento, conocimiento y programación en un solo puntaje comparable."
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
@@ -270,6 +271,7 @@ export default function StateOfAiPage() {
                       border: "1px solid #2C40FF33",
                       borderRadius: "var(--radius-md)",
                       padding: "4px 12px",
+                      cursor: "help",
                     }}
                   >
                     <span
@@ -283,7 +285,7 @@ export default function StateOfAiPage() {
                         flexShrink: 0,
                       }}
                     />
-                    índice de inteligencia
+                    Índice de inteligencia
                   </span>
                 </div>
                 <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "12px 0 0" }}>
