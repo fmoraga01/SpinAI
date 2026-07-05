@@ -466,7 +466,7 @@ export default function StateOfAiPage() {
               <SectionHeading
                 kicker="Empresas"
                 title="¿Quién está liderando la carrera?"
-                subtitle="Laboratorios ordenados por el índice de inteligencia promedio de sus modelos evaluados."
+                subtitle="Laboratorios ordenados por el índice de inteligencia de su modelo insignia."
               />
               <Companies models={deduped} />
             </section>

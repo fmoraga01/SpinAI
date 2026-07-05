@@ -6,7 +6,6 @@ import { AiModel, formatIndex } from "@/lib/stateOfAi";
 interface CompanyStats {
   name: string;
   modelCount: number;
-  avgIntelligence: number;
   topModel: AiModel;
   latestRelease: string | null;
 }
@@ -23,19 +22,18 @@ export default function Companies({ models }: { models: AiModel[] }) {
     return Array.from(byCreator.entries())
       .map(([name, list]) => {
         const withIndex = list.filter((m) => m.intelligenceIndex !== null);
-        const avgIntelligence = withIndex.reduce((sum, m) => sum + m.intelligenceIndex!, 0) / (withIndex.length || 1);
         const topModel = [...withIndex].sort((a, b) => b.intelligenceIndex! - a.intelligenceIndex!)[0] ?? list[0];
         const releases = list.filter((m) => m.releaseDate).map((m) => m.releaseDate!);
         const latestRelease = releases.length > 0 ? releases.sort().at(-1)! : null;
-        return { name, modelCount: list.length, avgIntelligence, topModel, latestRelease };
+        return { name, modelCount: list.length, topModel, latestRelease };
       })
-      .sort((a, b) => b.avgIntelligence - a.avgIntelligence)
+      .sort((a, b) => (b.topModel.intelligenceIndex ?? -Infinity) - (a.topModel.intelligenceIndex ?? -Infinity))
       .slice(0, 9);
   }, [models]);
 
   if (companies.length === 0) return null;
 
-  const maxAvg = Math.max(...companies.map((c) => c.avgIntelligence));
+  const maxTop = Math.max(...companies.map((c) => c.topModel.intelligenceIndex ?? 0));
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -56,12 +54,12 @@ export default function Companies({ models }: { models: AiModel[] }) {
 
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
             <span style={{ fontSize: 18, fontWeight: 700, color: "#5B6CFF", fontVariantNumeric: "tabular-nums" }}>
-              {c.avgIntelligence.toFixed(1)}
+              {formatIndex(c.topModel.intelligenceIndex)}
             </span>
-            <span style={{ fontSize: 11.5, color: "var(--color-tertiary)" }}>índice promedio</span>
+            <span style={{ fontSize: 11.5, color: "var(--color-tertiary)" }}>índice del modelo insignia</span>
           </div>
           <div style={{ width: "100%", height: 4, borderRadius: 4, background: "var(--color-border)", overflow: "hidden", marginBottom: 14 }}>
-            <div style={{ height: "100%", borderRadius: 4, background: "#5B6CFF", width: `${(c.avgIntelligence / maxAvg) * 100}%` }} />
+            <div style={{ height: "100%", borderRadius: 4, background: "#5B6CFF", width: `${((c.topModel.intelligenceIndex ?? 0) / maxTop) * 100}%` }} />
           </div>
 
           <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
@@ -69,7 +67,7 @@ export default function Companies({ models }: { models: AiModel[] }) {
               Modelo líder
             </p>
             <p style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-secondary)", margin: 0 }}>
-              {c.topModel.name} · {formatIndex(c.topModel.intelligenceIndex)}
+              {c.topModel.name}
             </p>
           </div>
         </div>
