@@ -85,6 +85,7 @@ export const AI_AGENTS: AgentCategory[] = [
       { name: "CrewAI", url: "https://www.crewai.com/", description: "Equipos de agentes con roles definidos" },
       { name: "AutoGen", url: "https://microsoft.github.io/autogen/", description: "Conversaciones multi-agente de Microsoft" },
       { name: "LangGraph", url: "https://www.langchain.com/langgraph", description: "Grafos de estado para agentes" },
+      { name: "Amazon Bedrock Agents", url: "https://aws.amazon.com/bedrock/agents/", description: "Agentes gestionados de AWS, con colaboración multi-agente" },
     ],
   },
   {
@@ -99,6 +100,7 @@ export const AI_AGENTS: AgentCategory[] = [
     entries: [
       { name: "Claude Agent SDK", url: "https://docs.claude.com/en/api/agent-sdk/overview", description: "SDK de Anthropic para construir agentes" },
       { name: "OpenAI Agents SDK", url: "https://openai.github.io/openai-agents-python/", description: "SDK de OpenAI para orquestar agentes" },
+      { name: "Strands Agents", url: "https://strandsagents.com/", description: "SDK open source de AWS para Python y TypeScript" },
     ],
   },
   {
@@ -106,6 +108,7 @@ export const AI_AGENTS: AgentCategory[] = [
     entries: [
       { name: "Devin (Cognition)", url: "https://cognition.ai/", description: "Agente autónomo de ingeniería de software" },
       { name: "Manus", url: "https://manus.im/", description: "Agente general para tareas complejas de múltiples pasos" },
+      { name: "Amazon Bedrock AgentCore", url: "https://aws.amazon.com/bedrock/agentcore/", description: "Runtime de AWS para operar agentes en producción a escala" },
     ],
   },
 ];
