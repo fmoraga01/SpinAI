@@ -99,8 +99,8 @@ function relativeDate(dateStr: string): string {
 }
 
 function StatTile({
-  value, label, index, chip,
-}: { value: string | number; label: string; index: number; chip?: string }) {
+  value, label, index, caption,
+}: { value: string | number; label: string; index: number; caption?: string }) {
   return (
     <div
       className="soa-stat-tile"
@@ -119,23 +119,10 @@ function StatTile({
       <p style={{ fontSize: 42, fontWeight: 700, color: "#fff", margin: 0, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" }}>
         {value}
       </p>
-      {chip && (
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            fontSize: 12.5,
-            fontWeight: 500,
-            color: "var(--color-primary)",
-            background: "#2C40FF15",
-            border: "1px solid #2C40FF33",
-            borderRadius: "var(--radius-md)",
-            padding: "3px 10px",
-            marginTop: 10,
-          }}
-        >
-          {chip}
-        </span>
+      {caption && (
+        <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "6px 0 0" }}>
+          {caption}
+        </p>
       )}
     </div>
   );
@@ -371,7 +358,7 @@ export default function StateOfAiPage() {
               <StatTile
                 value={stats.bestValue ? stripMaxSuffix(stats.bestValue.name) : "—"}
                 label="Modelo con mejor relación precio/calidad"
-                chip={stats.bestValue ? `(${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens)` : undefined}
+                caption={stats.bestValue ? `${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens` : undefined}
                 index={1}
               />
               <StatTile
