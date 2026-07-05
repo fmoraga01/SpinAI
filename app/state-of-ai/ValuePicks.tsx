@@ -39,7 +39,7 @@ export default function ValuePicks({ models, leader }: { models: AiModel[]; lead
   return (
     <div>
       <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "0 0 18px" }}>
-        Comparado contra el líder actual — <strong style={{ color: "var(--color-text-secondary)" }}>{leader.name}</strong>:{" "}
+        <strong style={{ color: "#F0A868" }}>Comparado contra el líder actual</strong> — <strong style={{ color: "var(--color-text-secondary)" }}>{leader.name}</strong>:{" "}
         índice {formatIndex(leader.intelligenceIndex)} a {formatPrice(leader.priceBlended1m)}/1M tokens.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
