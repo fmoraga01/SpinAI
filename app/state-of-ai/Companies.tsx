@@ -62,7 +62,7 @@ export default function Companies({ models }: { models: AiModel[] }) {
             <div style={{ height: "100%", borderRadius: 4, background: "#5B6CFF", width: `${((c.topModel.intelligenceIndex ?? 0) / maxTop) * 100}%` }} />
           </div>
 
-          <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
+          <div style={{ paddingTop: 12 }}>
             <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "#4B5563", margin: "0 0 4px" }}>
               Modelo líder
             </p>
