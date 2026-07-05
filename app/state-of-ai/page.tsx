@@ -268,7 +268,7 @@ export default function StateOfAiPage() {
                       fontWeight: 800,
                       lineHeight: 1,
                       letterSpacing: "-0.03em",
-                      color: "#5B6CFF",
+                      color: "#fff",
                       fontVariantNumeric: "tabular-nums",
                     }}
                   >
