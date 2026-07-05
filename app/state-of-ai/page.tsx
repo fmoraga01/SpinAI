@@ -455,7 +455,7 @@ export default function StateOfAiPage() {
 
             {/* Tendencias */}
             <section style={{ marginBottom: 56 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 24px" }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 6px" }}>
                 Tendencias
               </p>
               <Trends models={deduped} />
