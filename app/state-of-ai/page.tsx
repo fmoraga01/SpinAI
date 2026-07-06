@@ -235,10 +235,24 @@ export default function StateOfAiPage() {
         {loading && (
           <div>
             {/* Hero card */}
-            <div className="animate-pulse" style={{ ...tileStyle, padding: "44px 32px 36px", marginBottom: 16 }}>
-              <div style={{ width: 150, height: 11, borderRadius: 4, background: "var(--color-border)", marginBottom: 16 }} />
-              <div style={{ width: 200, height: 15, borderRadius: 4, background: "var(--color-border)", marginBottom: 18 }} />
-              <div style={{ width: 260, height: 56, borderRadius: 8, background: "var(--color-border)" }} />
+            <div className="animate-pulse" style={{ ...tileStyle, padding: "44px 32px 36px", marginBottom: 16, display: "flex", alignItems: "center", gap: 36 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ width: 150, height: 11, borderRadius: 4, background: "var(--color-border)", marginBottom: 16 }} />
+                <div style={{ width: 200, height: 15, borderRadius: 4, background: "var(--color-border)", marginBottom: 18 }} />
+                <div style={{ width: 260, height: 56, borderRadius: 8, background: "var(--color-border)" }} />
+              </div>
+              <div
+                className="hidden md:flex"
+                style={{ flexShrink: 0, width: 310, paddingLeft: 32, borderLeft: "1px solid var(--color-border)", alignSelf: "stretch", flexDirection: "column", justifyContent: "center" }}
+              >
+                <div style={{ width: 140, height: 10.5, borderRadius: 4, background: "var(--color-border)", marginBottom: 14 }} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 14 }}>
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <div key={i} style={{ height: 6, borderRadius: 4, background: "var(--color-border)", width: `${100 - i * 6}%` }} />
+                  ))}
+                </div>
+                <div style={{ width: "85%", height: 11, borderRadius: 4, background: "var(--color-border)" }} />
+              </div>
             </div>
 
             {/* Stat tiles */}
