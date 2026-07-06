@@ -1,9 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import { AiModel } from "@/lib/stateOfAi";
 
 const MARK = "#2C40FF";
 const TIGHT_THRESHOLD = 5; // puntos de índice — por debajo de esto, el podio se lee "reñido"
 
 export default function Podium({ models }: { models: AiModel[] }) {
+  const [hovered, setHovered] = useState<number | null>(null);
   const top = models.slice(0, 5);
   if (top.length < 3) return null;
 
@@ -32,7 +36,38 @@ export default function Podium({ models }: { models: AiModel[] }) {
           const isLeader = i === 0;
           const pct = Math.max(6, (m.intelligenceIndex! / max) * 100);
           return (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div
+              key={m.id}
+              tabIndex={0}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              onFocus={() => setHovered(i)}
+              onBlur={() => setHovered(null)}
+              style={{ display: "flex", alignItems: "center", gap: 8, position: "relative" }}
+            >
+              {hovered === i && (
+                <span
+                  role="tooltip"
+                  style={{
+                    position: "absolute",
+                    bottom: "calc(100% + 6px)",
+                    left: 18,
+                    padding: "5px 9px",
+                    background: "#1A1D2E",
+                    border: "1px solid var(--color-border-bright)",
+                    borderRadius: "var(--radius-md)",
+                    boxShadow: "0 8px 16px -6px rgba(0,0,0,0.6)",
+                    fontSize: 11.5,
+                    fontWeight: 500,
+                    color: "#fff",
+                    whiteSpace: "nowrap",
+                    zIndex: 20,
+                    pointerEvents: "none",
+                  }}
+                >
+                  {m.name}
+                </span>
+              )}
               <span style={{ width: 10, fontSize: 10.5, color: "var(--color-tertiary)", flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
                 {i + 1}
               </span>
