@@ -224,7 +224,7 @@ export default function StateOfAiPage() {
           State of AI · 2026
         </p>
         <h1 style={{ fontSize: "clamp(32px, 5vw, 46px)", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.02em", color: "#fff", margin: "0 0 12px", maxWidth: 640 }}>
-          Todo el ecosistema de IA, siempre actualizado.
+          Todo el ecosistema de IA, siempre actualizado
         </h1>
         <p style={{ fontSize: 15.5, color: "var(--color-text-secondary)", maxWidth: 560, lineHeight: "24px", margin: "0 0 40px" }}>
           Explora en un solo lugar los modelos más relevantes del mercado, quién los desarrolla,
