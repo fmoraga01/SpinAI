@@ -11,7 +11,7 @@ import Summary from "./Summary";
 import Trends from "./Trends";
 import Research from "./Research";
 import CategoryGrid from "./CategoryGrid";
-import SpeedTrend from "./SpeedTrend";
+import Podium from "./Podium";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
@@ -389,7 +389,7 @@ export default function StateOfAiPage() {
                     {stats.leader.releaseDate ? `, con un modelo lanzado ${relativeDate(stats.leader.releaseDate).toLowerCase()}` : ""}.
                   </p>
                 </div>
-                <SpeedTrend models={deduped} />
+                <Podium models={deduped} />
               </div>
             </div>
 

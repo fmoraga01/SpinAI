@@ -124,26 +124,6 @@ export function buildExecutiveSummary(models: AiModel[], now: number = Date.now(
   return { thisWeekReleases, last30Count: last30.length, prev30Count: prev30.length, growthPct, leader, mostActiveLab };
 }
 
-export interface SpeedTrendPoint {
-  slug: string;
-  releaseDate: string;
-  tokensPerSecond: number;
-}
-
-// Velocidad de inferencia (tokens/segundo), modelo a modelo, en orden de
-// lanzamiento — una métrica nativa y directa (sin combinar dos índices)
-// para ver si los modelos nuevos responden más rápido.
-export function speedTrend(models: AiModel[], sampleSize: number = 14): SpeedTrendPoint[] {
-  return models
-    .filter(
-      (m): m is AiModel & { releaseDate: string; tokensPerSecond: number } =>
-        !!m.releaseDate && m.tokensPerSecond !== null && m.tokensPerSecond > 0
-    )
-    .sort((a, b) => a.releaseDate.localeCompare(b.releaseDate))
-    .slice(-sampleSize)
-    .map((m) => ({ slug: m.slug, releaseDate: m.releaseDate, tokensPerSecond: m.tokensPerSecond }));
-}
-
 export interface MonthlyCount {
   key: string; // YYYY-MM
   label: string;
