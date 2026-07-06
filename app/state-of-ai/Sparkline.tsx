@@ -7,7 +7,6 @@ const MARK = "#2C40FF";
 export interface SparklinePoint {
   value: number;
   label: string;
-  partial?: boolean; // período todavía en curso — el valor no es comparable 1:1 con los cerrados
 }
 
 export default function Sparkline({
@@ -30,7 +29,6 @@ export default function Sparkline({
   const areaPath = `M${coords.map((p) => `${p.x},${p.y}`).join(" L")} L${width},${height} L0,${height} Z`;
   const lastSegment = coords.slice(-3).map((p) => `${p.x},${p.y}`).join(" ");
   const last = coords[coords.length - 1];
-  const lastIsPartial = points[points.length - 1].partial === true;
   const active = hovered !== null ? coords[hovered] : null;
 
   const xTranslate = hovered === 0 ? "0%" : hovered === points.length - 1 ? "-100%" : "-50%";
@@ -48,18 +46,9 @@ export default function Sparkline({
       >
         <path d={areaPath} fill={MARK} opacity={0.08} />
         <polyline points={linePath} fill="none" stroke="var(--color-border-bright)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-        <polyline
-          points={lastSegment}
-          fill="none"
-          stroke={MARK}
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeDasharray={lastIsPartial ? "1 4" : undefined}
-          opacity={lastIsPartial ? 0.6 : 1}
-        />
+        <polyline points={lastSegment} fill="none" stroke={MARK} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
         <circle cx={last.x} cy={last.y} r={5} fill="var(--color-surface-elevated)" />
-        <circle cx={last.x} cy={last.y} r={3.5} fill={MARK} opacity={lastIsPartial ? 0.6 : 1} />
+        <circle cx={last.x} cy={last.y} r={3.5} fill={MARK} />
         {active && hovered !== points.length - 1 && (
           <>
             <circle cx={active.x} cy={active.y} r={5} fill="var(--color-surface-elevated)" />
@@ -105,7 +94,6 @@ export default function Sparkline({
         >
           <strong style={{ fontVariantNumeric: "tabular-nums" }}>{points[hovered].value}</strong>{" "}
           <span style={{ textTransform: "capitalize", color: "var(--color-tertiary)" }}>{points[hovered].label}</span>
-          {points[hovered].partial && <span style={{ color: "var(--color-tertiary)" }}> (parcial)</span>}
         </div>
       )}
     </div>

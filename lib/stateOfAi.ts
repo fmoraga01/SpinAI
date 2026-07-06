@@ -128,19 +128,17 @@ export interface MonthlyCount {
   key: string; // YYYY-MM
   label: string;
   count: number;
-  isCurrent: boolean; // mes en curso: el conteo es parcial, no comparable 1:1 con meses cerrados
 }
 
 // Distribución de lanzamientos por mes — derivable del snapshot actual
 // porque release_date es un dato histórico fijo por modelo.
 export function monthlyReleaseCounts(models: AiModel[], months: number = 6): MonthlyCount[] {
   const now = new Date();
-  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const buckets: MonthlyCount[] = [];
   for (let i = months - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-    buckets.push({ key, label: d.toLocaleDateString("es-CL", { month: "short" }), count: 0, isCurrent: key === currentKey });
+    buckets.push({ key, label: d.toLocaleDateString("es-CL", { month: "short" }), count: 0 });
   }
   const byKey = new Map(buckets.map((b) => [b.key, b]));
   for (const m of models) {
