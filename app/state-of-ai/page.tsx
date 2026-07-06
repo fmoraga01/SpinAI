@@ -14,7 +14,7 @@ import CategoryGrid from "./CategoryGrid";
 import Podium from "./Podium";
 import Sparkline, { SparklinePoint } from "./Sparkline";
 import { usePrefersReducedMotion } from "./useReducedMotion";
-import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels, rollingReleaseCounts } from "@/lib/stateOfAi";
+import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels, monthlyReleaseCounts } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
 
 function stripMaxSuffix(name: string): string {
@@ -204,7 +204,7 @@ export default function StateOfAiPage() {
 
   const summary = useMemo(() => buildExecutiveSummary(deduped, now), [deduped, now]);
 
-  const releaseTrend = useMemo(() => rollingReleaseCounts(deduped, 6, 30, now), [deduped, now]);
+  const releaseTrend = useMemo(() => monthlyReleaseCounts(deduped, 6), [deduped]);
 
   function toggleCompare(id: string) {
     setSelectedIds((prev) =>
@@ -421,8 +421,8 @@ export default function StateOfAiPage() {
                 value={stats.releases30}
                 label="Modelos lanzados en los últimos 30 días"
                 index={0}
-                trend={releaseTrend.map((d) => ({ value: d.count, label: d.label }))}
-                trendLabel={`Modelos lanzados en ventanas móviles de 30 días, cada una terminando en la fecha indicada: ${releaseTrend.map((d) => `${d.label}: ${d.count}`).join(", ")}.`}
+                trend={releaseTrend.map((d) => ({ value: d.count, label: d.label, partial: d.isCurrent }))}
+                trendLabel={`Modelos lanzados por mes en los últimos ${releaseTrend.length} meses: ${releaseTrend.map((d) => `${d.label}${d.isCurrent ? " (parcial)" : ""}: ${d.count}`).join(", ")}.`}
               />
               <StatTile
                 value={stats.bestValue ? stripMaxSuffix(stats.bestValue.name) : "—"}
