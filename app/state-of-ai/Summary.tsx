@@ -16,7 +16,7 @@ export default function Summary({ summary }: { summary: ExecutiveSummary }) {
       <p style={{ fontSize: 15, lineHeight: "26px", color: "var(--color-text-secondary)", margin: 0 }}>
         {thisWeekReleases.length > 0 ? (
           <>
-            Esta semana se {thisWeekReleases.length === 1 ? "sumó" : "sumaron"}{" "}
+            En los últimos 7 días se {thisWeekReleases.length === 1 ? "sumó" : "sumaron"}{" "}
             <strong style={{ color: "#fff" }}>
               {thisWeekReleases.length} {thisWeekReleases.length === 1 ? "modelo nuevo" : "modelos nuevos"}
             </strong>{" "}
@@ -24,7 +24,7 @@ export default function Summary({ summary }: { summary: ExecutiveSummary }) {
             {thisWeekReleases[0] ? <> — el más reciente, <strong style={{ color: "#fff" }}>{thisWeekReleases[0].name}</strong> de {thisWeekReleases[0].creatorName}</> : ""}.{" "}
           </>
         ) : (
-          "Esta semana no se registraron lanzamientos nuevos entre los modelos evaluados. "
+          "En los últimos 7 días no se registraron lanzamientos nuevos entre los modelos evaluados. "
         )}
         {growthPct !== null ? (
           <>
