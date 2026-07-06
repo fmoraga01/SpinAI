@@ -128,7 +128,7 @@ function StatTile({
         </p>
       )}
       {trend && trend.length >= 2 && (
-        <div style={{ marginTop: 14 }}>
+        <div style={{ marginTop: -16 }}>
           <Sparkline values={trend} ariaLabel={trendLabel} />
         </div>
       )}
