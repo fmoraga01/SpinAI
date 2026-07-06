@@ -124,6 +124,38 @@ export function buildExecutiveSummary(models: AiModel[], now: number = Date.now(
   return { thisWeekReleases, last30Count: last30.length, prev30Count: prev30.length, growthPct, leader, mostActiveLab };
 }
 
+export interface RollingCount {
+  label: string; // fecha de fin de la ventana, ej. "6 jul"
+  count: number;
+}
+
+// Misma métrica que "releases30" del hero (modelos lanzados en los últimos
+// 30 días), pero evaluada en ventanas móviles hacia atrás en el tiempo — a
+// diferencia de un conteo por mes calendario, el último punto siempre
+// coincide con el número grande de la card (el mes en curso, en cambio,
+// está incompleto y casi nunca calza).
+export function rollingReleaseCounts(
+  models: AiModel[],
+  periods: number = 6,
+  periodDays: number = 30,
+  now: number = Date.now()
+): RollingCount[] {
+  const day = 86400000;
+  const result: RollingCount[] = [];
+  for (let i = periods - 1; i >= 0; i--) {
+    const windowEnd = now - i * periodDays * day;
+    const windowStart = windowEnd - periodDays * day;
+    const count = models.filter((m) => {
+      if (!m.releaseDate) return false;
+      const t = new Date(m.releaseDate).getTime();
+      return t >= windowStart && t < windowEnd;
+    }).length;
+    const label = new Date(windowEnd).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
+    result.push({ label, count });
+  }
+  return result;
+}
+
 export interface MonthlyCount {
   key: string; // YYYY-MM
   label: string;
