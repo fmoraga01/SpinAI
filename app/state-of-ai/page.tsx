@@ -12,8 +12,9 @@ import Trends from "./Trends";
 import Research from "./Research";
 import CategoryGrid from "./CategoryGrid";
 import Podium from "./Podium";
+import Sparkline from "./Sparkline";
 import { usePrefersReducedMotion } from "./useReducedMotion";
-import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
+import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels, monthlyReleaseCounts } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
 
 function stripMaxSuffix(name: string): string {
@@ -101,8 +102,8 @@ function relativeDate(dateStr: string): string {
 }
 
 function StatTile({
-  value, label, index, caption,
-}: { value: string | number; label: string; index: number; caption?: string }) {
+  value, label, index, caption, trend, trendLabel,
+}: { value: string | number; label: string; index: number; caption?: string; trend?: number[]; trendLabel?: string }) {
   return (
     <div
       className="soa-stat-tile"
@@ -125,6 +126,11 @@ function StatTile({
         <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: "6px 0 0" }}>
           {caption}
         </p>
+      )}
+      {trend && trend.length >= 2 && (
+        <div style={{ marginTop: 14 }}>
+          <Sparkline values={trend} ariaLabel={trendLabel} />
+        </div>
       )}
     </div>
   );
@@ -197,6 +203,8 @@ export default function StateOfAiPage() {
   }, [deduped, models, now]);
 
   const summary = useMemo(() => buildExecutiveSummary(deduped, now), [deduped, now]);
+
+  const releaseTrend = useMemo(() => monthlyReleaseCounts(deduped, 6), [deduped]);
 
   function toggleCompare(id: string) {
     setSelectedIds((prev) =>
@@ -413,6 +421,8 @@ export default function StateOfAiPage() {
                 value={stats.releases30}
                 label="Modelos lanzados en los últimos 30 días"
                 index={0}
+                trend={releaseTrend.map((d) => d.count)}
+                trendLabel={`Modelos lanzados por mes en los últimos ${releaseTrend.length} meses: ${releaseTrend.map((d) => `${d.label} ${d.count}`).join(", ")}.`}
               />
               <StatTile
                 value={stats.bestValue ? stripMaxSuffix(stats.bestValue.name) : "—"}
