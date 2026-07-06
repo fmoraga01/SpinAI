@@ -16,7 +16,7 @@ export default function Podium({ models }: { models: AiModel[] }) {
       className="hidden md:flex"
       style={{
         flexShrink: 0,
-        width: 270,
+        width: 310,
         paddingLeft: 32,
         borderLeft: "1px solid var(--color-border)",
         alignSelf: "stretch",
