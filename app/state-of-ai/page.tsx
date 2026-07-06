@@ -12,7 +12,7 @@ import Trends from "./Trends";
 import Research from "./Research";
 import CategoryGrid from "./CategoryGrid";
 import Podium from "./Podium";
-import Sparkline from "./Sparkline";
+import Sparkline, { SparklinePoint } from "./Sparkline";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels, monthlyReleaseCounts } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
@@ -103,7 +103,7 @@ function relativeDate(dateStr: string): string {
 
 function StatTile({
   value, label, index, caption, trend, trendLabel,
-}: { value: string | number; label: string; index: number; caption?: string; trend?: number[]; trendLabel?: string }) {
+}: { value: string | number; label: string; index: number; caption?: string; trend?: SparklinePoint[]; trendLabel?: string }) {
   return (
     <div
       className="soa-stat-tile"
@@ -129,7 +129,7 @@ function StatTile({
       )}
       {trend && trend.length >= 2 && (
         <div style={{ marginTop: -6 }}>
-          <Sparkline values={trend} ariaLabel={trendLabel} />
+          <Sparkline points={trend} ariaLabel={trendLabel} />
         </div>
       )}
     </div>
@@ -421,7 +421,7 @@ export default function StateOfAiPage() {
                 value={stats.releases30}
                 label="Modelos lanzados en los últimos 30 días"
                 index={0}
-                trend={releaseTrend.map((d) => d.count)}
+                trend={releaseTrend.map((d) => ({ value: d.count, label: d.label }))}
                 trendLabel={`Modelos lanzados por mes en los últimos ${releaseTrend.length} meses: ${releaseTrend.map((d) => `${d.label} ${d.count}`).join(", ")}.`}
               />
               <StatTile
