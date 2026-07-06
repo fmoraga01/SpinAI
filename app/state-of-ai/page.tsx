@@ -11,6 +11,7 @@ import Summary from "./Summary";
 import Trends from "./Trends";
 import Research from "./Research";
 import CategoryGrid from "./CategoryGrid";
+import CostTrend from "./CostTrend";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels } from "@/lib/stateOfAi";
 import { AI_LANDSCAPE, AI_AGENTS } from "@/lib/aiLandscape";
@@ -329,63 +330,66 @@ export default function StateOfAiPage() {
                 boxShadow: "0 1px 0 rgba(255,255,255,0.03) inset, 0 20px 40px -24px rgba(0,0,0,0.6)",
               }}
             >
-              <div style={{ position: "relative", zIndex: 1 }}>
-                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
-                  Modelo líder en inteligencia
-                </p>
-                <p style={{ fontSize: 17, fontWeight: 500, color: "var(--color-text-secondary)", margin: "0 0 2px", letterSpacing: "-0.005em" }}>
-                  {stats.leader.name}
-                </p>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
-                  <span
-                    style={{
-                      fontSize: "clamp(64px, 9vw, 120px)",
-                      fontWeight: 800,
-                      lineHeight: 1,
-                      letterSpacing: "-0.03em",
-                      color: "#fff",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    <CountUp value={stats.leader.intelligenceIndex!} />
-                  </span>
-                  <InfoTooltip text="Puntaje de 0 a 100 de Artificial Analysis que combina 9 evaluaciones independientes en razonamiento, conocimiento general, matemáticas y programación en un solo número comparable.">
-
+              <div style={{ position: "relative", zIndex: 1, display: "flex", alignItems: "center", gap: 36 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 14px" }}>
+                    Modelo líder en inteligencia
+                  </p>
+                  <p style={{ fontSize: 17, fontWeight: 500, color: "var(--color-text-secondary)", margin: "0 0 2px", letterSpacing: "-0.005em" }}>
+                    {stats.leader.name}
+                  </p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
                     <span
-                      tabIndex={0}
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 8,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: "var(--color-primary)",
-                        background: "#2C40FF15",
-                        border: "1px solid #2C40FF33",
-                        borderRadius: "var(--radius-md)",
-                        padding: "4px 12px",
-                        cursor: "pointer",
+                        fontSize: "clamp(64px, 9vw, 120px)",
+                        fontWeight: 800,
+                        lineHeight: 1,
+                        letterSpacing: "-0.03em",
+                        color: "#fff",
+                        fontVariantNumeric: "tabular-nums",
                       }}
                     >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          background: "var(--color-primary)",
-                          boxShadow: "var(--shadow-glow-sm)",
-                          display: "inline-block",
-                          flexShrink: 0,
-                        }}
-                      />
-                      Índice de inteligencia
+                      <CountUp value={stats.leader.intelligenceIndex!} />
                     </span>
-                  </InfoTooltip>
+                    <InfoTooltip text="Puntaje de 0 a 100 de Artificial Analysis que combina 9 evaluaciones independientes en razonamiento, conocimiento general, matemáticas y programación en un solo número comparable.">
+
+                      <span
+                        tabIndex={0}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 8,
+                          fontSize: 13,
+                          fontWeight: 500,
+                          color: "var(--color-primary)",
+                          background: "#2C40FF15",
+                          border: "1px solid #2C40FF33",
+                          borderRadius: "var(--radius-md)",
+                          padding: "4px 12px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: "50%",
+                            background: "var(--color-primary)",
+                            boxShadow: "var(--shadow-glow-sm)",
+                            display: "inline-block",
+                            flexShrink: 0,
+                          }}
+                        />
+                        Índice de inteligencia
+                      </span>
+                    </InfoTooltip>
+                  </div>
+                  <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "12px 0 0" }}>
+                    {stats.leader.creatorName} lidera el ranking de Artificial Analysis
+                    {stats.leader.releaseDate ? `, con un modelo lanzado ${relativeDate(stats.leader.releaseDate).toLowerCase()}` : ""}.
+                  </p>
                 </div>
-                <p style={{ fontSize: 13.5, color: "var(--color-tertiary)", margin: "12px 0 0" }}>
-                  {stats.leader.creatorName} lidera el ranking de Artificial Analysis
-                  {stats.leader.releaseDate ? `, con un modelo lanzado ${relativeDate(stats.leader.releaseDate).toLowerCase()}` : ""}.
-                </p>
+                <CostTrend models={deduped} />
               </div>
             </div>
 

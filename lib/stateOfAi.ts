@@ -124,6 +124,26 @@ export function buildExecutiveSummary(models: AiModel[], now: number = Date.now(
   return { thisWeekReleases, last30Count: last30.length, prev30Count: prev30.length, growthPct, leader, mostActiveLab };
 }
 
+export interface CostTrendPoint {
+  slug: string;
+  releaseDate: string;
+  costPerPoint: number; // USD por 1M tokens, por cada punto de índice de inteligencia
+}
+
+// Cuánto cuesta un punto de índice de inteligencia, modelo a modelo, en orden
+// de lanzamiento — muestra que la inteligencia se abarata con el tiempo,
+// más allá de cuántos modelos nuevos salen por mes.
+export function costOfIntelligenceTrend(models: AiModel[], sampleSize: number = 14): CostTrendPoint[] {
+  return models
+    .filter(
+      (m): m is AiModel & { releaseDate: string; priceBlended1m: number; intelligenceIndex: number } =>
+        !!m.releaseDate && m.priceBlended1m !== null && m.priceBlended1m > 0 && m.intelligenceIndex !== null && m.intelligenceIndex > 0
+    )
+    .sort((a, b) => a.releaseDate.localeCompare(b.releaseDate))
+    .slice(-sampleSize)
+    .map((m) => ({ slug: m.slug, releaseDate: m.releaseDate, costPerPoint: m.priceBlended1m / m.intelligenceIndex }));
+}
+
 export interface MonthlyCount {
   key: string; // YYYY-MM
   label: string;
