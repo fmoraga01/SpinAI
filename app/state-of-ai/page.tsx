@@ -364,7 +364,7 @@ export default function StateOfAiPage() {
                         border: "1px solid #2C40FF33",
                         borderRadius: "var(--radius-md)",
                         padding: "4px 12px",
-                        cursor: "help",
+                        cursor: "pointer",
                       }}
                     >
                       <span
