@@ -7,23 +7,12 @@ const MARK = "#2C40FF";
 const MUTED = "var(--color-border-bright)";
 const W = 640;
 const H = 320;
-const M = { top: 20, right: 16, bottom: 56, left: 34 };
-
-// Artificial Analysis no publica un costo por tarea directo: reporta precio
-// blended (mezcla 3:1 entrada/salida) por 1M de tokens. Proyectamos ese precio
-// real sobre una tarea de referencia de 1M de tokens combinados —del orden de
-// una sesión agéntica larga de codificación— para poder comparar "costo por
-// tarea" entre modelos sin inventar una métrica de benchmark que no tenemos.
-const REFERENCE_TASK_TOKENS = 1_000_000;
-
-function costPerTask(priceBlended1m: number): number {
-  return priceBlended1m * (REFERENCE_TASK_TOKENS / 1_000_000);
-}
+const M = { top: 20, right: 16, bottom: 44, left: 34 };
 
 interface Point {
   id: string;
   model: AiModel;
-  cost: number;
+  price: number;
   index: number;
 }
 
@@ -48,7 +37,7 @@ function formatTick(v: number): string {
 }
 
 function paretoFrontier(points: Point[]): Set<string> {
-  const sorted = [...points].sort((a, b) => a.cost - b.cost);
+  const sorted = [...points].sort((a, b) => a.price - b.price);
   const frontier = new Set<string>();
   let best = -Infinity;
   for (const p of sorted) {
@@ -67,7 +56,7 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
     () =>
       models
         .filter((m) => m.priceBlended1m !== null && m.priceBlended1m! > 0 && m.intelligenceIndex !== null)
-        .map((m) => ({ id: m.id, model: m, cost: costPerTask(m.priceBlended1m!), index: m.intelligenceIndex! })),
+        .map((m) => ({ id: m.id, model: m, price: m.priceBlended1m!, index: m.intelligenceIndex! })),
     [models]
   );
 
@@ -76,8 +65,8 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
   const frontierIds = paretoFrontier(points);
   const leader = points.reduce((a, b) => (b.index > a.index ? b : a));
 
-  const maxCost = Math.max(...points.map((p) => p.cost));
-  const xTicks = niceTicks(maxCost, 5);
+  const maxPrice = Math.max(...points.map((p) => p.price));
+  const xTicks = niceTicks(maxPrice, 5);
   const xMax = xTicks[xTicks.length - 1];
 
   const minIndex = Math.min(...points.map((p) => p.index));
@@ -90,14 +79,14 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
   const innerW = W - M.left - M.right;
   const innerH = H - M.top - M.bottom;
 
-  function xFor(cost: number) {
-    return M.left + ((xMax - cost) / xMax) * innerW;
+  function xFor(price: number) {
+    return M.left + ((xMax - price) / xMax) * innerW;
   }
   function yFor(index: number) {
     return M.top + innerH - ((index - yMin) / (yMax - yMin)) * innerH;
   }
 
-  const coords = points.map((p) => ({ ...p, x: xFor(p.cost), y: yFor(p.index) }));
+  const coords = points.map((p) => ({ ...p, x: xFor(p.price), y: yFor(p.index) }));
   const frontierCoords = coords.filter((p) => frontierIds.has(p.id)).sort((a, b) => a.x - b.x);
   const frontierPath = frontierCoords.map((p) => `${p.x},${p.y}`).join(" ");
   const leaderCoord = coords.find((p) => p.id === leader.id)!;
@@ -106,7 +95,7 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
   const xTranslate = active ? (active.x < 90 ? "0%" : active.x > W - 90 ? "-100%" : "-50%") : "-50%";
   const showBelow = active ? active.y < 56 : false;
 
-  const ariaLabel = `Gráfico de dispersión: costo estimado por tarea vs índice de inteligencia para ${points.length} modelos. ${frontierCoords.length} modelos forman la frontera de eficiencia, desde ${frontierCoords[0].model.name} (${formatPrice(frontierCoords[0].cost)} por tarea) hasta ${frontierCoords[frontierCoords.length - 1].model.name} (${formatPrice(frontierCoords[frontierCoords.length - 1].cost)} por tarea). Líder en índice: ${leader.model.name} con ${formatIndex(leader.index)} puntos.`;
+  const ariaLabel = `Gráfico de dispersión: precio por 1M de tokens vs índice de inteligencia para ${points.length} modelos. ${frontierCoords.length} modelos forman la frontera de eficiencia, desde ${frontierCoords[0].model.name} (${formatPrice(frontierCoords[0].price)}) hasta ${frontierCoords[frontierCoords.length - 1].model.name} (${formatPrice(frontierCoords[frontierCoords.length - 1].price)}). Líder en índice: ${leader.model.name} con ${formatIndex(leader.index)} puntos.`;
 
   return (
     <figure style={{ margin: 0 }}>
@@ -217,7 +206,7 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
           >
             <strong>{active.model.name}</strong>{" "}
             <span style={{ color: "var(--color-tertiary)" }}>
-              · {formatIndex(active.index)} pts · {formatPrice(active.cost)}/tarea
+              · {formatIndex(active.index)} pts · {formatPrice(active.price)}/1M
             </span>
           </div>
         )}
@@ -225,7 +214,7 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 6 }}>
         <span style={{ fontSize: 11, color: "#4B5563" }}>Más caro</span>
-        <span style={{ fontSize: 11, color: "#4B5563" }}>Costo estimado por tarea (USD) — más barato hacia la derecha</span>
+        <span style={{ fontSize: 11, color: "#4B5563" }}>Precio por 1M de tokens (USD) — más barato hacia la derecha</span>
         <span style={{ fontSize: 11, color: "#4B5563" }}>Más barato</span>
       </div>
 
@@ -239,10 +228,6 @@ export default function CostEfficiencyChart({ models }: { models: AiModel[] }) {
           Fuera de la frontera
         </span>
       </div>
-
-      <p style={{ fontSize: 11, color: "#4B5563", margin: "12px 0 0", lineHeight: "16px" }}>
-        Estimado para una tarea de referencia de 1M de tokens combinados (mezcla 3:1 entrada/salida), a partir del precio real por token de Artificial Analysis — no es una medición directa por tarea.
-      </p>
     </figure>
   );
 }

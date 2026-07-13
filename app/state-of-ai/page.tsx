@@ -524,10 +524,10 @@ export default function StateOfAiPage() {
 
               <div style={{ marginTop: 40 }}>
                 <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 4px" }}>
-                  Top 20 por índice de inteligencia: costo por tarea vs. desempeño
+                  Top 20 por índice de inteligencia: precio vs. desempeño
                 </h3>
                 <p style={{ fontSize: 13, color: "var(--color-tertiary)", margin: "0 0 20px", lineHeight: "19px", maxWidth: 560 }}>
-                  Cada punto es un modelo. La línea marca la frontera de eficiencia: para cada costo, el modelo con mayor índice de inteligencia disponible.
+                  Cada punto es un modelo. La línea marca la frontera de eficiencia: para cada precio, el modelo con mayor índice de inteligencia disponible.
                 </p>
                 <CostEfficiencyChart models={deduped.slice(0, 20)} />
               </div>
