@@ -12,7 +12,6 @@ import Trends from "./Trends";
 import Research from "./Research";
 import CategoryGrid from "./CategoryGrid";
 import Podium from "./Podium";
-import CostEfficiencyChart from "./CostEfficiencyChart";
 import Sparkline, { SparklinePoint } from "./Sparkline";
 import { usePrefersReducedMotion } from "./useReducedMotion";
 import { AiModel, bestVariantPerSlug, buildExecutiveSummary, formatIndex, formatPrice, loadAiModels, monthlyReleaseCounts } from "@/lib/stateOfAi";
@@ -521,16 +520,6 @@ export default function StateOfAiPage() {
                 subtitle={`La pregunta no es cuál es el mejor modelo, sino cuál da más por tu presupuesto. ${stats.bestValue ? `Hoy, ${stats.bestValue.name} ofrece ${formatIndex(stats.bestValue.intelligenceIndex)} puntos de inteligencia por ${formatPrice(stats.bestValue.priceBlended1m)}/1M tokens.` : ""}`}
               />
               <ValuePicks models={deduped} leader={stats.leader} />
-
-              <div style={{ marginTop: 40 }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: "#fff", margin: "0 0 4px" }}>
-                  Top 20 por índice de inteligencia: precio vs. desempeño
-                </h3>
-                <p style={{ fontSize: 13, color: "var(--color-tertiary)", margin: "0 0 20px", lineHeight: "19px", maxWidth: 560 }}>
-                  Cada punto es un modelo. La línea marca la frontera de eficiencia: para cada precio, el modelo con mayor índice de inteligencia disponible.
-                </p>
-                <CostEfficiencyChart models={deduped.slice(0, 20)} />
-              </div>
             </section>
 
             {/* Tendencias */}
