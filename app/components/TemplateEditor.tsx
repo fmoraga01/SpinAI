@@ -292,23 +292,11 @@ function TimingSection({
   onTotalMinutesChange: (n: number) => void;
 }) {
   return (
-    <div
-      style={{
-        background: "var(--color-surface-elevated)",
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
-        padding: "14px 16px",
-      }}
-    >
-      <div className="flex items-center justify-between" style={{ gap: 12 }}>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#4B5563" }}>
-            Tiempo de reunión
-          </p>
-          <p style={{ fontSize: 11, color: "#6B7280", marginTop: 3, lineHeight: 1.4 }}>
-            Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
-          </p>
-        </div>
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#4B5563" }}>
+          Tiempo de reunión
+        </p>
         <button
           role="switch"
           aria-checked={enabled}
@@ -331,14 +319,17 @@ function TimingSection({
           />
         </button>
       </div>
+      {!enabled && (
+        <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.4 }}>
+          Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
+        </p>
+      )}
       {enabled && (
-        <div className="flex items-center gap-3" style={{ marginTop: 12, flexWrap: "wrap" }}>
-          <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
-            Total
-            <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
-            min
-          </label>
-        </div>
+        <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
+          Total
+          <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
+          min
+        </label>
       )}
     </div>
   );
