@@ -622,14 +622,6 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         />
       </div>
 
-      {/* Agenda */}
-      <AgendaEditor
-        items={agendaItems}
-        timingEnabled={timingEnabled}
-        members={members}
-        onChange={setAgendaItems}
-      />
-
       {/* Tiempo de reunión */}
       <TimingSection
         enabled={timingEnabled}
@@ -638,6 +630,14 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         onTotalMinutesChange={setTotalMinutes}
         assignedMinutes={assignedMinutes}
         onDistribute={() => distribute(totalMinutes)}
+      />
+
+      {/* Agenda */}
+      <AgendaEditor
+        items={agendaItems}
+        timingEnabled={timingEnabled}
+        members={members}
+        onChange={setAgendaItems}
       />
 
       {/* Theme picker */}
