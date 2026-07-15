@@ -6,6 +6,7 @@ import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
 import { SIZES, SIZE_ORDER } from "@/lib/sizes";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
+import Toast from "./Toast";
 
 interface Props {
   assignment: Assignment;
@@ -591,6 +592,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [presenting, setPresenting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplate(assignment.id).then((t) => {
@@ -684,10 +686,15 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
 
   async function handleSave() {
     setSaving(true);
-    await saveTemplate(buildTemplate());
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      await saveTemplate(buildTemplate());
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setError("No se pudo guardar. Revisá tu conexión e intentá de nuevo.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handlePresent() {
@@ -695,8 +702,14 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
     // Must call requestFullscreen synchronously inside the click handler
     // before any await — browsers reject it outside a user gesture context
     document.documentElement.requestFullscreen?.().catch(() => {});
-    await saveTemplate(buildTemplate());
-    onPresent(buildTemplate());
+    try {
+      const built = buildTemplate();
+      await saveTemplate(built);
+      onPresent(built);
+    } catch {
+      setError("No se pudo guardar antes de presentar. Intentá de nuevo.");
+      setPresenting(false);
+    }
   }
 
   if (loading || presenting) {
@@ -709,6 +722,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Assignment badge */}
       <div
@@ -818,5 +832,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         </button>
       </div>
     </div>
+    {error && <Toast message={error} kind="error" onDismiss={() => setError(null)} />}
+    </>
   );
 }
