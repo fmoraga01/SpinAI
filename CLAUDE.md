@@ -9,3 +9,4 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- Before publishing graphify-out/graph.html as an Artifact (or re-publishing after `graphify update .` changed it), run `node .claude/graphify-artifact-patch.mjs` first and publish the resulting graphify-out/graph-standalone.html instead. It inlines the vis-network library (graph.html's CDN `<script src>` is blocked by the Artifact sandbox's CSP) and adds a collapsible right-hand sidebar toggle. Republish to the same Artifact URL the user already has rather than minting a new one, unless asked otherwise.
