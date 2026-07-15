@@ -56,7 +56,7 @@ export default function MeetingTimeline({ agenda, items, currentIndex, intoItemS
 
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: theme.textColor }}>
-          Ítem {currentIndex + 1} de {items.length}
+          Agenda
           <span style={{ fontSize: 11, fontWeight: 500, color: theme.textSecondary, marginLeft: 8 }}>
             {current.memberName ?? "Sin responsable"} · {current.minutes} min asignados
           </span>
