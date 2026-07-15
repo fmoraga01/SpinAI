@@ -6,6 +6,7 @@ import { THEMES } from "@/lib/themes";
 import { FONTS } from "@/lib/fonts";
 import { SIZES, scaleSize } from "@/lib/sizes";
 import SlideBackground from "./SlideBackground";
+import MeetingTimeline from "./MeetingTimeline";
 
 interface Props {
   template: Template;
@@ -25,6 +26,38 @@ export default function PresentationView({ template, date, onClose }: Props) {
   }, [onClose]);
 
   const [crossed, setCrossed] = useState<Set<number>>(new Set());
+
+  const timing = template.timing?.enabled ? template.timing : null;
+  const [meetingRunning, setMeetingRunning] = useState(false);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const startRef = useRef<number | null>(null);
+  const baseElapsedRef = useRef(0);
+
+  useEffect(() => {
+    if (!meetingRunning) return;
+    const id = setInterval(() => {
+      const extra = startRef.current !== null ? (Date.now() - startRef.current) / 1000 : 0;
+      setElapsedSec(baseElapsedRef.current + extra);
+    }, 500);
+    return () => clearInterval(id);
+  }, [meetingRunning]);
+
+  function startMeeting() {
+    startRef.current = Date.now();
+    setMeetingRunning(true);
+  }
+  function pauseMeeting() {
+    if (startRef.current !== null) baseElapsedRef.current += (Date.now() - startRef.current) / 1000;
+    startRef.current = null;
+    setMeetingRunning(false);
+  }
+  function resetMeeting() {
+    startRef.current = null;
+    baseElapsedRef.current = 0;
+    setMeetingRunning(false);
+    setElapsedSec(0);
+  }
+  const meetingStarted = meetingRunning || elapsedSec > 0;
 
   const th = THEMES[template.theme ?? "default"];
   const fnt = FONTS[template.font ?? "sans"];
@@ -129,6 +162,50 @@ export default function PresentationView({ template, date, onClose }: Props) {
           }}>
             {formatDate(date)}
           </span>
+          {timing && !meetingStarted && (
+            <button
+              onClick={startMeeting}
+              style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "6px 16px",
+                background: th.accent, color: th.badgeText,
+                border: `1px solid ${th.accent}`,
+                borderRadius: "var(--radius-md)",
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              ▶ Iniciar reunión
+            </button>
+          )}
+          {timing && meetingStarted && (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                onClick={meetingRunning ? pauseMeeting : startMeeting}
+                style={{
+                  padding: "6px 14px",
+                  background: "transparent", color: th.textSecondary,
+                  border: `1px solid ${th.cardBorder}`,
+                  borderRadius: "var(--radius-md)",
+                  fontSize: 12, fontWeight: 500, cursor: "pointer",
+                }}
+              >
+                {meetingRunning ? "⏸ Pausar" : "▶ Reanudar"}
+              </button>
+              <button
+                onClick={resetMeeting}
+                title="Reiniciar cronómetro"
+                style={{
+                  width: 28, height: 28,
+                  background: "transparent", color: th.textSecondary,
+                  border: `1px solid ${th.cardBorder}`,
+                  borderRadius: "var(--radius-md)",
+                  fontSize: 13, cursor: "pointer",
+                }}
+              >
+                ↻
+              </button>
+            </div>
+          )}
           <button
             onClick={() => { document.exitFullscreen?.().catch(() => {}); onClose(); }}
             style={{
@@ -306,22 +383,26 @@ export default function PresentationView({ template, date, onClose }: Props) {
       </div>
 
       {/* Footer */}
-      <div style={{
-        position: "relative", zIndex: 1,
-        padding: "10px 40px",
-        borderTop: `1px solid ${th.cardBorder}`,
-        display: "flex", justifyContent: "center", flexShrink: 0,
-      }}>
-        <span style={{ fontSize: 11, color: th.textSecondary }}>
-          Presiona{" "}
-          <kbd style={{
-            background: th.cardBg,
-            border: `1px solid ${th.cardBorder}`,
-            borderRadius: 4, padding: "1px 6px", fontSize: 10,
-          }}>ESC</kbd>{" "}
-          para salir
-        </span>
-      </div>
+      {timing ? (
+        <MeetingTimeline agenda={template.agenda} items={timing.items} elapsedSec={elapsedSec} theme={th} />
+      ) : (
+        <div style={{
+          position: "relative", zIndex: 1,
+          padding: "10px 40px",
+          borderTop: `1px solid ${th.cardBorder}`,
+          display: "flex", justifyContent: "center", flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: th.textSecondary }}>
+            Presiona{" "}
+            <kbd style={{
+              background: th.cardBg,
+              border: `1px solid ${th.cardBorder}`,
+              borderRadius: 4, padding: "1px 6px", fontSize: 10,
+            }}>ESC</kbd>{" "}
+            para salir
+          </span>
+        </div>
+      )}
     </div>
   );
 }

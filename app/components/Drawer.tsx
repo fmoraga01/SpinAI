@@ -202,6 +202,7 @@ export default function Drawer() {
             <TemplateEditor
               key={editorKey}
               assignment={editingAssignment}
+              members={data.members}
               onBack={() => setEditingAssignment(null)}
               onPresent={(template) => setPresentingTemplate({ template, date: editingAssignment.date })}
             />

@@ -24,6 +24,18 @@ export type SlideTheme = "default" | "minimal" | "blueprint" | "warm";
 export type SlideFont = "sans" | "mono" | "serif" | "impact";
 export type SlideSize = "sm" | "md" | "lg";
 
+export interface AgendaTimingItem {
+  minutes: number;
+  memberId: string | null;
+  memberName: string | null;
+}
+
+export interface MeetingTiming {
+  enabled: boolean;
+  totalMinutes: number;
+  items: AgendaTimingItem[]; // paralelo a agenda[]: mismo orden y longitud
+}
+
 export interface Template {
   id?: string;
   assignmentId: string;
@@ -36,6 +48,7 @@ export interface Template {
   theme: SlideTheme;
   font: SlideFont;
   size: SlideSize;
+  timing: MeetingTiming | null;
 }
 
 export interface LogEntry {

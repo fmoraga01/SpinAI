@@ -1,5 +1,5 @@
 import { getSupabase } from "./supabase";
-import { AppData, TeamMember, Assignment, Template, LogEntry, SlideTheme, SlideFont, SlideSize } from "./types";
+import { AppData, TeamMember, Assignment, Template, LogEntry, SlideTheme, SlideFont, SlideSize, MeetingTiming } from "./types";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -310,6 +310,28 @@ export async function confirmBulkAssignment(previews: BulkAssignmentPreview[]): 
 
 // ─── Templates ────────────────────────────────────────────────────────────────
 
+function sanitizeTiming(raw: unknown, agendaLength: number): MeetingTiming | null {
+  if (!raw || typeof raw !== "object") return null;
+  const t = raw as Record<string, unknown>;
+  if (!t.enabled || !Array.isArray(t.items)) return null;
+
+  const items = t.items.slice(0, agendaLength).map((item) => {
+    const i = (item ?? {}) as Record<string, unknown>;
+    return {
+      minutes: typeof i.minutes === "number" && i.minutes > 0 ? i.minutes : 1,
+      memberId: (i.memberId as string | null) ?? null,
+      memberName: (i.memberName as string | null) ?? null,
+    };
+  });
+  while (items.length < agendaLength) items.push({ minutes: 1, memberId: null, memberName: null });
+
+  return {
+    enabled: true,
+    totalMinutes: typeof t.totalMinutes === "number" && t.totalMinutes > 0 ? t.totalMinutes : items.reduce((s, i) => s + i.minutes, 0),
+    items,
+  };
+}
+
 export async function loadTemplate(assignmentId: string): Promise<Template | null> {
   const { data } = await getSupabase()
     .from("templates")
@@ -318,18 +340,20 @@ export async function loadTemplate(assignmentId: string): Promise<Template | nul
     .single();
 
   if (!data) return null;
+  const agenda: string[] = data.agenda ?? [];
   return {
     id: data.id,
     assignmentId: data.assignment_id,
     memberId: data.member_id,
     memberName: data.member_name,
     title: data.title,
-    agenda: data.agenda ?? [],
+    agenda,
     keyPoints: data.key_points ?? [],
     notes: data.notes,
     theme: (data.theme as SlideTheme) ?? "default",
     font: (data.font as SlideFont) ?? "sans",
     size: (data.size as SlideSize) ?? "md",
+    timing: sanitizeTiming(data.timing, agenda.length),
   };
 }
 
@@ -345,6 +369,7 @@ export async function saveTemplate(template: Template): Promise<void> {
     theme: template.theme,
     font: template.font,
     size: template.size,
+    timing: template.timing,
     updated_at: new Date().toISOString(),
   };
 

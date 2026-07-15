@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Assignment, Template, SlideTheme, SlideFont, SlideSize } from "@/lib/types";
+import { Assignment, Template, SlideTheme, SlideFont, SlideSize, TeamMember, AgendaTimingItem } from "@/lib/types";
 import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
 import { SIZES, SIZE_ORDER } from "@/lib/sizes";
@@ -9,8 +9,16 @@ import { loadTemplate, saveTemplate } from "@/lib/storage";
 
 interface Props {
   assignment: Assignment;
+  members: TeamMember[];
   onBack: () => void;
   onPresent: (template: Template) => void;
+}
+
+interface AgendaDraft {
+  text: string;
+  minutes: number;
+  memberId: string | null;
+  memberName: string | null;
 }
 
 function formatDate(dateStr: string): string {
@@ -18,28 +26,36 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long" });
 }
 
-function ListEditor({
-  label,
+function distributeEvenly(count: number, totalMinutes: number): number[] {
+  if (count <= 0) return [];
+  const base = Math.floor(totalMinutes / count);
+  const remainder = totalMinutes - base * count;
+  return Array.from({ length: count }, (_, i) => Math.max(1, base + (i < remainder ? 1 : 0)));
+}
+
+function AgendaEditor({
   items,
-  placeholder,
+  timingEnabled,
+  members,
   onChange,
 }: {
-  label: string;
-  items: string[];
-  placeholder: string;
-  onChange: (items: string[]) => void;
+  items: AgendaDraft[];
+  timingEnabled: boolean;
+  members: TeamMember[];
+  onChange: (items: AgendaDraft[]) => void;
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
+  const activeMembers = members.filter((m) => m.active);
 
-  function update(index: number, value: string) {
+  function update(index: number, patch: Partial<AgendaDraft>) {
     const next = [...items];
-    next[index] = value;
+    next[index] = { ...next[index], ...patch };
     onChange(next);
   }
 
   function add() {
-    onChange([...items, ""]);
+    onChange([...items, { text: "", minutes: 5, memberId: null, memberName: null }]);
   }
 
   function remove(index: number) {
@@ -74,72 +90,121 @@ function ListEditor({
   return (
     <div>
       <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
-        {label}
+        Agenda
       </p>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div
             key={i}
-            draggable
-            onDragStart={() => onDragStart(i)}
-            onDragOver={(e) => onDragOver(e, i)}
-            onDragLeave={() => setDragOver(null)}
-            onDrop={() => onDrop(i)}
-            onDragEnd={onDragEnd}
-            className="flex items-center gap-2"
             style={{
               borderRadius: "var(--radius-md)",
               outline: dragOver === i ? "2px solid var(--color-primary)" : "2px solid transparent",
               transition: "outline 100ms",
               opacity: dragIndex === i ? 0.4 : 1,
+              display: "flex",
+              flexDirection: "column",
+              gap: 6,
             }}
           >
-            {/* Drag handle */}
-            <span
-              style={{
-                cursor: "grab", color: "#9CA3AF", fontSize: 12,
-                flexShrink: 0, userSelect: "none", paddingLeft: 2,
-              }}
-              title="Arrastrar para reordenar"
+            <div
+              draggable
+              onDragStart={() => onDragStart(i)}
+              onDragOver={(e) => onDragOver(e, i)}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={() => onDrop(i)}
+              onDragEnd={onDragEnd}
+              className="flex items-center gap-2"
             >
-              ⠿
-            </span>
-            <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
-              {i + 1}
-            </span>
-            <input
-              value={item}
-              onChange={(e) => update(i, e.target.value)}
-              placeholder={placeholder}
-              style={{
-                flex: 1,
-                background: "var(--color-surface-elevated)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                padding: "8px 12px",
-                fontSize: 13,
-                color: "var(--color-text-primary)",
-                outline: "none",
-                transition: "border-color 150ms",
-              }}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
-            />
-            <button
-              onClick={() => remove(i)}
-              style={{
-                width: 28, height: 28, flexShrink: 0,
-                background: "transparent", border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)", color: "#374151",
-                cursor: "pointer", fontSize: 12, display: "flex",
-                alignItems: "center", justifyContent: "center",
-                transition: "border-color 150ms, color 150ms",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#374151"; }}
-            >
-              ✕
-            </button>
+              <span
+                style={{
+                  cursor: "grab", color: "#9CA3AF", fontSize: 12,
+                  flexShrink: 0, userSelect: "none", paddingLeft: 2,
+                }}
+                title="Arrastrar para reordenar"
+              >
+                ⠿
+              </span>
+              <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
+                {i + 1}
+              </span>
+              <input
+                value={item.text}
+                onChange={(e) => update(i, { text: e.target.value })}
+                placeholder="Ej: Revisión de objetivos"
+                style={{
+                  flex: 1,
+                  background: "var(--color-surface-elevated)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)",
+                  padding: "8px 12px",
+                  fontSize: 13,
+                  color: "var(--color-text-primary)",
+                  outline: "none",
+                  transition: "border-color 150ms",
+                }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-primary)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+              />
+              <button
+                onClick={() => remove(i)}
+                style={{
+                  width: 28, height: 28, flexShrink: 0,
+                  background: "transparent", border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)", color: "#374151",
+                  cursor: "pointer", fontSize: 12, display: "flex",
+                  alignItems: "center", justifyContent: "center",
+                  transition: "border-color 150ms, color 150ms",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#374151"; }}
+              >
+                ✕
+              </button>
+            </div>
+            {timingEnabled && (
+              <div className="flex items-center gap-2" style={{ paddingLeft: 46 }}>
+                <input
+                  type="number"
+                  min={1}
+                  value={item.minutes}
+                  onChange={(e) => update(i, { minutes: Math.max(1, Number(e.target.value) || 1) })}
+                  style={{
+                    width: 52,
+                    background: "var(--color-surface-elevated)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "6px 8px",
+                    fontSize: 12,
+                    color: "var(--color-text-primary)",
+                    outline: "none",
+                  }}
+                />
+                <span style={{ fontSize: 11, color: "#6B7280", flexShrink: 0 }}>min ·</span>
+                <select
+                  value={item.memberId ?? ""}
+                  onChange={(e) => {
+                    const id = e.target.value || null;
+                    const m = activeMembers.find((mm) => mm.id === id);
+                    update(i, { memberId: id, memberName: m ? m.name : null });
+                  }}
+                  style={{
+                    flex: 1,
+                    background: "var(--color-surface-elevated)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-md)",
+                    padding: "6px 8px",
+                    fontSize: 12,
+                    color: "var(--color-text-primary)",
+                    outline: "none",
+                  }}
+                >
+                  <option value="">Sin responsable</option>
+                  {activeMembers.map((m) => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         ))}
         <button
@@ -157,6 +222,99 @@ function ListEditor({
           + Agregar
         </button>
       </div>
+    </div>
+  );
+}
+
+function TimingSection({
+  enabled,
+  onToggle,
+  totalMinutes,
+  onTotalMinutesChange,
+  assignedMinutes,
+  onDistribute,
+}: {
+  enabled: boolean;
+  onToggle: (next: boolean) => void;
+  totalMinutes: number;
+  onTotalMinutesChange: (n: number) => void;
+  assignedMinutes: number;
+  onDistribute: () => void;
+}) {
+  const mismatch = enabled && assignedMinutes !== totalMinutes;
+  return (
+    <div
+      style={{
+        background: "var(--color-surface-elevated)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        padding: "14px 16px",
+      }}
+    >
+      <div className="flex items-center justify-between" style={{ gap: 12 }}>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#4B5563" }}>
+            Tiempo de reunión
+          </p>
+          <p style={{ fontSize: 11, color: "#6B7280", marginTop: 3, lineHeight: 1.4 }}>
+            Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
+          </p>
+        </div>
+        <button
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Activar tiempo de reunión"
+          onClick={() => onToggle(!enabled)}
+          style={{
+            width: 38, height: 22, borderRadius: 11, flexShrink: 0,
+            border: "1px solid var(--color-border)",
+            background: enabled ? "var(--color-primary)" : "var(--color-surface)",
+            position: "relative", cursor: "pointer", padding: 0,
+            transition: "background 150ms",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute", top: 1, left: enabled ? 17 : 1,
+              width: 18, height: 18, borderRadius: "50%", background: "#fff",
+              transition: "left 150ms",
+            }}
+          />
+        </button>
+      </div>
+      {enabled && (
+        <div className="flex items-center gap-3" style={{ marginTop: 12, flexWrap: "wrap" }}>
+          <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
+            Total
+            <input
+              type="number"
+              min={1}
+              value={totalMinutes}
+              onChange={(e) => onTotalMinutesChange(Math.max(1, Number(e.target.value) || 1))}
+              style={{
+                width: 60, background: "var(--color-surface)", border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)", padding: "6px 8px", fontSize: 12,
+                color: "var(--color-text-primary)", outline: "none",
+              }}
+            />
+            min
+          </label>
+          <button
+            onClick={onDistribute}
+            style={{
+              padding: "6px 12px", background: "transparent", border: "1px dashed var(--color-border)",
+              borderRadius: "var(--radius-md)", color: "#4B5563", fontSize: 12, cursor: "pointer",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#4B5563"; }}
+          >
+            ⟲ Repartir equitativo
+          </button>
+          <span style={{ fontSize: 11, color: mismatch ? "#F59E0B" : "#6B7280" }}>
+            Asignado {assignedMinutes} / {totalMinutes} min{mismatch ? " ⚠" : ""}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -318,9 +476,11 @@ function SizePicker({ value, onChange }: { value: SlideSize; onChange: (s: Slide
   );
 }
 
-export default function TemplateEditor({ assignment, onBack, onPresent }: Props) {
+export default function TemplateEditor({ assignment, members, onBack, onPresent }: Props) {
   const [title, setTitle] = useState("");
-  const [agenda, setAgenda] = useState<string[]>([""]);
+  const [agendaItems, setAgendaItems] = useState<AgendaDraft[]>([{ text: "", minutes: 5, memberId: null, memberName: null }]);
+  const [timingEnabled, setTimingEnabled] = useState(false);
+  const [totalMinutes, setTotalMinutes] = useState(15);
   const [theme, setTheme] = useState<SlideTheme>("default");
   const [font, setFont] = useState<SlideFont>("sans");
   const [size, setSize] = useState<SlideSize>("md");
@@ -333,7 +493,16 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
     loadTemplate(assignment.id).then((t) => {
       if (t) {
         setTitle(t.title);
-        setAgenda(t.agenda.length > 0 ? t.agenda : [""]);
+        const texts = t.agenda.length > 0 ? t.agenda : [""];
+        const timingItems: AgendaTimingItem[] = t.timing?.items ?? [];
+        setAgendaItems(texts.map((text, i) => ({
+          text,
+          minutes: timingItems[i]?.minutes ?? 5,
+          memberId: timingItems[i]?.memberId ?? null,
+          memberName: timingItems[i]?.memberName ?? null,
+        })));
+        setTimingEnabled(t.timing?.enabled ?? false);
+        setTotalMinutes(t.timing?.totalMinutes ?? Math.max(texts.length * 5, 5));
         setTheme(t.theme ?? "default");
         setFont(t.font ?? "sans");
         setSize(t.size ?? "md");
@@ -342,18 +511,47 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
     });
   }, [assignment.id]);
 
+  const assignedMinutes = agendaItems
+    .filter((a) => a.text.trim() !== "")
+    .reduce((sum, a) => sum + a.minutes, 0);
+
+  function distribute(total: number) {
+    setAgendaItems((prev) => {
+      const minutesList = distributeEvenly(prev.length, total);
+      return prev.map((item, i) => ({ ...item, minutes: minutesList[i] ?? item.minutes }));
+    });
+  }
+
+  function handleToggleTiming(next: boolean) {
+    setTimingEnabled(next);
+    if (next) {
+      const nonEmptyCount = Math.max(1, agendaItems.filter((a) => a.text.trim() !== "").length);
+      const suggestedTotal = totalMinutes > 0 ? totalMinutes : nonEmptyCount * 5;
+      setTotalMinutes(suggestedTotal);
+      distribute(suggestedTotal);
+    }
+  }
+
   function buildTemplate(): Template {
+    const nonEmpty = agendaItems.filter((a) => a.text.trim() !== "");
     return {
       assignmentId: assignment.id,
       memberId: assignment.memberId ?? "",
       memberName: assignment.memberName ?? "",
       title,
-      agenda: agenda.filter((a) => a.trim() !== ""),
+      agenda: nonEmpty.map((a) => a.text),
       keyPoints: [],
       notes: "",
       theme,
       font,
       size,
+      timing: timingEnabled
+        ? {
+            enabled: true,
+            totalMinutes,
+            items: nonEmpty.map((a): AgendaTimingItem => ({ minutes: a.minutes, memberId: a.memberId, memberName: a.memberName })),
+          }
+        : null,
     };
   }
 
@@ -425,11 +623,21 @@ export default function TemplateEditor({ assignment, onBack, onPresent }: Props)
       </div>
 
       {/* Agenda */}
-      <ListEditor
-        label="Agenda"
-        items={agenda}
-        placeholder="Ej: Revisión de objetivos"
-        onChange={setAgenda}
+      <AgendaEditor
+        items={agendaItems}
+        timingEnabled={timingEnabled}
+        members={members}
+        onChange={setAgendaItems}
+      />
+
+      {/* Tiempo de reunión */}
+      <TimingSection
+        enabled={timingEnabled}
+        onToggle={handleToggleTiming}
+        totalMinutes={totalMinutes}
+        onTotalMinutesChange={setTotalMinutes}
+        assignedMinutes={assignedMinutes}
+        onDistribute={() => distribute(totalMinutes)}
       />
 
       {/* Theme picker */}
