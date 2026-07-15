@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Assignment, Template, SlideTheme, SlideFont, SlideSize, TeamMember, AgendaTimingItem } from "@/lib/types";
 import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
@@ -102,6 +102,103 @@ function MinutesField({ value, onChange, min = 1 }: { value: number; onChange: (
   );
 }
 
+function memberOptionStyle(selected: boolean, isLast: boolean): React.CSSProperties {
+  return {
+    display: "block", width: "100%", textAlign: "left",
+    padding: "7px 10px", fontSize: 12, cursor: "pointer",
+    background: selected ? "#2C40FF12" : "transparent",
+    color: selected ? "var(--color-primary)" : "var(--color-text-primary)",
+    border: "none", borderBottom: isLast ? "none" : "1px solid var(--color-border)",
+  };
+}
+
+function MemberSelect({
+  value,
+  members,
+  onChange,
+}: {
+  value: string | null;
+  members: TeamMember[];
+  onChange: (id: string | null, name: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const activeMembers = members.filter((m) => m.active);
+  const selected = value ? activeMembers.find((m) => m.id === value) : null;
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", flex: 1 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6,
+          background: "var(--color-surface-elevated)",
+          border: `1px solid ${open ? "var(--color-primary)" : "var(--color-border)"}`,
+          borderRadius: "var(--radius-md)", padding: "6px 8px", fontSize: 12,
+          color: selected ? "var(--color-text-primary)" : "#6B7280", cursor: "pointer",
+          transition: "border-color 150ms",
+        }}
+      >
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {selected ? selected.name : "Sin responsable"}
+        </span>
+        <span
+          style={{
+            fontSize: 9, color: "#6B7280", flexShrink: 0,
+            transform: open ? "rotate(180deg)" : "none", transition: "transform 150ms",
+          }}
+        >
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 20,
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            maxHeight: 180, overflowY: "auto",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => { onChange(null, null); setOpen(false); }}
+            style={memberOptionStyle(value === null, activeMembers.length === 0)}
+            onMouseEnter={(e) => { if (value !== null) e.currentTarget.style.background = "var(--color-surface)"; }}
+            onMouseLeave={(e) => { if (value !== null) e.currentTarget.style.background = "transparent"; }}
+          >
+            Sin responsable
+          </button>
+          {activeMembers.map((m, i) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => { onChange(m.id, m.name); setOpen(false); }}
+              style={memberOptionStyle(value === m.id, i === activeMembers.length - 1)}
+              onMouseEnter={(e) => { if (value !== m.id) e.currentTarget.style.background = "var(--color-surface)"; }}
+              onMouseLeave={(e) => { if (value !== m.id) e.currentTarget.style.background = "transparent"; }}
+            >
+              {m.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AgendaEditor({
   items,
   timingEnabled,
@@ -115,7 +212,6 @@ function AgendaEditor({
 }) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
-  const activeMembers = members.filter((m) => m.active);
 
   function update(index: number, patch: Partial<AgendaDraft>) {
     const next = [...items];
@@ -234,29 +330,11 @@ function AgendaEditor({
               <div className="flex items-center gap-2" style={{ paddingLeft: 46 }}>
                 <MinutesField value={item.minutes} onChange={(n) => update(i, { minutes: n })} />
                 <span style={{ fontSize: 11, color: "#6B7280", flexShrink: 0 }}>min ·</span>
-                <select
-                  value={item.memberId ?? ""}
-                  onChange={(e) => {
-                    const id = e.target.value || null;
-                    const m = activeMembers.find((mm) => mm.id === id);
-                    update(i, { memberId: id, memberName: m ? m.name : null });
-                  }}
-                  style={{
-                    flex: 1,
-                    background: "var(--color-surface-elevated)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "6px 8px",
-                    fontSize: 12,
-                    color: "var(--color-text-primary)",
-                    outline: "none",
-                  }}
-                >
-                  <option value="">Sin responsable</option>
-                  {activeMembers.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+                <MemberSelect
+                  value={item.memberId}
+                  members={members}
+                  onChange={(id, name) => update(i, { memberId: id, memberName: name })}
+                />
               </div>
             )}
           </div>
