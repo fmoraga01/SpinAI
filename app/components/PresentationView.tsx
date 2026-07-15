@@ -30,6 +30,8 @@ export default function PresentationView({ template, date, onClose }: Props) {
   const timing = template.timing?.enabled ? template.timing : null;
   const [meetingRunning, setMeetingRunning] = useState(false);
   const [elapsedSec, setElapsedSec] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [itemStartElapsedSec, setItemStartElapsedSec] = useState(0);
   const startRef = useRef<number | null>(null);
   const baseElapsedRef = useRef(0);
 
@@ -56,6 +58,9 @@ export default function PresentationView({ template, date, onClose }: Props) {
     baseElapsedRef.current = 0;
     setMeetingRunning(false);
     setElapsedSec(0);
+    setCurrentIndex(0);
+    setItemStartElapsedSec(0);
+    setCrossed(new Set());
   }
   const meetingStarted = meetingRunning || elapsedSec > 0;
 
@@ -67,12 +72,19 @@ export default function PresentationView({ template, date, onClose }: Props) {
   const bs = szCfg.bodyScale;
 
   function toggleCrossed(i: number) {
+    const willBeCrossed = !crossed.has(i);
     setCrossed((prev) => {
       const next = new Set(prev);
       if (next.has(i)) next.delete(i);
       else next.add(i);
       return next;
     });
+    // Tachar el ítem que está actualmente en curso en la línea de tiempo
+    // avanza el timer al siguiente; destachar o tachar otro ítem no lo mueve.
+    if (timing && willBeCrossed && i === currentIndex && currentIndex < timing.items.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setItemStartElapsedSec(elapsedSec);
+    }
   }
 
   useEffect(() => {
@@ -384,7 +396,13 @@ export default function PresentationView({ template, date, onClose }: Props) {
 
       {/* Footer */}
       {timing ? (
-        <MeetingTimeline agenda={template.agenda} items={timing.items} elapsedSec={elapsedSec} theme={th} />
+        <MeetingTimeline
+          agenda={template.agenda}
+          items={timing.items}
+          currentIndex={currentIndex}
+          intoItemSec={elapsedSec - itemStartElapsedSec}
+          theme={th}
+        />
       ) : (
         <div style={{
           position: "relative", zIndex: 1,

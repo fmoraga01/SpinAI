@@ -9,24 +9,13 @@ const OVER = "#EF4444";
 interface Props {
   agenda: string[];
   items: AgendaTimingItem[];
-  elapsedSec: number;
+  currentIndex: number;
+  intoItemSec: number;
   theme: ThemeConfig;
 }
 
 function initials(name: string): string {
   return name.split(" ").filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-}
-
-function locate(items: AgendaTimingItem[], elapsedSec: number): { index: number; intoItemSec: number; itemDurSec: number } {
-  let acc = 0;
-  for (let i = 0; i < items.length; i++) {
-    const dur = items[i].minutes * 60;
-    if (i === items.length - 1 || elapsedSec < acc + dur) {
-      return { index: i, intoItemSec: elapsedSec - acc, itemDurSec: dur };
-    }
-    acc += dur;
-  }
-  return { index: 0, intoItemSec: 0, itemDurSec: (items[0]?.minutes ?? 0) * 60 };
 }
 
 function fmt(sec: number): string {
@@ -36,13 +25,13 @@ function fmt(sec: number): string {
   return `${mm}:${ss}`;
 }
 
-export default function MeetingTimeline({ agenda, items, elapsedSec, theme }: Props) {
+export default function MeetingTimeline({ agenda, items, currentIndex, intoItemSec, theme }: Props) {
   const [hovered, setHovered] = useState<number | null>(null);
   const totalMinutes = items.reduce((s, it) => s + it.minutes, 0);
 
   if (items.length === 0 || totalMinutes === 0) return null;
 
-  const { index: currentIndex, intoItemSec, itemDurSec } = locate(items, elapsedSec);
+  const itemDurSec = (items[currentIndex]?.minutes ?? 0) * 60;
   const overtimeSec = Math.max(0, intoItemSec - itemDurSec);
   const isOvertime = overtimeSec > 0;
   const remaining = isOvertime ? overtimeSec : Math.max(0, itemDurSec - intoItemSec);
