@@ -385,7 +385,7 @@ function TimingSection({
       >
         <div className="flex items-center justify-between" style={{ gap: 12 }}>
           <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.4 }}>
-            Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
+            Define el tiempo total y repártelo entre los ítems de la agenda.
           </p>
           <button
             role="switch"
