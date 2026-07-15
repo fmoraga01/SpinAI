@@ -33,6 +33,75 @@ function distributeEvenly(count: number, totalMinutes: number): number[] {
   return Array.from({ length: count }, (_, i) => Math.max(1, base + (i < remainder ? 1 : 0)));
 }
 
+function MinutesField({ value, onChange, min = 1 }: { value: number; onChange: (n: number) => void; min?: number }) {
+  const [draft, setDraft] = useState(String(value));
+  const [syncedValue, setSyncedValue] = useState(value);
+
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setDraft(String(value));
+  }
+
+  function commit() {
+    const parsed = parseInt(draft, 10);
+    const clamped = Number.isFinite(parsed) ? Math.max(min, parsed) : min;
+    setDraft(String(clamped));
+    if (clamped !== value) onChange(clamped);
+  }
+
+  const stepBtnStyle: React.CSSProperties = {
+    width: 22, height: 26, flexShrink: 0,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    background: "transparent", border: "none", color: "#6B7280",
+    fontSize: 13, fontWeight: 600, cursor: "pointer", lineHeight: 1,
+    transition: "color 150ms",
+  };
+
+  return (
+    <div
+      style={{
+        display: "inline-flex", alignItems: "center",
+        background: "var(--color-surface-elevated)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        overflow: "hidden",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        style={stepBtnStyle}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-primary)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7280")}
+      >
+        −
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={draft}
+        onChange={(e) => { if (/^\d*$/.test(e.target.value)) setDraft(e.target.value); }}
+        onBlur={commit}
+        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+        style={{
+          width: 30, textAlign: "center", background: "transparent", border: "none",
+          color: "var(--color-text-primary)", fontSize: 12, outline: "none", padding: "6px 0",
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => onChange(value + 1)}
+        style={stepBtnStyle}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--color-primary)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "#6B7280")}
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 function AgendaEditor({
   items,
   timingEnabled,
@@ -163,22 +232,7 @@ function AgendaEditor({
             </div>
             {timingEnabled && (
               <div className="flex items-center gap-2" style={{ paddingLeft: 46 }}>
-                <input
-                  type="number"
-                  min={1}
-                  value={item.minutes}
-                  onChange={(e) => update(i, { minutes: Math.max(1, Number(e.target.value) || 1) })}
-                  style={{
-                    width: 52,
-                    background: "var(--color-surface-elevated)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: "var(--radius-md)",
-                    padding: "6px 8px",
-                    fontSize: 12,
-                    color: "var(--color-text-primary)",
-                    outline: "none",
-                  }}
-                />
+                <MinutesField value={item.minutes} onChange={(n) => update(i, { minutes: n })} />
                 <span style={{ fontSize: 11, color: "#6B7280", flexShrink: 0 }}>min ·</span>
                 <select
                   value={item.memberId ?? ""}
@@ -232,14 +286,12 @@ function TimingSection({
   totalMinutes,
   onTotalMinutesChange,
   assignedMinutes,
-  onDistribute,
 }: {
   enabled: boolean;
   onToggle: (next: boolean) => void;
   totalMinutes: number;
   onTotalMinutesChange: (n: number) => void;
   assignedMinutes: number;
-  onDistribute: () => void;
 }) {
   const mismatch = enabled && assignedMinutes !== totalMinutes;
   return (
@@ -286,30 +338,9 @@ function TimingSection({
         <div className="flex items-center gap-3" style={{ marginTop: 12, flexWrap: "wrap" }}>
           <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
             Total
-            <input
-              type="number"
-              min={1}
-              value={totalMinutes}
-              onChange={(e) => onTotalMinutesChange(Math.max(1, Number(e.target.value) || 1))}
-              style={{
-                width: 60, background: "var(--color-surface)", border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)", padding: "6px 8px", fontSize: 12,
-                color: "var(--color-text-primary)", outline: "none",
-              }}
-            />
+            <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
             min
           </label>
-          <button
-            onClick={onDistribute}
-            style={{
-              padding: "6px 12px", background: "transparent", border: "1px dashed var(--color-border)",
-              borderRadius: "var(--radius-md)", color: "#4B5563", fontSize: 12, cursor: "pointer",
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; e.currentTarget.style.color = "var(--color-primary)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; e.currentTarget.style.color = "#4B5563"; }}
-          >
-            ⟲ Repartir equitativo
-          </button>
           <span style={{ fontSize: 11, color: mismatch ? "#F59E0B" : "#6B7280" }}>
             Asignado {assignedMinutes} / {totalMinutes} min{mismatch ? " ⚠" : ""}
           </span>
@@ -537,6 +568,15 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
     distribute(next);
   }
 
+  function handleAgendaItemsChange(next: AgendaDraft[]) {
+    if (timingEnabled && next.length !== agendaItems.length) {
+      const minutesList = distributeEvenly(next.length, totalMinutes);
+      setAgendaItems(next.map((item, i) => ({ ...item, minutes: minutesList[i] ?? item.minutes })));
+    } else {
+      setAgendaItems(next);
+    }
+  }
+
   function buildTemplate(): Template {
     const nonEmpty = agendaItems.filter((a) => a.text.trim() !== "");
     return {
@@ -634,7 +674,6 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         totalMinutes={totalMinutes}
         onTotalMinutesChange={handleTotalMinutesChange}
         assignedMinutes={assignedMinutes}
-        onDistribute={() => distribute(totalMinutes)}
       />
 
       {/* Agenda */}
@@ -642,7 +681,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         items={agendaItems}
         timingEnabled={timingEnabled}
         members={members}
-        onChange={setAgendaItems}
+        onChange={handleAgendaItemsChange}
       />
 
       {/* Theme picker */}
