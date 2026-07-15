@@ -327,7 +327,7 @@ function AgendaEditor({
               </button>
             </div>
             {timingEnabled && (
-              <div className="flex items-center gap-2" style={{ paddingLeft: 46 }}>
+              <div className="flex items-center gap-2" style={{ paddingLeft: 46, paddingRight: 36 }}>
                 <MinutesField value={item.minutes} onChange={(n) => update(i, { minutes: n })} />
                 <span style={{ fontSize: 11, color: "#6B7280", flexShrink: 0 }}>min ·</span>
                 <MemberSelect
