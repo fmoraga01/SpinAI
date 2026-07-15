@@ -285,15 +285,12 @@ function TimingSection({
   onToggle,
   totalMinutes,
   onTotalMinutesChange,
-  assignedMinutes,
 }: {
   enabled: boolean;
   onToggle: (next: boolean) => void;
   totalMinutes: number;
   onTotalMinutesChange: (n: number) => void;
-  assignedMinutes: number;
 }) {
-  const mismatch = enabled && assignedMinutes !== totalMinutes;
   return (
     <div
       style={{
@@ -341,9 +338,6 @@ function TimingSection({
             <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
             min
           </label>
-          <span style={{ fontSize: 11, color: mismatch ? "#F59E0B" : "#6B7280" }}>
-            Asignado {assignedMinutes} / {totalMinutes} min{mismatch ? " ⚠" : ""}
-          </span>
         </div>
       )}
     </div>
@@ -542,9 +536,9 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
     });
   }, [assignment.id]);
 
-  const assignedMinutes = agendaItems
-    .filter((a) => a.text.trim() !== "")
-    .reduce((sum, a) => sum + a.minutes, 0);
+  function nonEmptyMinutesSum(items: AgendaDraft[]): number {
+    return items.filter((a) => a.text.trim() !== "").reduce((sum, a) => sum + a.minutes, 0);
+  }
 
   function distribute(total: number) {
     setAgendaItems((prev) => {
@@ -569,12 +563,22 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
   }
 
   function handleAgendaItemsChange(next: AgendaDraft[]) {
-    if (timingEnabled && next.length !== agendaItems.length) {
+    if (!timingEnabled) {
+      setAgendaItems(next);
+      return;
+    }
+    if (next.length !== agendaItems.length) {
+      // Ítem agregado o quitado: redistribuye desde el total vigente.
       const minutesList = distributeEvenly(next.length, totalMinutes);
       setAgendaItems(next.map((item, i) => ({ ...item, minutes: minutesList[i] ?? item.minutes })));
-    } else {
-      setAgendaItems(next);
+      return;
     }
+    // Edición manual del tiempo de un ítem puntual: el total pasa a ser la nueva suma.
+    const nextSum = nonEmptyMinutesSum(next);
+    if (nextSum !== nonEmptyMinutesSum(agendaItems)) {
+      setTotalMinutes(nextSum);
+    }
+    setAgendaItems(next);
   }
 
   function buildTemplate(): Template {
@@ -673,7 +677,6 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         onToggle={handleToggleTiming}
         totalMinutes={totalMinutes}
         onTotalMinutesChange={handleTotalMinutesChange}
-        assignedMinutes={assignedMinutes}
       />
 
       {/* Agenda */}
