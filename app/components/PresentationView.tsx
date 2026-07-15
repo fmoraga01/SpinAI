@@ -35,14 +35,19 @@ export default function PresentationView({ template, date, onClose }: Props) {
   const startRef = useRef<number | null>(null);
   const baseElapsedRef = useRef(0);
 
+  const allAgendaCrossed = timing !== null && template.agenda.length > 0 && template.agenda.every((_, idx) => crossed.has(idx));
+  // Reunión completa (todos los ítems tachados): el cronómetro deja de correr,
+  // igual que "Pausar", sin necesidad de tocar el estado meetingRunning.
+  const isRunning = meetingRunning && !allAgendaCrossed;
+
   useEffect(() => {
-    if (!meetingRunning) return;
+    if (!isRunning) return;
     const id = setInterval(() => {
       const extra = startRef.current !== null ? (Date.now() - startRef.current) / 1000 : 0;
       setElapsedSec(baseElapsedRef.current + extra);
     }, 500);
     return () => clearInterval(id);
-  }, [meetingRunning]);
+  }, [isRunning]);
 
   function startMeeting() {
     startRef.current = Date.now();
@@ -81,6 +86,7 @@ export default function PresentationView({ template, date, onClose }: Props) {
     });
     // Tachar el ítem que está actualmente en curso en la línea de tiempo
     // avanza el timer al siguiente; destachar o tachar otro ítem no lo mueve.
+    // Si con esto quedan todos tachados, el efecto de arriba detiene el cronómetro.
     if (timing && willBeCrossed && i === currentIndex && currentIndex < timing.items.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setItemStartElapsedSec(elapsedSec);
@@ -191,18 +197,22 @@ export default function PresentationView({ template, date, onClose }: Props) {
           )}
           {timing && meetingStarted && (
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <button
-                onClick={meetingRunning ? pauseMeeting : startMeeting}
-                style={{
-                  padding: "6px 14px",
-                  background: "transparent", color: th.textSecondary,
-                  border: `1px solid ${th.cardBorder}`,
-                  borderRadius: "var(--radius-md)",
-                  fontSize: 12, fontWeight: 500, cursor: "pointer",
-                }}
-              >
-                {meetingRunning ? "⏸ Pausar" : "▶ Reanudar"}
-              </button>
+              {allAgendaCrossed ? (
+                <span style={{ fontSize: 12, color: th.textSecondary, fontWeight: 500 }}>✓ Reunión finalizada</span>
+              ) : (
+                <button
+                  onClick={isRunning ? pauseMeeting : startMeeting}
+                  style={{
+                    padding: "6px 14px",
+                    background: "transparent", color: th.textSecondary,
+                    border: `1px solid ${th.cardBorder}`,
+                    borderRadius: "var(--radius-md)",
+                    fontSize: 12, fontWeight: 500, cursor: "pointer",
+                  }}
+                >
+                  {isRunning ? "⏸ Pausar" : "▶ Reanudar"}
+                </button>
+              )}
               <button
                 onClick={resetMeeting}
                 title="Reiniciar cronómetro"
