@@ -293,44 +293,53 @@ function TimingSection({
 }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#4B5563" }}>
-          Tiempo de reunión
-        </p>
-        <button
-          role="switch"
-          aria-checked={enabled}
-          aria-label="Activar tiempo de reunión"
-          onClick={() => onToggle(!enabled)}
-          style={{
-            width: 38, height: 22, borderRadius: 11, flexShrink: 0,
-            border: "1px solid var(--color-border)",
-            background: enabled ? "var(--color-primary)" : "var(--color-surface)",
-            position: "relative", cursor: "pointer", padding: 0,
-            transition: "background 150ms",
-          }}
-        >
-          <span
+      <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
+        Tiempo de reunión
+      </p>
+      <div
+        style={{
+          background: "var(--color-surface-elevated)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-md)",
+          padding: "14px 16px",
+        }}
+      >
+        <div className="flex items-center justify-between" style={{ gap: 12 }}>
+          <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.4 }}>
+            Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
+          </p>
+          <button
+            role="switch"
+            aria-checked={enabled}
+            aria-label="Activar tiempo de reunión"
+            onClick={() => onToggle(!enabled)}
             style={{
-              position: "absolute", top: 1, left: enabled ? 17 : 1,
-              width: 18, height: 18, borderRadius: "50%", background: "#fff",
-              transition: "left 150ms",
+              width: 38, height: 22, borderRadius: 11, flexShrink: 0,
+              border: "1px solid var(--color-border)",
+              background: enabled ? "var(--color-primary)" : "var(--color-surface)",
+              position: "relative", cursor: "pointer", padding: 0,
+              transition: "background 150ms",
             }}
-          />
-        </button>
+          >
+            <span
+              style={{
+                position: "absolute", top: 1, left: enabled ? 17 : 1,
+                width: 18, height: 18, borderRadius: "50%", background: "#fff",
+                transition: "left 150ms",
+              }}
+            />
+          </button>
+        </div>
+        {enabled && (
+          <div className="flex items-center gap-3" style={{ marginTop: 12, flexWrap: "wrap" }}>
+            <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
+              Total
+              <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
+              min
+            </label>
+          </div>
+        )}
       </div>
-      {!enabled && (
-        <p style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.4 }}>
-          Opcional. Define el tiempo total y repártelo entre los ítems de la agenda.
-        </p>
-      )}
-      {enabled && (
-        <label style={{ fontSize: 12, color: "#9CA3AF", display: "flex", alignItems: "center", gap: 6 }}>
-          Total
-          <MinutesField value={totalMinutes} onChange={onTotalMinutesChange} />
-          min
-        </label>
-      )}
     </div>
   );
 }
