@@ -532,6 +532,11 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
     }
   }
 
+  function handleTotalMinutesChange(next: number) {
+    setTotalMinutes(next);
+    distribute(next);
+  }
+
   function buildTemplate(): Template {
     const nonEmpty = agendaItems.filter((a) => a.text.trim() !== "");
     return {
@@ -627,7 +632,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
         enabled={timingEnabled}
         onToggle={handleToggleTiming}
         totalMinutes={totalMinutes}
-        onTotalMinutesChange={setTotalMinutes}
+        onTotalMinutesChange={handleTotalMinutesChange}
         assignedMinutes={assignedMinutes}
         onDistribute={() => distribute(totalMinutes)}
       />
