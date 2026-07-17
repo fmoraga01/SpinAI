@@ -1,14 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 
-const HF_MODELS_URL = "https://huggingface.co/api/models?sort=likes&limit=5";
+// La API pública no expone un sort de "trending" real para modelos (se
+// probó sort=trending y sort=trending_score, ambos rechazados — el
+// algoritmo de trending de HF es interno a su sitio). Como aproximación:
+// traemos un batch grande ordenado por fecha de creación (sort=createdAt,
+// confirmado válido en vivo) y de esos nos quedamos con los creados en los
+// últimos 30 días, ordenados por likes — "lo nuevo que está pegando" en
+// vez de "lo más viejo con más likes acumulados".
+const HF_MODELS_URL = "https://huggingface.co/api/models?sort=createdAt&limit=100&full=true";
 const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=5";
+const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface HfModel {
   id?: string;
   author?: string | null;
   likes?: number | null;
   pipeline_tag?: string | null;
+  createdAt?: string | null;
+  lastModified?: string | null;
 }
 
 interface HfPaperFields {
@@ -73,8 +83,17 @@ export async function GET(req: NextRequest) {
 
   const now = new Date().toISOString();
 
+  const recentCutoff = Date.now() - RECENT_WINDOW_MS;
   const modelRows = (models ?? [])
     .filter((m) => m.id)
+    .filter((m) => {
+      const dateStr = m.createdAt ?? m.lastModified;
+      if (!dateStr) return false;
+      const t = new Date(dateStr).getTime();
+      return Number.isFinite(t) && t >= recentCutoff;
+    })
+    .sort((a, b) => (num(b.likes) ?? 0) - (num(a.likes) ?? 0))
+    .slice(0, 5)
     .map((m) => ({
       id: m.id!,
       kind: "model" as const,
