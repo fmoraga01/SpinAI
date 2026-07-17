@@ -25,13 +25,15 @@ function LikesBadge({ likes, icon }: { likes: number | null; icon: string }) {
   );
 }
 
-function ItemCard({ item, icon, showSummary }: { item: HfTrendingItem; icon: string; showSummary: boolean }) {
+function ItemCard({
+  item, icon, showSummary, compact,
+}: { item: HfTrendingItem; icon: string; showSummary: boolean; compact: boolean }) {
   return (
     <a
       href={item.url}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ textDecoration: "none", display: "block" }}
+      style={{ textDecoration: "none", display: "block", height: "100%" }}
     >
       <div
         style={{
@@ -39,19 +41,31 @@ function ItemCard({ item, icon, showSummary }: { item: HfTrendingItem; icon: str
           border: "1px solid var(--color-border)",
           borderRadius: "var(--radius-md)",
           padding: "12px 14px",
+          height: "100%",
           transition: "border-color 150ms ease",
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2C40FF44"; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
       >
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0, lineHeight: "18px" }}>
-            {item.title}
-          </p>
-          <LikesBadge likes={item.likes} icon={icon} />
-        </div>
+        {compact ? (
+          <>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0, lineHeight: "18px", wordBreak: "break-word" }}>
+              {item.title}
+            </p>
+            <div style={{ marginTop: 8 }}>
+              <LikesBadge likes={item.likes} icon={icon} />
+            </div>
+          </>
+        ) : (
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0, lineHeight: "18px" }}>
+              {item.title}
+            </p>
+            <LikesBadge likes={item.likes} icon={icon} />
+          </div>
+        )}
         {item.author && (
-          <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "4px 0 0" }}>
+          <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "6px 0 0" }}>
             {item.author}
             {item.pipelineTag ? ` · ${item.pipelineTag}` : ""}
           </p>
@@ -67,8 +81,16 @@ function ItemCard({ item, icon, showSummary }: { item: HfTrendingItem; icon: str
 }
 
 function Column({
-  label, items, icon, showSummary, emptyMessage,
-}: { label: string; items: HfTrendingItem[]; icon: string; showSummary: boolean; emptyMessage: string }) {
+  label, items, icon, showSummary, emptyMessage, gridClassName, compact,
+}: {
+  label: string;
+  items: HfTrendingItem[];
+  icon: string;
+  showSummary: boolean;
+  emptyMessage: string;
+  gridClassName: string;
+  compact: boolean;
+}) {
   return (
     <div>
       <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-tertiary)", margin: "0 0 10px" }}>
@@ -79,9 +101,9 @@ function Column({
           <p style={{ fontSize: 12.5, color: "var(--color-tertiary)", margin: 0 }}>{emptyMessage}</p>
         </div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div className={gridClassName}>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} />
+            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} compact={compact} />
           ))}
         </div>
       )}
@@ -107,14 +129,17 @@ export default function HfTrending() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {[0, 1].map((col) => (
-          <div key={col} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="animate-pulse" style={{ height: 60, borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />
-            ))}
-          </div>
-        ))}
+      <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="animate-pulse" style={{ height: 64, borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="animate-pulse" style={{ height: 90, borderRadius: "var(--radius-md)", background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)" }} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -130,19 +155,23 @@ export default function HfTrending() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       <Column
         label="Modelos"
         items={models}
         icon="♥"
         showSummary={false}
+        compact
+        gridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"
         emptyMessage="Aún no hay modelos cargados — el cron diario poblará esta sección."
       />
       <Column
         label="Papers"
         items={papers}
         icon="▲"
-        showSummary={true}
+        showSummary
+        compact={false}
+        gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
         emptyMessage="Aún no hay papers cargados — el cron diario poblará esta sección."
       />
     </div>
