@@ -34,8 +34,8 @@ function modelDisplayTitle(title: string): string {
 }
 
 function ItemCard({
-  item, icon, showSummary, stripOrgPrefix,
-}: { item: HfTrendingItem; icon: string; showSummary: boolean; stripOrgPrefix: boolean }) {
+  item, icon, showSummary, stripOrgPrefix, authorLabel,
+}: { item: HfTrendingItem; icon: string; showSummary: boolean; stripOrgPrefix: boolean; authorLabel?: string }) {
   return (
     <a
       href={item.url}
@@ -63,6 +63,7 @@ function ItemCard({
         </p>
         {item.author && (
           <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "6px 0 0" }}>
+            {authorLabel && <span style={{ fontWeight: 600, color: "var(--color-text-secondary)" }}>{authorLabel} </span>}
             {item.author}
             {item.pipelineTag ? ` · ${item.pipelineTag}` : ""}
           </p>
@@ -78,7 +79,7 @@ function ItemCard({
 }
 
 function Column({
-  label, items, icon, showSummary, emptyMessage, gridClassName, stripOrgPrefix,
+  label, items, icon, showSummary, emptyMessage, gridClassName, stripOrgPrefix, authorLabel,
 }: {
   label: string;
   items: HfTrendingItem[];
@@ -87,6 +88,7 @@ function Column({
   emptyMessage: string;
   gridClassName: string;
   stripOrgPrefix: boolean;
+  authorLabel?: string;
 }) {
   return (
     <div>
@@ -100,7 +102,7 @@ function Column({
       ) : (
         <div className={gridClassName}>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} stripOrgPrefix={stripOrgPrefix} />
+            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} stripOrgPrefix={stripOrgPrefix} authorLabel={authorLabel} />
           ))}
         </div>
       )}
@@ -168,6 +170,7 @@ export default function HfTrending() {
         icon="▲"
         showSummary
         stripOrgPrefix={false}
+        authorLabel="Autores:"
         gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
         emptyMessage="Aún no hay papers cargados — el cron diario poblará esta sección."
       />

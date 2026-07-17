@@ -111,19 +111,29 @@ export async function GET(req: NextRequest) {
   const paperRows = papers
     .map(extractPaperFields)
     .filter((p) => p.id && p.title)
-    .map((p) => ({
-      id: p.id!,
-      kind: "paper" as const,
-      title: p.title!.trim().replace(/\s+/g, " "),
-      url: `https://huggingface.co/papers/${p.id}`,
-      author:
-        (p.authors ?? []).map((a) => (typeof a === "string" ? a : a?.name)).filter(Boolean).join(", ") ||
-        null,
-      summary: p.summary?.trim().replace(/\s+/g, " ").slice(0, 500) || null,
-      likes: num(p.upvotes),
-      pipeline_tag: null,
-      fetched_at: now,
-    }));
+    .map((p) => {
+      // Igual que Research.tsx: 3 autores + "+N" en vez de la lista completa,
+      // que en algunos papers puede tener más de 20 nombres.
+      const authorNames = (p.authors ?? [])
+        .map((a) => (typeof a === "string" ? a : a?.name))
+        .filter((n): n is string => !!n);
+      const author =
+        authorNames.length > 0
+          ? `${authorNames.slice(0, 3).join(", ")}${authorNames.length > 3 ? ` +${authorNames.length - 3}` : ""}`
+          : null;
+
+      return {
+        id: p.id!,
+        kind: "paper" as const,
+        title: p.title!.trim().replace(/\s+/g, " "),
+        url: `https://huggingface.co/papers/${p.id}`,
+        author,
+        summary: p.summary?.trim().replace(/\s+/g, " ").slice(0, 500) || null,
+        likes: num(p.upvotes),
+        pipeline_tag: null,
+        fetched_at: now,
+      };
+    });
 
   if (modelRows.length === 0 && paperRows.length === 0) {
     return NextResponse.json({ error: "Hugging Face no devolvió datos" }, { status: 502 });
