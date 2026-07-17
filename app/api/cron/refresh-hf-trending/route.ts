@@ -47,8 +47,14 @@ export async function GET(req: NextRequest) {
       fetch(HF_PAPERS_URL),
     ]);
     if (!modelsRes.ok || !papersRes.ok) {
+      const modelsBody = modelsRes.ok ? null : await modelsRes.text();
+      const papersBody = papersRes.ok ? null : await papersRes.text();
       return NextResponse.json(
-        { error: `Hugging Face respondió ${modelsRes.status}/${papersRes.status}` },
+        {
+          error: `Hugging Face respondió ${modelsRes.status}/${papersRes.status}`,
+          modelsBody: modelsBody?.slice(0, 500),
+          papersBody: papersBody?.slice(0, 500),
+        },
         { status: 502 }
       );
     }
