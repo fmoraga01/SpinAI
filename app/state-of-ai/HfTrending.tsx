@@ -167,7 +167,7 @@ export default function HfTrending() {
       <Column
         label="Papers"
         items={papers}
-        icon="▲"
+        icon="👍"
         showSummary
         stripOrgPrefix={false}
         authorLabel="Autores:"
