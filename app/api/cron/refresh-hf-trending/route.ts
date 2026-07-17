@@ -3,12 +3,14 @@ import { getSupabase } from "@/lib/supabase";
 
 // La API pública no expone un sort de "trending" real para modelos (se
 // probó sort=trending y sort=trending_score, ambos rechazados — el
-// algoritmo de trending de HF es interno a su sitio). Como aproximación:
-// traemos un batch grande ordenado por fecha de creación (sort=createdAt,
-// confirmado válido en vivo) y de esos nos quedamos con los creados en los
-// últimos 30 días, ordenados por likes — "lo nuevo que está pegando" en
-// vez de "lo más viejo con más likes acumulados".
-const HF_MODELS_URL = "https://huggingface.co/api/models?sort=createdAt&limit=100&full=true";
+// algoritmo de trending de HF es interno a su sitio). sort=createdAt
+// tampoco sirve: los 100 más nuevos son en su mayoría subidas automáticas
+// con 0 likes (HF recibe cientos de uploads por hora). Aproximación que sí
+// funciona, verificada en vivo: traemos los 100 modelos con más likes de
+// siempre (sort=likes) y de esos filtramos a los actualizados en los
+// últimos 30 días (10 de 100 califican) — "populares que siguen activos",
+// en vez de un ranking estático congelado o ruido de subidas nuevas.
+const HF_MODELS_URL = "https://huggingface.co/api/models?sort=likes&limit=100&full=true";
 const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=5";
 const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -87,7 +89,7 @@ export async function GET(req: NextRequest) {
   const modelRows = (models ?? [])
     .filter((m) => m.id)
     .filter((m) => {
-      const dateStr = m.createdAt ?? m.lastModified;
+      const dateStr = m.lastModified ?? m.createdAt;
       if (!dateStr) return false;
       const t = new Date(dateStr).getTime();
       return Number.isFinite(t) && t >= recentCutoff;
