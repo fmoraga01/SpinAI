@@ -11,7 +11,7 @@ import { getSupabase } from "@/lib/supabase";
 // últimos 30 días (10 de 100 califican) — "populares que siguen activos",
 // en vez de un ranking estático congelado o ruido de subidas nuevas.
 const HF_MODELS_URL = "https://huggingface.co/api/models?sort=likes&limit=100&full=true";
-const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=5";
+const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=6";
 const RECENT_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface HfModel {
