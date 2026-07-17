@@ -137,7 +137,7 @@ function StatTile({
   );
 }
 
-function SectionHeading({ kicker, title, subtitle }: { kicker: string; title: string; subtitle: string }) {
+function SectionHeading({ kicker, title, subtitle }: { kicker: string; title: string; subtitle: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 24 }}>
       <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 6px" }}>
@@ -556,7 +556,7 @@ export default function StateOfAiPage() {
               <SectionHeading
                 kicker="Comunidad"
                 title="¿Qué está trending en Hugging Face ahora mismo?"
-                subtitle="Modelos populares que siguen activos, y los papers que la comunidad está votando hoy."
+                subtitle={<>Modelos populares que siguen activos, y los papers que<br />la comunidad está votando hoy.</>}
               />
               <HfTrending />
             </section>
