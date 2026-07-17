@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 
-const HF_MODELS_URL = "https://huggingface.co/api/models?sort=trending_score&limit=5";
+const HF_MODELS_URL = "https://huggingface.co/api/models?sort=likes&limit=5";
 const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=5";
 
 interface HfModel {
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
       kind: "model" as const,
       title: m.id!,
       url: `https://huggingface.co/${m.id}`,
-      author: m.author ?? null,
+      author: m.author ?? m.id!.split("/")[0] ?? null,
       summary: null,
       likes: num(m.likes),
       pipeline_tag: m.pipeline_tag ?? null,
