@@ -556,7 +556,7 @@ export default function StateOfAiPage() {
               <SectionHeading
                 kicker="Comunidad"
                 title="¿Qué está trending en Hugging Face ahora mismo?"
-                subtitle="Los modelos y papers que la comunidad está descargando y votando hoy — una señal de adopción real, distinta del benchmark del Ranking y del orden cronológico de Investigación."
+                subtitle="Modelos populares que siguen activos, y los papers que la comunidad está votando hoy — una señal de adopción real, distinta del benchmark del Ranking y del orden cronológico de Investigación."
               />
               <HfTrending />
             </section>
