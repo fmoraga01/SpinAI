@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 
-const HF_MODELS_URL = "https://huggingface.co/api/models?sort=trending&limit=5";
+const HF_MODELS_URL = "https://huggingface.co/api/models?sort=trending_score&limit=5";
 const HF_PAPERS_URL = "https://huggingface.co/api/daily_papers?sort=trending&limit=5";
 
 interface HfModel {
