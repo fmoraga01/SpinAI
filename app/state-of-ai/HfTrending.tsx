@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ComponentType, SVGProps } from "react";
+import { HeartIcon, HandThumbUpIcon } from "@heroicons/react/20/solid";
 import { HfTrendingItem, loadHfTrending } from "@/lib/hfTrending";
 
-function LikesBadge({ likes, icon }: { likes: number | null; icon: string }) {
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+function LikesBadge({ likes, Icon }: { likes: number | null; Icon: IconComponent }) {
   if (likes === null) return null;
   return (
     <span
       style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
         fontSize: 11,
         fontWeight: 500,
         color: "var(--color-primary)",
@@ -20,7 +27,8 @@ function LikesBadge({ likes, icon }: { likes: number | null; icon: string }) {
         flexShrink: 0,
       }}
     >
-      {icon} {likes}
+      <Icon style={{ width: 12, height: 12 }} />
+      {likes}
     </span>
   );
 }
@@ -34,8 +42,8 @@ function modelDisplayTitle(title: string): string {
 }
 
 function ItemCard({
-  item, icon, showSummary, stripOrgPrefix, authorLabel,
-}: { item: HfTrendingItem; icon: string; showSummary: boolean; stripOrgPrefix: boolean; authorLabel?: string }) {
+  item, Icon, showSummary, stripOrgPrefix, authorLabel,
+}: { item: HfTrendingItem; Icon: IconComponent; showSummary: boolean; stripOrgPrefix: boolean; authorLabel?: string }) {
   return (
     <a
       href={item.url}
@@ -56,7 +64,7 @@ function ItemCard({
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
       >
         <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 8 }}>
-          <LikesBadge likes={item.likes} icon={icon} />
+          <LikesBadge likes={item.likes} Icon={Icon} />
         </div>
         <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0, lineHeight: "18px", wordBreak: "break-word" }}>
           {stripOrgPrefix ? modelDisplayTitle(item.title) : item.title}
@@ -79,11 +87,11 @@ function ItemCard({
 }
 
 function Column({
-  label, items, icon, showSummary, emptyMessage, gridClassName, stripOrgPrefix, authorLabel,
+  label, items, Icon, showSummary, emptyMessage, gridClassName, stripOrgPrefix, authorLabel,
 }: {
   label: string;
   items: HfTrendingItem[];
-  icon: string;
+  Icon: IconComponent;
   showSummary: boolean;
   emptyMessage: string;
   gridClassName: string;
@@ -102,7 +110,7 @@ function Column({
       ) : (
         <div className={gridClassName}>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} stripOrgPrefix={stripOrgPrefix} authorLabel={authorLabel} />
+            <ItemCard key={item.id} item={item} Icon={Icon} showSummary={showSummary} stripOrgPrefix={stripOrgPrefix} authorLabel={authorLabel} />
           ))}
         </div>
       )}
@@ -158,7 +166,7 @@ export default function HfTrending() {
       <Column
         label="Modelos"
         items={models}
-        icon="♥"
+        Icon={HeartIcon}
         showSummary={false}
         stripOrgPrefix
         gridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"
@@ -167,7 +175,7 @@ export default function HfTrending() {
       <Column
         label="Papers"
         items={papers}
-        icon="👍"
+        Icon={HandThumbUpIcon}
         showSummary
         stripOrgPrefix={false}
         authorLabel="Autores:"
