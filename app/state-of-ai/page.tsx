@@ -10,6 +10,7 @@ import Companies from "./Companies";
 import Summary from "./Summary";
 import Trends from "./Trends";
 import Research from "./Research";
+import HfTrending from "./HfTrending";
 import CategoryGrid from "./CategoryGrid";
 import Podium from "./Podium";
 import Sparkline, { SparklinePoint } from "./Sparkline";
@@ -548,6 +549,16 @@ export default function StateOfAiPage() {
                 subtitle="Papers recientes de arXiv en inteligencia artificial (categoría cs.AI)."
               />
               <Research />
+            </section>
+
+            {/* Trending en Hugging Face */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="Comunidad"
+                title="¿Qué está trending en Hugging Face ahora mismo?"
+                subtitle="Los modelos y papers que la comunidad está descargando y votando hoy — una señal de adopción real, distinta del benchmark del Ranking y del orden cronológico de Investigación."
+              />
+              <HfTrending />
             </section>
 
             {/* AI Landscape */}

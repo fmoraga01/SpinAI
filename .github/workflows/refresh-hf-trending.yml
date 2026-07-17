@@ -1,0 +1,16 @@
+name: Refresh Hugging Face Trending
+
+on:
+  schedule:
+    # Daily at 11:00 UTC = 8:00 AM Santiago
+    - cron: "0 11 * * *"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  refresh-hf-trending:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refresh Hugging Face trending snapshot
+        run: |
+          curl -f -X GET "${{ secrets.APP_URL }}/api/cron/refresh-hf-trending" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
