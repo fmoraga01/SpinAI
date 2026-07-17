@@ -25,9 +25,17 @@ function LikesBadge({ likes, icon }: { likes: number | null; icon: string }) {
   );
 }
 
+// Para modelos, el título trae "organización/nombre" (ej.
+// "black-forest-labs/FLUX.1-dev") pero la organización ya se repite en la
+// línea de author de abajo — mostramos solo la parte del nombre acá.
+function modelDisplayTitle(title: string): string {
+  const slash = title.indexOf("/");
+  return slash === -1 ? title : title.slice(slash + 1);
+}
+
 function ItemCard({
-  item, icon, showSummary,
-}: { item: HfTrendingItem; icon: string; showSummary: boolean }) {
+  item, icon, showSummary, stripOrgPrefix,
+}: { item: HfTrendingItem; icon: string; showSummary: boolean; stripOrgPrefix: boolean }) {
   return (
     <a
       href={item.url}
@@ -51,7 +59,7 @@ function ItemCard({
           <LikesBadge likes={item.likes} icon={icon} />
         </div>
         <p style={{ fontSize: 13, fontWeight: 600, color: "#fff", margin: 0, lineHeight: "18px", wordBreak: "break-word" }}>
-          {item.title}
+          {stripOrgPrefix ? modelDisplayTitle(item.title) : item.title}
         </p>
         {item.author && (
           <p style={{ fontSize: 11.5, color: "var(--color-tertiary)", margin: "6px 0 0" }}>
@@ -70,7 +78,7 @@ function ItemCard({
 }
 
 function Column({
-  label, items, icon, showSummary, emptyMessage, gridClassName,
+  label, items, icon, showSummary, emptyMessage, gridClassName, stripOrgPrefix,
 }: {
   label: string;
   items: HfTrendingItem[];
@@ -78,6 +86,7 @@ function Column({
   showSummary: boolean;
   emptyMessage: string;
   gridClassName: string;
+  stripOrgPrefix: boolean;
 }) {
   return (
     <div>
@@ -91,7 +100,7 @@ function Column({
       ) : (
         <div className={gridClassName}>
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} />
+            <ItemCard key={item.id} item={item} icon={icon} showSummary={showSummary} stripOrgPrefix={stripOrgPrefix} />
           ))}
         </div>
       )}
@@ -149,6 +158,7 @@ export default function HfTrending() {
         items={models}
         icon="♥"
         showSummary={false}
+        stripOrgPrefix
         gridClassName="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3"
         emptyMessage="Aún no hay modelos cargados — el cron diario poblará esta sección."
       />
@@ -157,6 +167,7 @@ export default function HfTrending() {
         items={papers}
         icon="▲"
         showSummary
+        stripOrgPrefix={false}
         gridClassName="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"
         emptyMessage="Aún no hay papers cargados — el cron diario poblará esta sección."
       />
