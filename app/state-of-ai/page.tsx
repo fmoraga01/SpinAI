@@ -541,16 +541,6 @@ export default function StateOfAiPage() {
               <Companies models={deduped} />
             </section>
 
-            {/* Investigación */}
-            <section style={{ marginBottom: 56 }}>
-              <SectionHeading
-                kicker="Investigación"
-                title="¿Qué se está publicando ahora?"
-                subtitle="Papers recientes de arXiv en inteligencia artificial (categoría cs.AI)."
-              />
-              <Research />
-            </section>
-
             {/* Trending en Hugging Face */}
             <section style={{ marginBottom: 56 }}>
               <SectionHeading
@@ -559,6 +549,16 @@ export default function StateOfAiPage() {
                 subtitle={<>Modelos populares que siguen activos, y los papers que<br />la comunidad está votando hoy.</>}
               />
               <HfTrending />
+            </section>
+
+            {/* Investigación */}
+            <section style={{ marginBottom: 56 }}>
+              <SectionHeading
+                kicker="Investigación"
+                title="¿Qué se está publicando ahora?"
+                subtitle="Papers recientes de arXiv en inteligencia artificial (categoría cs.AI)."
+              />
+              <Research />
             </section>
 
             {/* AI Landscape */}
