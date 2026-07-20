@@ -42,3 +42,6 @@ next-env.d.ts
 
 # graphify
 graphify-out/
+
+# foglamp (contains an edit-token secret in scan.lock.json)
+.foglamp/
