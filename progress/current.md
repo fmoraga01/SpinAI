@@ -1,6 +1,10 @@
 # Current session state
 
-No feature is currently `in_progress` or `in_review`.
+- **Feature:** changelog-empty-state-animation
+- **Status:** spec_ready — awaiting human approval
+- **Started:** 2026-07-21
+- **Role active:** none (waiting on human)
+- **Next step:** human reviews specs/changelog-empty-state-animation/{requirements,design,tasks}.md; once explicitly approved, leader moves status to in_progress and invokes implementer.
 
 When `leader` starts a feature, this file gets replaced with:
 
