@@ -25,4 +25,19 @@ Entry format:
   existente de `state-of-ai`. Fundamentada en research de UX sobre
   microinteracciones. Cero deps nuevas, cero tokens nuevos. Reviewer
   aprobó sin objeciones — ver progress/review_changelog-empty-state-animation.md.
-- Merged to dev: commits d0b8b0f, ea0c96a · Promoted to main: pending
+- Merged to dev: commits d0b8b0f, ea0c96a · Promoted to main: 2026-07-21 (dev → main junto con schedule-content-animation)
+
+## schedule-content-animation — done 2026-07-21
+
+- Requirements: R1–R6, see specs/schedule-content-animation/requirements.md
+- Summary: animación de entrada por fila del calendario de asignados en
+  `app/components/Schedule.tsx` (fade + `translateY(4px)→0`, 220ms
+  ease-in-out) con stagger escalonado (30ms/fila, tope 8), aplicada de forma
+  independiente a "Próximos viernes" y "Anteriores". Respeta
+  `prefers-reduced-motion` (sin movimiento en primer paint vía snapshot SSR),
+  no toca el empty state ni el drag/drop, y no re-dispara la entrada tras
+  swap/`onRefresh()` (los `key={a.id}` preservan el nodo DOM). Cero deps
+  nuevas, cero tokens nuevos; `design-check` sin hallazgos. Reviewer corrió
+  `npm run verify` (lint/build/test 5/5/check-sdd-state) y aprobó sin
+  objeciones — ver progress/review_schedule-content-animation.md.
+- Merged to dev: commit 325a555 · Promoted to main: 2026-07-21

@@ -1,10 +1,10 @@
 # Current session state
 
-- **Feature:** schedule-content-animation
-- **Status:** in_review — implementation done, lint/build pass
-- **Started:** 2026-07-21
-- **Role active:** reviewer
-- **Next step:** reviewer validates against CHECKPOINTS.md and traceability — pay special attention to the drag/entrance-animation overlap edge case implementer flagged (opacity dimming masked during the ~460ms worst-case entrance window) — writes progress/review_schedule-content-animation.md with a verdict.
+- **Feature:** _(ninguna activa)_
+- **Status:** —
+- **Started:** —
+- **Role active:** —
+- **Next step:** No hay feature en curso. `schedule-content-animation` cerró en `done` (2026-07-21) y se promovió a `main`; ver progress/history.md. El `leader` reemplaza este bloque al arrancar la próxima feature.
 
 When `leader` starts a feature, this file gets replaced with:
 
