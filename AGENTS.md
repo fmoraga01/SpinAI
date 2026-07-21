@@ -11,3 +11,13 @@ Todo cambio (features, fixes, copy, config) se desarrolla y commitea primero en 
 - Todo commit nuevo va a `dev`, sin excepción — incluidos cambios "menores" como texto o estilos.
 - No mergear `dev` → `main` de forma proactiva. Esperar una confirmación explícita del usuario (ej. "pásalo a prod", "mergea a main") antes de tocar `main`.
 - Si por error algo llega a `main` sin pasar por este flujo, revertirlo y rehacerlo correctamente por `dev`.
+
+# Spec-Driven Development (SDD)
+
+Las features nuevas siguen el proceso definido en `docs/specs.md`: una spec
+en `specs/<feature>/` (requirements/design/tasks) con aprobación humana
+explícita antes de escribir código, luego implementación y review por roles
+separados (`.claude/agents/leader.md`, `spec-author.md`, `implementer.md`,
+`reviewer.md`). Este gate de spec es independiente del gate `dev → main` de
+arriba — no lo reemplaza. Ver `docs/specs.md` para el proceso completo y
+`CHECKPOINTS.md` para los criterios de "listo".
