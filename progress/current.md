@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** changelog-empty-state-animation
-- **Status:** in_progress — spec approved by human on 2026-07-21
+- **Status:** in_review — implementation done, lint/build pass
 - **Started:** 2026-07-21
-- **Role active:** implementer
-- **Next step:** implementer executes specs/changelog-empty-state-animation/tasks.md, writes progress/impl_changelog-empty-state-animation.md, then leader moves status to in_review and invokes reviewer.
+- **Role active:** reviewer
+- **Next step:** reviewer validates against CHECKPOINTS.md and traceability, writes progress/review_changelog-empty-state-animation.md with a verdict.
 
 When `leader` starts a feature, this file gets replaced with:
 

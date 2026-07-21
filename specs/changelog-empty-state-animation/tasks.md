@@ -22,7 +22,7 @@
    in one pass (not staggered per child), so heading and description text
    are reading-ready as soon as the animation starts. *(Serves R3)*
 
-5. **Manual QA pass** (document in `progress/impl_changelog-empty-state-animation.md`
+5. [x] **Manual QA pass** (document in `progress/impl_changelog-empty-state-animation.md`
    per `docs/specs.md` traceability):
    - Load the changelog view with zero log entries; confirm the empty state
      fades/settles in once, doesn't loop, and text is never harder to read
@@ -38,5 +38,5 @@
      per `CHECKPOINTS.md` ("If `app/components/*.tsx` changed...") and
      address or note any findings.
 
-6. **Lint/build check.** Run `npm run lint` and `npm run build`; both must
+6. [x] **Lint/build check.** Run `npm run lint` and `npm run build`; both must
    pass before moving the feature to `in_review`.
