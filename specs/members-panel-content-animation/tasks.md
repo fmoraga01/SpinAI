@@ -69,7 +69,7 @@
    toggling was added anywhere tied to animation state. *(Serves R7 —
    precondition for the manual QA step below)*
 
-9. [ ] **Manual QA pass** (document in
+9. [x] **Manual QA pass** (document in
    `progress/impl_members-panel-content-animation.md` per `docs/specs.md`
    traceability):
    - Open the drawer to an empty team (or remove all members first);
@@ -106,5 +106,5 @@
    - Run the `design-check` skill against `app/components/MembersPanel.tsx`
      per `CHECKPOINTS.md` and address or note any findings.
 
-10. [ ] **Lint/build check.** Run `npm run lint` and `npm run build`; both
+10. [x] **Lint/build check.** Run `npm run lint` and `npm run build`; both
     must pass before moving the feature to `in_review`.
