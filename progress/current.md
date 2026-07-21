@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** members-panel-content-animation
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-07-21
-- **Role active:** — (esperando aprobación humana)
-- **Next step:** Spec completa en specs/members-panel-content-animation/{requirements.md,design.md,tasks.md} (R1–R9). Esperando aprobación humana explícita del spec antes de pasar a `in_progress` e invocar `implementer`. `leader` no actúa más sobre esta feature hasta recibir esa aprobación.
+- **Role active:** implementer
+- **Next step:** implementer ejecuta specs/members-panel-content-animation/tasks.md (10 tareas) sobre app/components/MembersPanel.tsx, documenta QA manual con trazabilidad R1-R9 en progress/impl_members-panel-content-animation.md, y corre lint/build. Cuando termine y todas las tasks estén [x], leader mueve la feature a in_review.
 
 When `leader` starts a feature, this file gets replaced with:
 
