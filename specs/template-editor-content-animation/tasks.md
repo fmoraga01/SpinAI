@@ -1,13 +1,13 @@
 # Tasks — template-editor-content-animation
 
-1. [ ] **Import the reduced-motion hook.** In
+1. [x] **Import the reduced-motion hook.** In
    `app/components/TemplateEditor.tsx`, import `usePrefersReducedMotion`
    from `@/app/state-of-ai/useReducedMotion` and call it once at the top of
    the `TemplateEditor` component, alongside its existing `useState` calls
    and *before* the `if (loading || presenting)` early return (hooks must
    run unconditionally on every render). *(Serves R4)*
 
-2. [ ] **Add the entrance keyframes and stagger helper.** Add a
+2. [x] **Add the entrance keyframes and stagger helper.** Add a
    `templateEditorSectionIn` `@keyframes` rule (`opacity 0 → 1`,
    `translateY(6px) → translateY(0)`) via an inline `<style>` tag placed
    inside the populated-content return (the `<div className="space-y-6">`
@@ -17,7 +17,7 @@
    `{ animation: "templateEditorSectionIn 260ms ease-in-out backwards",
    animationDelay: `${index * 30}ms` }`. *(Serves R1, R2, R3, R4)*
 
-3. [ ] **Apply the animation to the three inline sections.** Merge
+3. [x] **Apply the animation to the three inline sections.** Merge
    `sectionMotionStyle(0, reduced)` into the "Reunión asignada" badge's
    existing `style` object; add a `style={sectionMotionStyle(1, reduced)}`
    prop to the "Título" wrapper `<div>`; add a
@@ -27,7 +27,7 @@
    text, the title `<input>`, or the three action buttons). *(Serves R1,
    R2, R3)*
 
-4. [ ] **Wrap and animate the five self-contained sections.** At their call
+4. [x] **Wrap and animate the five self-contained sections.** At their call
    sites inside `TemplateEditor`'s return (not inside their own component
    definitions), wrap each of `<TimingSection .../>`, `<AgendaEditor .../>`,
    `<ThemePicker .../>`, `<FontPicker .../>`, `<SizePicker .../>` in a
@@ -37,7 +37,7 @@
    `FontPicker`, or `SizePicker`'s own function signatures or internals.
    *(Serves R1, R2, R3)*
 
-5. [ ] **Verify no interference with existing behavior.** Confirm none of
+5. [x] **Verify no interference with existing behavior.** Confirm none of
    the file's existing per-control transitions (input `border-color
    150ms`, buttons' `border-color 150ms, color 150ms`, the timing toggle's
    `background 150ms` / `left 150ms`, `AgendaEditor`'s drag
@@ -46,7 +46,7 @@
    `loading || presenting` spinner branch (`@keyframes spin`) is
    completely unchanged. *(Serves scope/non-goals confirmation)*
 
-6. [ ] **Verify non-blocking interactivity by reading the diff.** Confirm
+6. [x] **Verify non-blocking interactivity by reading the diff.** Confirm
    the only CSS properties introduced are `opacity`, `transform`,
    `animation`, and `animation-delay` — no `pointer-events`, `disabled`,
    `visibility`, or `display` toggling was added anywhere tied to

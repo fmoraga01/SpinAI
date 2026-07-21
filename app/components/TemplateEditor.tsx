@@ -6,6 +6,7 @@ import { THEMES, THEME_ORDER } from "@/lib/themes";
 import { FONTS, FONT_ORDER } from "@/lib/fonts";
 import { SIZES, SIZE_ORDER } from "@/lib/sizes";
 import { loadTemplate, saveTemplate } from "@/lib/storage";
+import { usePrefersReducedMotion } from "@/app/state-of-ai/useReducedMotion";
 import Toast from "./Toast";
 
 interface Props {
@@ -32,6 +33,14 @@ function distributeEvenly(count: number, totalMinutes: number): number[] {
   const base = Math.floor(totalMinutes / count);
   const remainder = totalMinutes - base * count;
   return Array.from({ length: count }, (_, i) => Math.max(1, base + (i < remainder ? 1 : 0)));
+}
+
+function sectionMotionStyle(index: number, reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return {
+    animation: "templateEditorSectionIn 260ms ease-in-out backwards",
+    animationDelay: `${index * 30}ms`,
+  };
 }
 
 function MinutesField({ value, onChange, min = 1 }: { value: number; onChange: (n: number) => void; min?: number }) {
@@ -593,6 +602,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
   const [loading, setLoading] = useState(true);
   const [presenting, setPresenting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     loadTemplate(assignment.id).then((t) => {
@@ -724,11 +734,13 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
   return (
     <>
     <div className="space-y-6">
+      <style>{`@keyframes templateEditorSectionIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {/* Assignment badge */}
       <div
         style={{
           background: "#2C40FF0f", border: "1px solid #2C40FF22",
           borderRadius: "var(--radius-md)", padding: "10px 14px",
+          ...sectionMotionStyle(0, prefersReducedMotion),
         }}
       >
         <p className="text-xs" style={{ color: "#4B5563" }}>Reunión asignada</p>
@@ -738,7 +750,7 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
       </div>
 
       {/* Título */}
-      <div>
+      <div style={sectionMotionStyle(1, prefersReducedMotion)}>
         <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "#4B5563" }}>
           Título
         </p>
@@ -764,32 +776,42 @@ export default function TemplateEditor({ assignment, members, onBack, onPresent 
       </div>
 
       {/* Tiempo de reunión */}
-      <TimingSection
-        enabled={timingEnabled}
-        onToggle={handleToggleTiming}
-        totalMinutes={totalMinutes}
-        onTotalMinutesChange={handleTotalMinutesChange}
-      />
+      <div style={sectionMotionStyle(2, prefersReducedMotion)}>
+        <TimingSection
+          enabled={timingEnabled}
+          onToggle={handleToggleTiming}
+          totalMinutes={totalMinutes}
+          onTotalMinutesChange={handleTotalMinutesChange}
+        />
+      </div>
 
       {/* Agenda */}
-      <AgendaEditor
-        items={agendaItems}
-        timingEnabled={timingEnabled}
-        members={members}
-        onChange={handleAgendaItemsChange}
-      />
+      <div style={sectionMotionStyle(3, prefersReducedMotion)}>
+        <AgendaEditor
+          items={agendaItems}
+          timingEnabled={timingEnabled}
+          members={members}
+          onChange={handleAgendaItemsChange}
+        />
+      </div>
 
       {/* Theme picker */}
-      <ThemePicker value={theme} onChange={setTheme} />
+      <div style={sectionMotionStyle(4, prefersReducedMotion)}>
+        <ThemePicker value={theme} onChange={setTheme} />
+      </div>
 
       {/* Font picker */}
-      <FontPicker value={font} onChange={setFont} />
+      <div style={sectionMotionStyle(5, prefersReducedMotion)}>
+        <FontPicker value={font} onChange={setFont} />
+      </div>
 
       {/* Size picker */}
-      <SizePicker value={size} onChange={setSize} />
+      <div style={sectionMotionStyle(6, prefersReducedMotion)}>
+        <SizePicker value={size} onChange={setSize} />
+      </div>
 
       {/* Actions */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap" style={sectionMotionStyle(7, prefersReducedMotion)}>
         <button
           onClick={onBack}
           style={{
