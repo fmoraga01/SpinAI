@@ -1,10 +1,10 @@
 # Current session state
 
-- **Feature:** _(ninguna activa)_
-- **Status:** —
-- **Started:** —
-- **Role active:** —
-- **Next step:** No hay feature en curso. `schedule-content-animation` cerró en `done` (2026-07-21) y se promovió a `main`; ver progress/history.md. El `leader` reemplaza este bloque al arrancar la próxima feature.
+- **Feature:** template-editor-content-animation
+- **Status:** pending → writing spec
+- **Started:** 2026-07-21
+- **Role active:** spec-author
+- **Next step:** spec-author writes requirements.md/design.md/tasks.md, then leader stops for human approval of the spec (spec_ready gate) before any code is written.
 
 When `leader` starts a feature, this file gets replaced with:
 
