@@ -1,10 +1,10 @@
 # Current session state
 
-- **Feature:** _(ninguna activa)_
-- **Status:** —
-- **Started:** —
-- **Role active:** —
-- **Next step:** No hay feature en curso. `template-editor-content-animation` cerró en `done` (2026-07-21) y quedó mergeada en `dev`; ver progress/history.md. La promoción a `main` está pendiente de aprobación explícita del usuario. El `leader` reemplaza este bloque al arrancar la próxima feature.
+- **Feature:** members-panel-content-animation
+- **Status:** spec_ready (pendiente)
+- **Started:** 2026-07-21
+- **Role active:** spec-author (en curso)
+- **Next step:** `spec-author` está escribiendo specs/members-panel-content-animation/{requirements.md,design.md,tasks.md}. Al terminar, `leader` marcará el feature como `spec_ready` en feature_list.json y se detiene — requiere aprobación humana explícita antes de pasar a `in_progress`.
 
 When `leader` starts a feature, this file gets replaced with:
 

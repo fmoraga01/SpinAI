@@ -20,6 +20,13 @@
       "status": "done",
       "created": "2026-07-21",
       "spec_dir": "specs/template-editor-content-animation/"
+    },
+    {
+      "id": "members-panel-content-animation",
+      "title": "Animar el contenido de la vista equipo",
+      "status": "pending",
+      "created": "2026-07-21",
+      "spec_dir": "specs/members-panel-content-animation/"
     }
   ]
 }
