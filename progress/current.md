@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** schedule-content-animation
-- **Status:** in_progress — spec approved by human on 2026-07-21
+- **Status:** in_review — implementation done, lint/build pass
 - **Started:** 2026-07-21
-- **Role active:** implementer
-- **Next step:** implementer executes specs/schedule-content-animation/tasks.md, writes progress/impl_schedule-content-animation.md, then leader moves status to in_review and invokes reviewer.
+- **Role active:** reviewer
+- **Next step:** reviewer validates against CHECKPOINTS.md and traceability — pay special attention to the drag/entrance-animation overlap edge case implementer flagged (opacity dimming masked during the ~460ms worst-case entrance window) — writes progress/review_schedule-content-animation.md with a verdict.
 
 When `leader` starts a feature, this file gets replaced with:
 

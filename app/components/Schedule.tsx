@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Assignment } from "@/lib/types";
 import { useDrawer } from "./DrawerContext";
 import { swapAssignmentMembers } from "@/lib/storage";
+import { usePrefersReducedMotion } from "@/app/state-of-ai/useReducedMotion";
 
 interface Props {
   assignments: Assignment[];
@@ -32,6 +33,7 @@ function isPast(dateStr: string): boolean {
 
 export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
   const { switchDrawer } = useDrawer();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
@@ -121,6 +123,7 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
 
   return (
     <div className="space-y-5">
+      <style>{`@keyframes scheduleRowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {upcoming.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -160,6 +163,10 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
                     cursor: isUnassigned ? "default" : swapping ? "wait" : "grab",
                     transition: "opacity 150ms, border-color 150ms, background 150ms",
                     borderStyle: isUnassigned ? "dashed" : "solid",
+                    ...(prefersReducedMotion ? {} : {
+                      animation: "scheduleRowIn 220ms ease-in-out backwards",
+                      animationDelay: `${Math.min(i, 8) * 30}ms`,
+                    }),
                   }}
                 >
                   <span style={{ fontSize: 10, color: "#4B5563", flexShrink: 0, cursor: isUnassigned ? "default" : "grab", lineHeight: 1 }}>
@@ -242,6 +249,10 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
                   border: "1px solid var(--color-border)",
                   borderRadius: "var(--radius-md)",
                   padding: "10px 12px",
+                  ...(prefersReducedMotion ? {} : {
+                    animation: "scheduleRowIn 220ms ease-in-out backwards",
+                    animationDelay: `${Math.min(i, 8) * 30}ms`,
+                  }),
                 }}
               >
                 <span style={{ fontSize: 11, color: "#374151", fontWeight: 600, minWidth: 18, textAlign: "right" }}>
