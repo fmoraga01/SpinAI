@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** members-panel-content-animation
-- **Status:** spec_ready (pendiente)
+- **Status:** spec_ready
 - **Started:** 2026-07-21
-- **Role active:** spec-author (en curso)
-- **Next step:** `spec-author` está escribiendo specs/members-panel-content-animation/{requirements.md,design.md,tasks.md}. Al terminar, `leader` marcará el feature como `spec_ready` en feature_list.json y se detiene — requiere aprobación humana explícita antes de pasar a `in_progress`.
+- **Role active:** — (esperando aprobación humana)
+- **Next step:** Spec completa en specs/members-panel-content-animation/{requirements.md,design.md,tasks.md} (R1–R9). Esperando aprobación humana explícita del spec antes de pasar a `in_progress` e invocar `implementer`. `leader` no actúa más sobre esta feature hasta recibir esa aprobación.
 
 When `leader` starts a feature, this file gets replaced with:
 
