@@ -88,4 +88,4 @@ Entry format:
   (lint/build/test 5/5/check-sdd-state) y re-verificó independientemente
   cada R1–R9 contra el diff real, aprobando sin objeciones — ver
   progress/review_members-panel-content-animation.md.
-- Merged to dev: commits b1f5ad0, 97cfcf4, 71c30bb, b5d5165 · Promoted to main: pending
+- Merged to dev: commits b1f5ad0, 97cfcf4, 71c30bb, b5d5165 · Promoted to main: 2026-07-21
