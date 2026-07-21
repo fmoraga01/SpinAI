@@ -60,4 +60,4 @@ Entry format:
   cero tokens nuevos, `Drawer.tsx` sin cambios. Reviewer corrió
   `npm run verify` (lint/build/test 5/5/check-sdd-state) y aprobó sin
   objeciones — ver progress/review_template-editor-content-animation.md.
-- Merged to dev: commits 45bfd1d, daea385, 93d3a97, 1423e6f · Promoted to main: pending
+- Merged to dev: commits 45bfd1d, daea385, 93d3a97, 1423e6f · Promoted to main: 2026-07-21
