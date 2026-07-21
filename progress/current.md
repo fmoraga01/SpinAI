@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** template-editor-content-animation
-- **Status:** in_progress
+- **Status:** in_review
 - **Started:** 2026-07-21
-- **Role active:** implementer
-- **Next step:** implementer executes specs/template-editor-content-animation/tasks.md (8 tasks, target file app/components/TemplateEditor.tsx), documents manual QA with R1-R7 traceability in progress/impl_template-editor-content-animation.md, and runs lint/build. Once all tasks are [x], leader moves status to in_review and hands off to reviewer.
+- **Role active:** reviewer
+- **Next step:** reviewer validates the implementation against CHECKPOINTS.md and requirement traceability (R1-R7) in progress/impl_template-editor-content-animation.md, writes progress/review_template-editor-content-animation.md. Special attention to R5 (interactivity must never be blocked by the entrance animation) and R7 (entrance animation must replay on every fresh mount — reopen after close, and after returning from the presentation view). If approved, leader moves status to done and updates progress/history.md; if rejected, leader moves status back to in_progress with a note on what needs fixing.
 
 When `leader` starts a feature, this file gets replaced with:
 
