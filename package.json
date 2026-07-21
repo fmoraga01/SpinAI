@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check-sdd-state": "node scripts/check-sdd-state.mjs",
+    "verify": "npm run lint && npm run build && npm run test && npm run check-sdd-state"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -27,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

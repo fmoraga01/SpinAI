@@ -70,17 +70,21 @@ matches how a small, single-maintainer project actually works.
 ## Traceability: requirement → verification
 
 Every `R<n>` must map to a verification step, but **the kind of verification
-depends on what the requirement touches** — this repo has no test suite yet
-(see the phased rollout in the proposal), so traceability starts hybrid
-rather than 100% automated:
+depends on what the requirement touches**:
 
-- **Logic in `lib/`** (data fetching, parsing, pure functions) — once Vitest
-  is introduced, these get a real automated test. Until then, or for
-  requirements outside `lib/`, use the manual path below.
+- **Logic in `lib/`** (data fetching, parsing, pure functions) — a real
+  Vitest test, in `lib/**/*.test.ts` (run via `npm run test`, or as part of
+  `npm run verify`). This is no longer optional for `lib/` changes — Vitest
+  is set up (see `vitest.config.ts`) and `lib/sizes.ts` has the first
+  example test. If a pure helper isn't exported yet (e.g. a private mapper
+  function like `rowToNewsItem` in `lib/news.ts`), export it rather than
+  skipping the test — don't leave `lib/` logic untested because of a missing
+  `export`.
 - **UI/components** — a manual QA checklist step, documented in
   `progress/impl_<feature>.md` with what was checked and the outcome. If the
   change touches `app/components/*.tsx`, also run the `design-check` skill
-  and note its result.
+  and note its result. Vitest does not cover components yet — that's a
+  later-phase decision (React Testing Library + jsdom), not assumed here.
 - **Cron/API routes** — manual verification steps (e.g. hitting the route
   locally, checking logs), documented the same way.
 
@@ -98,9 +102,30 @@ different questions:
    and is it safe for production?" Approved after the feature is `done` and
    has lived on `dev` for a while.
 
+## Verification
+
+`npm run verify` is the one command that stands in for `init.sh` in the
+original harness-sdd design — run it before moving a feature to
+`in_review`:
+
+```
+npm run verify
+  → npm run lint            (eslint)
+  → npm run build            (next build — also runs the TS check)
+  → npm run test              (vitest run, scoped to lib/**/*.test.ts)
+  → npm run check-sdd-state    (scripts/check-sdd-state.mjs)
+```
+
+`check-sdd-state` only catches process mistakes mechanically — more than one
+feature `in_progress`/`in_review` at once, or a `spec_ready`+ feature
+missing a spec file. It's a safety net, not a substitute for `reviewer`
+actually reading the spec and the diff.
+
 ## References
 
 - Code style — `CONTRIBUTING.md`
 - "Is the state correct?" criteria — `CHECKPOINTS.md`
 - High-level architecture map — `docs/architecture.md`
 - Feature registry — `feature_list.json`
+- Verification entry point — `npm run verify` / `vitest.config.ts` /
+  `scripts/check-sdd-state.mjs`

@@ -18,14 +18,24 @@ in `docs/specs.md`. `reviewer` checks these before moving a feature to
 ## Before `in_review`
 
 - [ ] Every task in `tasks.md` is checked off (`[x]`)
-- [ ] `npm run lint` passes
-- [ ] `npm run build` passes
+- [ ] `npm run verify` passes (runs `lint` + `build` + `test` + `check-sdd-state`
+      — see below; run the pieces individually only if you need to debug a
+      failure)
+- [ ] If the feature added/changed logic in `lib/`, there is a real Vitest
+      test for it (`lib/**/*.test.ts`) — this is no longer optional now that
+      Vitest exists; see the traceability section in `docs/specs.md`
 - [ ] `progress/impl_<feature>.md` exists and lists, for every `R<n>`:
       the file(s) changed and how it was verified (automated test path or
       manual QA note — see the traceability section in `docs/specs.md`)
 - [ ] If `app/components/*.tsx` changed, the `design-check` skill was run
       and its findings addressed or explicitly accepted
 - [ ] `feature_list.json` entry is `in_progress` → moved to `in_review`
+
+`npm run check-sdd-state` (part of `verify`) only catches two things
+mechanically: more than one feature `in_progress`/`in_review` at once, and a
+`spec_ready`+ feature missing one of its three spec files. It does not
+replace the judgment calls above — a human/reviewer still has to actually
+read the spec and the diff.
 
 ## Before `done`
 
