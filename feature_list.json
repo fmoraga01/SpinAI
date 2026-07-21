@@ -24,7 +24,7 @@
     {
       "id": "members-panel-content-animation",
       "title": "Animar el contenido de la vista equipo",
-      "status": "in_review",
+      "status": "done",
       "created": "2026-07-21",
       "spec_dir": "specs/members-panel-content-animation/"
     }

@@ -61,3 +61,31 @@ Entry format:
   `npm run verify` (lint/build/test 5/5/check-sdd-state) y aprobó sin
   objeciones — ver progress/review_template-editor-content-animation.md.
 - Merged to dev: commits 45bfd1d, daea385, 93d3a97, 1423e6f · Promoted to main: 2026-07-21
+
+## members-panel-content-animation — done 2026-07-21
+
+- Requirements: R1–R9, see specs/members-panel-content-animation/requirements.md
+- Summary: animación de entrada del contenido de la vista "Equipo" en
+  `app/components/MembersPanel.tsx` (fade + `translateY→0`, 220ms
+  ease-in-out) aplicada a los tres bloques de nivel superior en orden fijo
+  — el formulario "Agregar", el bloque lista-o-empty-state, y el contador
+  del footer — con stagger de bloque `30ms * index` (0/30/60ms). El bloque
+  lista-o-empty-state trata el empty state ("Sin integrantes aún") como una
+  sola unidad visual sin sub-stagger, y cada fila de miembro (`<li
+  key={m.id}>`) anima individualmente con un stagger propio
+  `(1 + min(index, 8)) * 30ms` sobre la base del bloque, con tope en la
+  fila 8 para no alargar la entrada en rosters largos. Respeta
+  `prefers-reduced-motion` desde el primer paint SSR (reutilizando
+  `usePrefersReducedMotion()`), nunca bloquea la interactividad de ningún
+  control durante la animación (R7 — toggle, edición inline de
+  nombre/email, borrado con confirmación en dos pasos, formulario), no
+  repite la entrada en refresh ordinario tras `onAdd`/`onToggle`/`onRemove`/
+  `onUpdateEmail`/`onUpdateName` gracias a los `key={m.id}` preexistentes
+  (solo la fila nueva agregada por `onAdd` anima, R8), y sí repite la
+  entrada completa al remontar la pestaña "equipo" tras salir y volver
+  (R9, vía la ausencia de `key` en `Drawer.tsx`). Cero deps nuevas, cero
+  tokens nuevos, `Drawer.tsx` sin cambios. Reviewer corrió `npm run verify`
+  (lint/build/test 5/5/check-sdd-state) y re-verificó independientemente
+  cada R1–R9 contra el diff real, aprobando sin objeciones — ver
+  progress/review_members-panel-content-animation.md.
+- Merged to dev: commits b1f5ad0, 97cfcf4, 71c30bb, b5d5165 · Promoted to main: pending

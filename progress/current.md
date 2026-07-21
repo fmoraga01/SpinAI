@@ -1,10 +1,10 @@
 # Current session state
 
-- **Feature:** members-panel-content-animation
-- **Status:** in_review
-- **Started:** 2026-07-21
-- **Role active:** reviewer
-- **Next step:** reviewer valida la implementación (app/components/MembersPanel.tsx) contra CHECKPOINTS.md y la trazabilidad R1-R9 en progress/impl_members-panel-content-animation.md. Atención especial a R7 (no bloqueo de interactividad durante la animación), R8 (no replay en refresh ordinario tras onAdd/onToggle/onRemove/onUpdateEmail/onUpdateName — solo la fila nueva agregada por onAdd anima) y R9 (replay completo del entrance al remontar la pestaña "equipo" tras salir y volver). `npm run verify` está en verde (lint, build, test 5/5, check-sdd-state). Si aprueba: reviewer escribe progress/review_members-panel-content-animation.md y leader mueve la feature a `done`. Si rechaza: leader vuelve la feature a `in_progress` con nota de qué corregir.
+- **Feature:** _(ninguna activa)_
+- **Status:** —
+- **Started:** —
+- **Role active:** —
+- **Next step:** No hay feature en curso. `members-panel-content-animation` cerró en `done` (2026-07-21) y quedó mergeada en `dev`; ver progress/history.md. La promoción a `main` está pendiente de aprobación explícita del usuario. El `leader` reemplaza este bloque al arrancar la próxima feature.
 
 When `leader` starts a feature, this file gets replaced with:
 
