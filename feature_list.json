@@ -17,7 +17,7 @@
     {
       "id": "template-editor-content-animation",
       "title": "Animar el contenido de la vista preparar lámina",
-      "status": "spec_ready",
+      "status": "in_progress",
       "created": "2026-07-21",
       "spec_dir": "specs/template-editor-content-animation/"
     }

@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** template-editor-content-animation
-- **Status:** spec_ready — awaiting human approval
+- **Status:** in_progress
 - **Started:** 2026-07-21
-- **Role active:** none (waiting on human)
-- **Next step:** human reviews specs/template-editor-content-animation/{requirements,design,tasks}.md; once explicitly approved, leader moves status to in_progress and invokes implementer.
+- **Role active:** implementer
+- **Next step:** implementer executes specs/template-editor-content-animation/tasks.md (8 tasks, target file app/components/TemplateEditor.tsx), documents manual QA with R1-R7 traceability in progress/impl_template-editor-content-animation.md, and runs lint/build. Once all tasks are [x], leader moves status to in_review and hands off to reviewer.
 
 When `leader` starts a feature, this file gets replaced with:
 
