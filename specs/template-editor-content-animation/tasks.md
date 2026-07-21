@@ -53,7 +53,7 @@
    animation state. *(Serves R5 — precondition for the manual QA step
    below)*
 
-7. [ ] **Manual QA pass** (document in
+7. [x] **Manual QA pass** (document in
    `progress/impl_template-editor-content-animation.md` per
    `docs/specs.md` traceability):
    - Open the drawer and click "◈ Preparar lámina" (or "Lámina" from the
@@ -86,5 +86,5 @@
    - Run the `design-check` skill against `app/components/TemplateEditor.tsx`
      per `CHECKPOINTS.md` and address or note any findings.
 
-8. [ ] **Lint/build check.** Run `npm run lint` and `npm run build`; both
+8. [x] **Lint/build check.** Run `npm run lint` and `npm run build`; both
    must pass before moving the feature to `in_review`.
