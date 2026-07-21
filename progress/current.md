@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** members-panel-content-animation
-- **Status:** in_progress
+- **Status:** in_review
 - **Started:** 2026-07-21
-- **Role active:** implementer
-- **Next step:** implementer ejecuta specs/members-panel-content-animation/tasks.md (10 tareas) sobre app/components/MembersPanel.tsx, documenta QA manual con trazabilidad R1-R9 en progress/impl_members-panel-content-animation.md, y corre lint/build. Cuando termine y todas las tasks estén [x], leader mueve la feature a in_review.
+- **Role active:** reviewer
+- **Next step:** reviewer valida la implementación (app/components/MembersPanel.tsx) contra CHECKPOINTS.md y la trazabilidad R1-R9 en progress/impl_members-panel-content-animation.md. Atención especial a R7 (no bloqueo de interactividad durante la animación), R8 (no replay en refresh ordinario tras onAdd/onToggle/onRemove/onUpdateEmail/onUpdateName — solo la fila nueva agregada por onAdd anima) y R9 (replay completo del entrance al remontar la pestaña "equipo" tras salir y volver). `npm run verify` está en verde (lint, build, test 5/5, check-sdd-state). Si aprueba: reviewer escribe progress/review_members-panel-content-animation.md y leader mueve la feature a `done`. Si rechaza: leader vuelve la feature a `in_progress` con nota de qué corregir.
 
 When `leader` starts a feature, this file gets replaced with:
 
