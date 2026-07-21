@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** schedule-content-animation
-- **Status:** pending → writing spec
+- **Status:** spec_ready — awaiting human approval
 - **Started:** 2026-07-21
-- **Role active:** spec-author
-- **Next step:** spec-author writes requirements.md/design.md/tasks.md, then leader stops for human approval of the spec (spec_ready gate) before any code is written.
+- **Role active:** none (waiting on human)
+- **Next step:** human reviews specs/schedule-content-animation/{requirements,design,tasks}.md; once explicitly approved, leader moves status to in_progress and invokes implementer.
 
 When `leader` starts a feature, this file gets replaced with:
 
