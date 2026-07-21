@@ -1,23 +1,23 @@
 # Tasks — changelog-empty-state-animation
 
-1. **Import the reduced-motion hook.** In `app/components/ChangeLog.tsx`,
+1. [x] **Import the reduced-motion hook.** In `app/components/ChangeLog.tsx`,
    import `usePrefersReducedMotion` from `@/app/state-of-ai/useReducedMotion`
    and call it once at the top of the `ChangeLog` component. *(Serves R4)*
 
-2. **Add the entrance keyframes.** Add a `changelogEmptyIn` `@keyframes`
+2. [x] **Add the entrance keyframes.** Add a `changelogEmptyIn` `@keyframes`
    rule (opacity 0→1, `translateY(6px) scale(0.98)` → `translateY(0)
    scale(1)`) via an inline `<style>` tag inside the `logs.length === 0`
    branch, following the same pattern as the existing `spin` keyframe in the
    loading branch above it. *(Serves R1, R2, R5)*
 
-3. **Apply the animation conditionally.** On the empty state's outer
+3. [x] **Apply the animation conditionally.** On the empty state's outer
    container `<div>` (the one wrapping the icon + text), set
    `animation: changelogEmptyIn 320ms ease-in-out` inline only when
    `usePrefersReducedMotion()` is `false`; omit the `animation` property
    entirely (or set nothing) when it's `true`, so the element renders at its
    final opacity/position with no motion. *(Serves R1, R2, R4)*
 
-4. **Verify no legibility delay.** Confirm the animation has no
+4. [x] **Verify no legibility delay.** Confirm the animation has no
    `animation-delay` and that opacity/transform apply to the whole container
    in one pass (not staggered per child), so heading and description text
    are reading-ready as soon as the animation starts. *(Serves R3)*

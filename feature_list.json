@@ -3,7 +3,7 @@
     {
       "id": "changelog-empty-state-animation",
       "title": "Animar empty state de la vista del log de cambios",
-      "status": "spec_ready",
+      "status": "in_progress",
       "created": "2026-07-21",
       "spec_dir": "specs/changelog-empty-state-animation/"
     }

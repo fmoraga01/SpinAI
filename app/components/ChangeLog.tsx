@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { loadLogs } from "@/lib/storage";
 import { LogEntry } from "@/lib/types";
+import { usePrefersReducedMotion } from "@/app/state-of-ai/useReducedMotion";
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr + "T12:00:00");
@@ -25,6 +26,7 @@ export default function ChangeLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [tableError, setTableError] = useState(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     loadLogs().then(({ entries, tableError }) => {
@@ -75,7 +77,10 @@ export default function ChangeLog() {
 
   if (logs.length === 0) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "48px 24px", gap: 16 }}>
+      <div style={{
+        display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", padding: "48px 24px", gap: 16,
+        animation: prefersReducedMotion ? undefined : "changelogEmptyIn 320ms ease-in-out",
+      }}>
         <div style={{
           width: 52, height: 52, borderRadius: "var(--radius-md)",
           background: "#2C40FF0f", border: "1px solid #2C40FF22",
@@ -92,6 +97,7 @@ export default function ChangeLog() {
             Los intercambios de turno entre integrantes aparecerán aquí.
           </p>
         </div>
+        <style>{`@keyframes changelogEmptyIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }`}</style>
       </div>
     );
   }
