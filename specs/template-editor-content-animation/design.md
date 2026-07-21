@@ -34,7 +34,7 @@ function sectionMotionStyle(index: number, reduced: boolean): React.CSSPropertie
 
 called once per section with a hardcoded index matching the fixed top-to-
 bottom order (badge=0, Título=1, TimingSection=2, AgendaEditor=3,
-ThemePicker=4, FontPicker=5, SizePicker=6, actions row=7) — `!prefersReducedMotion`
+ThemePicker=4, FontPicker=5, SizePicker=6, actions row=7) — `prefersReducedMotion`
 is passed in as `reduced`, satisfying R4.
 
 - **Duration `260ms`, easing `ease-in-out`**: within the 200–500ms band

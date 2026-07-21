@@ -41,3 +41,23 @@ Entry format:
   `npm run verify` (lint/build/test 5/5/check-sdd-state) y aprobó sin
   objeciones — ver progress/review_schedule-content-animation.md.
 - Merged to dev: commit 325a555 · Promoted to main: 2026-07-21
+
+## template-editor-content-animation — done 2026-07-21
+
+- Requirements: R1–R7, see specs/template-editor-content-animation/requirements.md
+- Summary: animación de entrada por sección en `app/components/TemplateEditor.tsx`
+  (fade + `translateY(6px)→0`, 260ms ease-in-out) aplicada a cada una de las
+  ocho secciones de nivel superior ("Reunión asignada", Título,
+  TimingSection, AgendaEditor, ThemePicker, FontPicker, SizePicker, fila de
+  acciones), con stagger fijo de 30ms por índice (0–210ms, sin tope porque el
+  número de secciones es fijo). Respeta `prefers-reduced-motion` (incluido
+  primer paint vía snapshot SSR), garantiza que la interactividad de cada
+  control nunca queda bloqueada por la animación (R5, propiedad clave de
+  esta feature al ser un formulario y no un estado pasivo), no re-dispara la
+  entrada en re-renders ordinarios dentro del mismo montaje (R6), y sí la
+  repite íntegramente en cada remount — reapertura del editor o retorno
+  desde `PresentationView` vía `key={editorKey}` (R7). Cero deps nuevas,
+  cero tokens nuevos, `Drawer.tsx` sin cambios. Reviewer corrió
+  `npm run verify` (lint/build/test 5/5/check-sdd-state) y aprobó sin
+  objeciones — ver progress/review_template-editor-content-animation.md.
+- Merged to dev: commits 45bfd1d, daea385, 93d3a97, 1423e6f · Promoted to main: pending

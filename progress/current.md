@@ -1,10 +1,10 @@
 # Current session state
 
-- **Feature:** template-editor-content-animation
-- **Status:** in_review
-- **Started:** 2026-07-21
-- **Role active:** reviewer
-- **Next step:** reviewer validates the implementation against CHECKPOINTS.md and requirement traceability (R1-R7) in progress/impl_template-editor-content-animation.md, writes progress/review_template-editor-content-animation.md. Special attention to R5 (interactivity must never be blocked by the entrance animation) and R7 (entrance animation must replay on every fresh mount — reopen after close, and after returning from the presentation view). If approved, leader moves status to done and updates progress/history.md; if rejected, leader moves status back to in_progress with a note on what needs fixing.
+- **Feature:** _(ninguna activa)_
+- **Status:** —
+- **Started:** —
+- **Role active:** —
+- **Next step:** No hay feature en curso. `template-editor-content-animation` cerró en `done` (2026-07-21) y quedó mergeada en `dev`; ver progress/history.md. La promoción a `main` está pendiente de aprobación explícita del usuario. El `leader` reemplaza este bloque al arrancar la próxima feature.
 
 When `leader` starts a feature, this file gets replaced with:
 
