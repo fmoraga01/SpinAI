@@ -6,6 +6,13 @@
       "status": "done",
       "created": "2026-07-21",
       "spec_dir": "specs/changelog-empty-state-animation/"
+    },
+    {
+      "id": "schedule-content-animation",
+      "title": "Animar el contenido del calendario de asignados",
+      "status": "pending",
+      "created": "2026-07-21",
+      "spec_dir": "specs/schedule-content-animation/"
     }
   ]
 }
