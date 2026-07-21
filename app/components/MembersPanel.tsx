@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TeamMember } from "@/lib/types";
+import { usePrefersReducedMotion } from "@/app/state-of-ai/useReducedMotion";
 
 interface Props {
   members: TeamMember[];
@@ -12,7 +13,24 @@ interface Props {
   onUpdateName: (id: string, name: string) => void;
 }
 
+function blockMotionStyle(index: number, reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return {
+    animation: "membersPanelIn 220ms ease-in-out backwards",
+    animationDelay: `${index * 30}ms`,
+  };
+}
+
+function rowMotionStyle(index: number, reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return {
+    animation: "membersPanelIn 220ms ease-in-out backwards",
+    animationDelay: `${(1 + Math.min(index, 8)) * 30}ms`,
+  };
+}
+
 export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpdateEmail, onUpdateName }: Props) {
+  const prefersReducedMotion = usePrefersReducedMotion();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -63,8 +81,9 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
 
   return (
     <div>
+      <style>{`@keyframes membersPanelIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {/* Input */}
-      <form onSubmit={handleAdd} className="flex flex-col gap-2 mb-5">
+      <form onSubmit={handleAdd} className="flex flex-col gap-2 mb-5" style={blockMotionStyle(0, prefersReducedMotion)}>
         <div className="flex flex-col gap-2">
           <input
             type="text"
@@ -124,14 +143,18 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
       {members.length === 0 ? (
         <div
           className="text-center py-8 text-sm"
-          style={{ color: "var(--color-text-secondary)", borderTop: "1px solid var(--color-border)" }}
+          style={{
+            color: "var(--color-text-secondary)",
+            borderTop: "1px solid var(--color-border)",
+            ...blockMotionStyle(1, prefersReducedMotion),
+          }}
         >
           <p className="mt-4">Sin integrantes aún</p>
           <p className="text-xs mt-1" style={{ color: "#4B5563" }}>Agrega el primero arriba</p>
         </div>
       ) : (
         <ul className="space-y-2">
-          {members.map((m) => (
+          {members.map((m, index) => (
             <li
               key={m.id}
               className="flex items-center justify-between transition-all duration-150"
@@ -140,6 +163,7 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
                 border: "1px solid " + (m.active ? "#2C40FF44" : "var(--color-border)"),
                 borderRadius: "var(--radius-md)",
                 padding: "10px 12px",
+                ...rowMotionStyle(index, prefersReducedMotion),
               }}
             >
               <div className="flex items-center gap-3">
@@ -275,6 +299,7 @@ export default function MembersPanel({ members, onAdd, onToggle, onRemove, onUpd
           color: "#4B5563",
           borderTop: "1px solid var(--color-border)",
           paddingTop: "12px",
+          ...blockMotionStyle(2, prefersReducedMotion),
         }}
       >
         <span>{members.filter((m) => m.active).length} activos</span>

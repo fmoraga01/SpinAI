@@ -1,12 +1,12 @@
 # Tasks — members-panel-content-animation
 
-1. [ ] **Import the reduced-motion hook.** In `app/components/MembersPanel.tsx`,
+1. [x] **Import the reduced-motion hook.** In `app/components/MembersPanel.tsx`,
    import `usePrefersReducedMotion` from `@/app/state-of-ai/useReducedMotion`
    and call it once at the top of the `MembersPanel` component, alongside
    its existing `useState` calls (it's already `"use client"`). *(Serves
    R6)*
 
-2. [ ] **Add the entrance keyframes and the two helpers.** Add a
+2. [x] **Add the entrance keyframes and the two helpers.** Add a
    `membersPanelIn` `@keyframes` rule (`opacity 0 → 1`,
    `translateY(4px) → translateY(0)`) via an inline `<style>` tag placed in
    the component's returned JSX (inside the root `<div>`). Add two local
@@ -21,20 +21,20 @@
      animationDelay: `${(1 + Math.min(index, 8)) * 30}ms` }`.
    *(Serves R1, R2, R4, R5, R6)*
 
-3. [ ] **Apply the animation to the "Agregar" form block.** Merge
+3. [x] **Apply the animation to the "Agregar" form block.** Merge
    `blockMotionStyle(0, reduced)` into the `<form onSubmit={handleAdd}
    className="flex flex-col gap-2 mb-5">` element's `style` prop (add one if
    it doesn't have one). Do not add `animation`/`animationDelay` to the two
    inputs or the submit button individually. *(Serves R1, R2, R5)*
 
-4. [ ] **Apply the animation to the empty-state block.** Merge
+4. [x] **Apply the animation to the empty-state block.** Merge
    `blockMotionStyle(1, reduced)` into the empty-state `<div>`'s existing
    `style` object (the one shown when `members.length === 0`). Do not
    stagger the heading (`<p>Sin integrantes aún</p>`) and description
    (`<p>Agrega el primero arriba</p>`) separately — one `animation` on
    their shared wrapper only. *(Serves R1, R2, R3)*
 
-5. [ ] **Apply the animation to each member row.** In the `members.map((m,
+5. [x] **Apply the animation to each member row.** In the `members.map((m,
    index) => ...)` (or equivalent index-yielding map) branch, merge
    `rowMotionStyle(index, reduced)` into each `<li key={m.id}>`'s existing
    `style` object, alongside its current `background`/`border`/
@@ -44,13 +44,13 @@
    button, name, email, or delete button individually. *(Serves R1, R4,
    R5)*
 
-6. [ ] **Apply the animation to the footer block.** Merge
+6. [x] **Apply the animation to the footer block.** Merge
    `blockMotionStyle(2, reduced)` into the footer `<div>`'s existing
    `style` object (the "`N` activos" / "`N` total" counter). Do not add
    `animation`/`animationDelay` to the two `<span>`s individually. *(Serves
    R1, R2, R5)*
 
-7. [ ] **Verify no interference with existing behavior.** Confirm the
+7. [x] **Verify no interference with existing behavior.** Confirm the
    following are byte-for-byte unchanged: the `<li>`'s
    `transition-all duration-150` className; the submit button's
    disabled-while-empty-name logic and its own `transition-all
@@ -62,7 +62,7 @@
    should not be touched at all). *(Serves scope/non-goals confirmation,
    and the precondition for R8/R9)*
 
-8. [ ] **Verify non-blocking interactivity by reading the diff.** Confirm
+8. [x] **Verify non-blocking interactivity by reading the diff.** Confirm
    the only CSS properties introduced anywhere in this change are
    `opacity`, `transform`, `animation`, and `animation-delay` — no
    `pointer-events`, new `disabled` conditions, `visibility`, or `display`
