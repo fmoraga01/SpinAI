@@ -23,6 +23,8 @@ SpinAI es una app interna para equipos que necesitan rotar el rol de facilitador
 - **Log de cambios** — historial de todos los intercambios de turno realizados
 - **Acceso protegido** — PIN gate con JWT y cookie HttpOnly
 - **Microinteracciones de entrada** — animaciones sutiles de fade + desplazamiento (220–320ms, con stagger por fila/sección) al abrir el log de cambios, el calendario, la vista "preparar lámina" y la vista de equipo; respetan `prefers-reduced-motion` desde el primer paint
+- **Noticias de IA** (`/noticias`) — feed curado de actualidad de IA, agregado desde 10 fuentes (OpenAI, Google DeepMind, Hugging Face, MIT Technology Review, The Verge, Ars Technica, TechCrunch, VentureBeat, Wired, Import AI), con filtro por fuente, paginación y aviso de "suscripción requerida" cuando aplica. Se refresca automáticamente cada 3 horas vía GitHub Actions
+- **State of AI** (`/state-of-ai`) — panel del estado del ecosistema de modelos de IA: resumen ejecutivo generado automáticamente, timeline de lanzamientos recientes, ranking de modelos por índice de inteligencia (Artificial Analysis) con comparador de hasta 4 modelos, relación inteligencia-vs-precio, ranking de laboratorios, trending de Hugging Face (modelos y papers), papers recientes de arXiv (cs.AI), y un mapa curado del panorama de IA y de agentes. Los datos (modelos, papers de arXiv y trending de Hugging Face) se refrescan automáticamente todos los días vía GitHub Actions
 
 ---
 
@@ -113,6 +115,9 @@ GMAIL_PASS=
 
 # Cron
 CRON_SECRET=
+
+# State of AI (ranking de modelos vía Artificial Analysis)
+AA_API_KEY=
 ```
 
 ---
@@ -122,6 +127,21 @@ CRON_SECRET=
 Cada lunes a las 9:00 AM (hora Santiago) se ejecuta un job automático que consulta el próximo asignado en la base de datos y envía el email al responsable con copia al resto del equipo.
 
 Para activarlo necesitas configurar dos secretos en GitHub Actions y la variable `CRON_SECRET` en Vercel con el mismo valor.
+
+---
+
+## Otros jobs automáticos (GitHub Actions)
+
+Además de la notificación semanal, cuatro workflows en `.github/workflows/`
+mantienen fresco el contenido editorial sin intervención manual — todos
+autenticados con el mismo `CRON_SECRET`:
+
+| Workflow | Endpoint | Frecuencia |
+|---|---|---|
+| `refresh-news.yml` | `/api/cron/refresh-news` | Cada 3 horas |
+| `refresh-state-of-ai.yml` | `/api/cron/refresh-state-of-ai` | Diario, 9:00 AM UTC |
+| `refresh-research.yml` | `/api/cron/refresh-research` | Diario, 10:00 AM UTC |
+| `refresh-hf-trending.yml` | `/api/cron/refresh-hf-trending` | Diario, 11:00 AM UTC |
 
 ---
 
@@ -138,7 +158,9 @@ Abre [http://localhost:3000](http://localhost:3000)
 
 ## Base de datos (Supabase)
 
-Tablas requeridas: `members`, `assignments`, `templates`, `assignment_logs`
+Tablas requeridas: `members`, `assignments`, `templates`, `assignment_logs`,
+`news_items` (Noticias de IA), `ai_models` y `research_papers` y
+`hf_trending` (State of AI) — ver `supabase/migrations/`.
 
 Para habilitar emails, agrega la columna de email a la tabla de miembros:
 
