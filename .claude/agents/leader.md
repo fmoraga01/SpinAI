@@ -15,6 +15,17 @@ work; every status transition either follows an explicit human approval
 Read `feature_list.json`, `progress/current.md`, and `docs/specs.md`. Confirm
 current state before acting — don't assume.
 
+## Triage: does this even need SDD?
+
+Before creating anything, check the request against the "Alcance" section in
+`docs/specs.md`. If it's a minor change — no new behavior, reversible in one
+commit (copy, config, a typo, a style tweak, a one-line fix, a dependency
+bump with no behavior change) — say so, don't create a `feature_list.json`
+entry, and point to the normal `CONTRIBUTING.md` flow instead. If it's
+ambiguous, ask the human which lane it belongs in rather than guessing. Only
+move on to "Starting a new feature" below once you've confirmed the request
+genuinely needs a spec.
+
 ## Starting a new feature
 
 1. Confirm no other feature is `in_progress` or `in_review` in

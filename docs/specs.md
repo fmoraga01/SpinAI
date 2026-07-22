@@ -12,6 +12,33 @@ The repo, not the chat, is the system of record. A feature's requirements,
 design decisions, task list, and progress live on disk so any agent (or
 human) can pick the work back up with zero prior context.
 
+## Alcance: qué necesita spec y qué no
+
+No todo cambio es una "feature". Este proceso completo (`feature_list.json` +
+specs + los cuatro roles) aplica cuando el cambio:
+
+- agrega comportamiento nuevo visible para quien usa la app, o
+- toca lógica de negocio de forma no trivial, o
+- va a tomar más de una sentada de trabajo.
+
+**No** lo necesita — y va directo por el flujo normal de `CONTRIBUTING.md`
+(rama, commit, `npm run verify` si aplica, merge a `dev`) — un cambio que es:
+
+- reversible en un solo commit, y
+- sin comportamiento nuevo: copy, config, un typo, un ajuste de estilo, un
+  fix de una línea, un bump de dependencia sin cambio de comportamiento.
+
+Estos cambios **no crean entrada en `feature_list.json`** ni pasan por
+`spec-author` / `implementer` / `reviewer`. Siguen pasando, igual que
+cualquier otro cambio, por el gate `dev → main` de `AGENTS.md` — ese gate
+nunca se salta.
+
+Si no es obvio en qué categoría cae un pedido, quien orquesta (`leader`, o
+el agente que esté atendiendo el pedido) pregunta al humano en vez de
+asumir. Una instrucción explícita del humano ("esto es un ajuste menor, sin
+spec" / "quiero que esto pase por SDD igual") siempre gana sobre este
+criterio por defecto.
+
 ## Roles
 
 Four roles, defined as project subagents in `.claude/agents/`. No role
