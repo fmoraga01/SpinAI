@@ -22,6 +22,7 @@ SpinAI es una app interna para equipos que necesitan rotar el rol de facilitador
 - **Notificación automática** — GitHub Actions envía el email cada lunes a las 9:00 AM automáticamente
 - **Log de cambios** — historial de todos los intercambios de turno realizados
 - **Acceso protegido** — PIN gate con JWT y cookie HttpOnly
+- **Microinteracciones de entrada** — animaciones sutiles de fade + desplazamiento (220–320ms, con stagger por fila/sección) al abrir el log de cambios, el calendario, la vista "preparar lámina" y la vista de equipo; respetan `prefers-reduced-motion` desde el primer paint
 
 ---
 
@@ -34,6 +35,62 @@ SpinAI es una app interna para equipos que necesitan rotar el rol de facilitador
 | Email | Gmail SMTP via Nodemailer |
 | Automatización | GitHub Actions (cron semanal) |
 | Deploy | Vercel |
+
+---
+
+## Harness Engineering & Spec-Driven Development (SDD)
+
+Este repo no solo se desarrolla *con* asistencia de IA — está estructurado
+para que agentes de IA puedan orquestar su propio ciclo de trabajo con
+mínima supervisión, con el repo (no el chat) como sistema de registro.
+
+**Harness Engineering** — el "arnés" de agentes vive en `.claude/`:
+
+- **Roles como subagentes** (`.claude/agents/`): `leader` (orquesta el
+  ciclo de vida de cada feature), `spec-author` (escribe requirements/
+  design/tasks), `implementer` (ejecuta el checklist y deja traza) y
+  `reviewer` (valida contra `CHECKPOINTS.md` antes de aprobar). Ningún rol
+  aprueba su propio trabajo.
+- **`AGENTS.md`** es el mapa de navegación y las reglas duras del repo
+  (una feature a la vez, no saltar el gate de aprobación humana, dejar el
+  repo limpio al cerrar sesión) más el flujo de git `dev → aprobación →
+  prod`: todo commit va primero a `dev`; el merge a `main` requiere
+  confirmación explícita del usuario.
+- **`graphify`** mantiene un grafo de conocimiento del código
+  (`graphify-out/`, no versionado) que los agentes consultan antes de
+  hacer grep/read crudo, para orientarse más rápido en un repo grande.
+- **Hooks y checks automatizados** (`.claude/settings.json`,
+  `scripts/check-sdd-state.mjs`) detectan mecánicamente errores de
+  proceso, como tener más de una feature `in_progress` a la vez.
+
+**Spec-Driven Development (SDD)** — definido en `docs/specs.md`, adaptado
+de [betta-tech/harness-sdd](https://github.com/betta-tech/harness-sdd).
+Toda feature con comportamiento nuevo visible pasa por:
+
+```
+pending → spec_ready → in_progress → in_review → done
+              ▲
+        aprobación humana
+   (spec aprobado antes de escribir código)
+```
+
+- **`requirements.md`** — requisitos numerados en notación EARS.
+- **`design.md`** — el enfoque técnico y las alternativas descartadas.
+- **`tasks.md`** — checklist ordenado que ejecuta `implementer`.
+
+Cada requisito se traza a una verificación (test de Vitest para lógica en
+`lib/`, o QA manual documentado para UI/componentes), y `reviewer` corre
+`npm run verify` (`lint` + `build` + `test` + `check-sdd-state`) antes de
+aprobar. El estado de cada feature vive en `feature_list.json`; el
+historial de features cerradas, en `progress/history.md`. Cambios menores
+(copy, config, un typo, un fix de una línea) no requieren spec — ver
+"Alcance" en `docs/specs.md`.
+
+Ejemplo de este proceso en acción: las cuatro animaciones de entrada
+listadas arriba (`changelog-empty-state-animation`,
+`schedule-content-animation`, `template-editor-content-animation`,
+`members-panel-content-animation`) se especificaron, implementaron y
+revisaron siguiendo este flujo — ver `specs/` y `progress/history.md`.
 
 ---
 
