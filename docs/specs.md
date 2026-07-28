@@ -44,19 +44,23 @@ criterio por defecto.
 Four roles, defined as project subagents in `.claude/agents/`. No role
 approves its own output.
 
-| Role | File | Model | Responsibility |
-|---|---|---|---|
-| `leader` | `.claude/agents/leader.md` | Sonnet | Owns `feature_list.json`, moves features between statuses, invokes the other three roles in order, keeps `progress/history.md` |
-| `spec-author` | `.claude/agents/spec-author.md` | Opus | Writes `requirements.md`, `design.md`, `tasks.md` for a feature |
-| `implementer` | `.claude/agents/implementer.md` | Sonnet | Executes `tasks.md`, writes `progress/impl_<feature>.md` |
-| `reviewer` | `.claude/agents/reviewer.md` | Opus | Validates traceability and checkpoints, writes `progress/review_<feature>.md` |
+| Role | File | Model | Effort | Responsibility |
+|---|---|---|---|---|
+| `leader` | `.claude/agents/leader.md` | Sonnet | Medium | Owns `feature_list.json`, moves features between statuses, invokes the other three roles in order, keeps `progress/history.md` |
+| `spec-author` | `.claude/agents/spec-author.md` | Opus | High | Writes `requirements.md`, `design.md`, `tasks.md` for a feature |
+| `implementer` | `.claude/agents/implementer.md` | Sonnet | High | Executes `tasks.md`, writes `progress/impl_<feature>.md` |
+| `reviewer` | `.claude/agents/reviewer.md` | Opus | High | Validates traceability and checkpoints, writes `progress/review_<feature>.md` |
 
-Model choice per role is set in each agent's frontmatter (`model:`), not
-decided ad hoc per invocation. `leader`/`implementer` run on Sonnet — good
-enough for triage and well-scoped implementation once a spec exists.
-`spec-author`/`reviewer` run on Opus — mistakes in requirements/design
-compound downstream, and an independent review is only as good as the
-reasoning behind it, so both get the stronger model.
+Model and effort per role are set in each agent's frontmatter (`model:`,
+`effort:`), not decided ad hoc per invocation. `leader`/`implementer` run
+on Sonnet — good enough for triage and well-scoped implementation once a
+spec exists. `spec-author`/`reviewer` run on Opus — mistakes in
+requirements/design compound downstream, and an independent review is only
+as good as the reasoning behind it, so both get the stronger model.
+`leader` runs at medium effort (mostly mechanical state transitions, plus
+one judgment call on SDD triage); the other three run at high effort,
+since spec quality, implementation correctness, and review rigor are each
+worth the extra reasoning.
 
 ## Feature lifecycle
 

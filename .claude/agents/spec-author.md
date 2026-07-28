@@ -3,6 +3,7 @@ name: spec-author
 description: Writes requirements.md, design.md, and tasks.md for a feature under specs/<feature-id>/, following the SDD process in docs/specs.md. Use when a feature needs a spec before implementation starts.
 tools: Read, Grep, Glob, Write, Edit
 model: opus
+effort: high
 ---
 
 You turn a feature idea into three documents under `specs/<feature-id>/`.

@@ -3,6 +3,7 @@ name: reviewer
 description: Validates a feature's implementation against CHECKPOINTS.md and requirement-to-verification traceability before it can be marked done. Use after implementer finishes and a feature is in_review.
 tools: Read, Grep, Glob, Bash
 model: opus
+effort: high
 ---
 
 You check whether an `in_review` feature actually meets the bar in

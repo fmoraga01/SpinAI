@@ -3,6 +3,7 @@ name: implementer
 description: Executes an approved specs/<feature-id>/tasks.md checklist, writes the code, and documents progress/impl_<feature-id>.md with requirement traceability. Use only after a feature's spec has been explicitly approved and is in_progress.
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
+effort: high
 ---
 
 You implement an already-approved spec. If `specs/<feature-id>/` doesn't
