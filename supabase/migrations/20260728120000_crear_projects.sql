@@ -109,6 +109,7 @@ kpis as (
     ('Lead time de despacho', '2.3 días', 0),
     ('Bodegas optimizadas', '5 de 9', 1)
   ) as k(label, value, position)
+  returning 1
 ),
 updates as (
   insert into project_weekly_updates (project_id, week_of, status, note)
@@ -135,8 +136,11 @@ updates as (
     (date '2026-07-13', 'on_track', 'Plan de reorganización aprobado para las primeras 5 bodegas.'),
     (date '2026-07-20', 'on_track', 'Reorganización completada en 3 de las 5 bodegas priorizadas.')
   ) as u(week_of, status, note)
+  returning 1
 )
--- El SELECT final debe referenciar todos los CTEs de escritura (kpis,
--- updates) para que Postgres los ejecute: un WITH con INSERT que no es
--- referenciado por la query principal no se ejecuta.
+-- Un CTE de escritura (insert/update/delete con WITH) se ejecuta siempre
+-- que la query lo referencie, pero solo puede referenciarse si tiene
+-- RETURNING (si no, no forma tabla temporal y Postgres lanza error). Este
+-- SELECT final solo existe para dar ese RETURNING un destino y así forzar
+-- la ejecución de ambos inserts.
 select (select count(*) from kpis) + (select count(*) from updates);

@@ -15,7 +15,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     .eq("id", id)
     .maybeSingle();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    // 22P02 = invalid_text_representation — el id no parsea como uuid,
+    // es un caso de "no encontrado", no un error del servidor.
+    if (error.code === "22P02") return NextResponse.json({ error: "Proyecto no encontrado" }, { status: 404 });
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
   if (!data) return NextResponse.json({ error: "Proyecto no encontrado" }, { status: 404 });
 
   return NextResponse.json(rowToProject(data));

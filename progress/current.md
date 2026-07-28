@@ -1,17 +1,9 @@
 # Current session state
 
-When `leader` starts a feature, this file gets replaced with:
-
-```markdown
-# Current session state
-
-- **Feature:** <feature-id>
-- **Status:** in_progress | in_review
-- **Started:** YYYY-MM-DD
-- **Role active:** spec-author | implementer | reviewer
-- **Next step:** <what happens next and who does it>
-```
-
-This file always reflects the *single* active feature (see the one-feature-
-at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
-is cleared from here and summarized in `progress/history.md`.
+- **Feature:** project-status-tracking
+- **Status:** in_progress
+- **Started:** 2026-07-28
+- **Role active:** implementer (fixes applied after independent reviewer rejection)
+- **Next step:** re-run `npm run verify`, then invoke an independent `reviewer`
+  for a final pass covering the migration fix (R11) and the 404 fix (R7)
+  before moving back to `in_review` / `done`.

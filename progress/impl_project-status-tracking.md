@@ -79,7 +79,13 @@ verificó funcionando de punta a punta sin necesitarlos.
   devuelve `401` (gate de auth se prueba primero, ver R16); el camino
   `data === null → 404` en la ruta API y el bloque "Proyecto no encontrado"
   en `[id]/page.tsx` se verificaron por lectura de código — no se pudo
-  probar con datos reales sin la migración aplicada.
+  probar con datos reales sin la migración aplicada. **Corrección post-review**:
+  el review independiente notó que un `id` no-UUID (ej. `/api/proyectos/abc`)
+  hacía que Postgres devolviera el error `22P02` y la ruta lo mapeaba a
+  `500` en vez de `404` — el usuario veía "No se pudo cargar el proyecto"
+  en vez de "Proyecto no encontrado". Se agregó un chequeo explícito de
+  `error.code === "22P02"` en `app/api/proyectos/[id]/route.ts` para
+  devolver `404` en ese caso también.
 - **R8** (proyecto sin KPIs → sección omitida/estado vacío explícito):
   manual QA — `KpiList.tsx` renderiza un tile "todavía no tiene KPIs
   registrados" si `kpis.length === 0`; verificado por lectura de código.
@@ -91,13 +97,22 @@ verificó funcionando de punta a punta sin necesitarlos.
   `ProjectTimeline.tsx` renderiza "todavía no tiene avances semanales
   registrados" si `updates.length === 0`; verificado por lectura de código.
 - **R11** (seed de 4 proyectos, Chile, Paris/Easy distribuidos, ≥2 KPIs,
-  ≥3 avances): el `.sql` de la migración contiene exactamente ese seed
-  (2 proyectos "Paris", 2 "Easy", los 4 "Chile", 2 KPIs y 3 avances cada
-  uno con status distintos) — **bloqueado**: no se pudo aplicar contra un
-  proyecto Supabase real ni verificar el conteo de filas post-inserción
-  porque no hay credenciales de Supabase disponibles en este entorno. Se
-  verificó manualmente que el `WITH` de escritura referencia todos los CTEs
-  de insert en el `SELECT` final (necesario para que Postgres los ejecute).
+  ≥3 avances): **corregido y verificado por ejecución real**, no por
+  lectura. La primera versión de este archivo declaraba esto verificado
+  por lectura del `.sql`, pero el review independiente
+  (`progress/review_project-status-tracking.md`) detectó y demostró que
+  los CTEs `kpis`/`updates` no tenían `returning`, así que en Postgres no
+  formaban tabla temporal y el `insert` completo abortaba al ejecutarse —
+  0 filas, no las declaradas. Se corrigió agregando `returning 1` a ambos
+  CTEs y se verificó aplicando el `.sql` corregido contra un Postgres 16
+  real (`createdb` + `psql -f`): resultado `projects=4`, `project_kpis=8`,
+  `project_weekly_updates=12`, distribución `country=Chile` en las 4,
+  `business_unit` 2×"Paris"/2×"Easy". Pendiente solo lo ya documentado en
+  `design.md`: aplicar este mismo archivo (ya corregido) contra el
+  proyecto Supabase real de dev — el humano debe saber que un intento
+  anterior con el archivo roto pudo haber dejado las 3 tablas ya creadas
+  pero vacías, y que el `insert` del seed no es idempotente (no correr el
+  archivo dos veces sobre datos ya sembrados).
 - **R12** (país como texto libre, no enum): manual QA — `country: text not
   null` en el DDL, `country: string` en `lib/types.ts`; verificado por
   lectura de código.
