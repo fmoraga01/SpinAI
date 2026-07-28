@@ -44,18 +44,24 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 
 ## Datos
 
-- **R11**: WHEN se carga el módulo de datos de proyectos (`lib/projects.ts`
-  o equivalente) THEN el sistema SHALL exponer exactamente 4 proyectos
-  dummy, todos con país `"Chile"`, con negocio `"Paris"` o `"Easy"`
-  (distribuidos entre ambos, no los 4 en el mismo negocio).
+- **R11**: WHEN se aplica la migración de Supabase de esta feature THEN el
+  sistema SHALL sembrar exactamente 4 proyectos dummy, todos con país
+  `"Chile"`, con negocio `"Paris"` o `"Easy"` (distribuidos entre ambos, no
+  los 4 en el mismo negocio), cada uno con al menos 2 KPIs y al menos 3
+  avances semanales.
 - **R12**: WHEN se modela el campo país de un proyecto THEN el sistema
-  SHALL representarlo como un campo de texto libre/tipado (no un enum
-  cerrado a un solo valor), de forma que agregar países adicionales en el
-  futuro no requiera cambiar la forma del modelo de datos.
+  SHALL representarlo como una columna de texto libre (no un enum cerrado
+  a un solo valor), de forma que agregar países adicionales en el futuro
+  no requiera una migración de esquema, solo nuevas filas.
 - **R13**: WHEN se modela el campo de KPIs de un proyecto THEN el sistema
-  SHALL representarlo como una lista de pares clave-valor de largo variable
-  (no columnas fijas), permitiendo que cada proyecto defina sus propias
-  métricas.
+  SHALL representarlo como filas de una tabla relacionada
+  (`project_kpis`, clave-valor por fila) en vez de columnas fijas en
+  `projects`, permitiendo que cada proyecto tenga un número distinto de
+  KPIs.
+- **R15**: WHEN `app/proyectos/page.tsx` o `/proyectos/<id>` necesitan
+  datos de proyectos THEN el sistema SHALL consultarlos desde Supabase (no
+  desde datos hardcodeados en `lib/`), usando el mismo cliente anon
+  (`lib/supabase.ts`) y el mismo patrón de `rowToX()` que `lib/news.ts`.
 
 ## Navegación
 
@@ -69,8 +75,6 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 - No se implementa autenticación/autorización adicional — la ruta hereda
   la protección de `PinGate` en `app/layout.tsx` a nivel raíz (sin
   requisito nuevo).
-- No se implementa persistencia en Supabase en esta iteración — los datos
-  son dummy/estáticos en `lib/`, ver `design.md` para el plan de migración
-  futura.
 - No se implementa edición/creación de proyectos ni de entradas del
-  timeline desde la UI — es una vista de solo lectura.
+  timeline desde la UI — es una vista de solo lectura; la carga de datos
+  es vía la migración con seed (R11), no un formulario.

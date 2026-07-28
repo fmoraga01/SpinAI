@@ -33,6 +33,70 @@ componentes hijos co-ubicados, un módulo en `lib/`) y de `app/state-of-ai/`
 (subcarpeta con varios componentes + `page.tsx` de composición), en vez de
 inventar una nueva convención de carpetas.
 
+## Esquema Supabase
+
+Nueva migración `supabase/migrations/<timestamp>_crear_projects.sql`,
+siguiendo el convenio de `supabase/migrations/README.md` (timestamp +
+descripción corta, nunca se edita una migración ya aplicada) y el mismo
+patrón de RLS que `news_items` (política `anon full access`, ya que toda
+la app se lee con la anon key detrás de `PinGate`, sin roles adicionales):
+
+```sql
+create table if not exists projects (
+  id            uuid primary key default gen_random_uuid(),
+  name          text not null,
+  summary       text not null,
+  country       text not null,
+  business_unit text not null,
+  created_at    timestamptz not null default now()
+);
+
+create table if not exists project_kpis (
+  id         uuid primary key default gen_random_uuid(),
+  project_id uuid not null references projects(id) on delete cascade,
+  label      text not null,
+  value      text not null,
+  position   integer not null default 0
+);
+
+create table if not exists project_weekly_updates (
+  id         uuid primary key default gen_random_uuid(),
+  project_id uuid not null references projects(id) on delete cascade,
+  week_of    date not null,
+  status     text not null check (status in ('on_track', 'at_risk', 'delayed')),
+  note       text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists project_kpis_project_id_idx on project_kpis (project_id);
+create index if not exists project_weekly_updates_project_id_idx on project_weekly_updates (project_id);
+
+alter table projects enable row level security;
+alter table project_kpis enable row level security;
+alter table project_weekly_updates enable row level security;
+
+create policy "anon full access" on projects for all to anon using (true) with check (true);
+create policy "anon full access" on project_kpis for all to anon using (true) with check (true);
+create policy "anon full access" on project_weekly_updates for all to anon using (true) with check (true);
+```
+
+La misma migración incluye los `insert` de los 4 proyectos dummy (R11):
+país `"Chile"` en los 4, `business_unit` `"Paris"` o `"Easy"`
+distribuidos, cada uno con ≥2 filas en `project_kpis` y ≥3 filas en
+`project_weekly_updates` con distintos `status`. No hay tabla ni cron
+separado para sembrar datos — a diferencia de `news_items` (que se llena
+por un cron), acá no hay fuente externa, así que el `insert` va en la
+misma migración.
+
+**Paso manual fuera del alcance de este repo**: aplicar la migración al
+proyecto Supabase de dev (SQL Editor) es un paso manual que el humano (o
+quien tenga acceso al dashboard de Supabase) debe ejecutar — ningún agente
+tiene credenciales de Supabase. `implementer` deja el archivo `.sql` listo
+y lo documenta en `progress/impl_project-status-tracking.md`, pero no
+puede verificar la feature end-to-end contra datos reales hasta que ese
+paso se haga. Esto es igual al flujo ya existente para cualquier otra
+migración de este repo (`supabase/migrations/README.md`).
+
 ## Modelo de datos (`lib/types.ts` o `lib/projects.ts`)
 
 ```ts
@@ -68,12 +132,20 @@ exportada, testeable con Vitest sin mocks (cumple la regla de
 traceability de `docs/specs.md` para lógica en `lib/`).
 
 `loadProjects(): Promise<Project[]>` y `loadProject(id: string): Promise<Project | null>`
-en `lib/projects.ts`, devolviendo los 4 proyectos dummy hardcodeados en el
-mismo archivo (no hay tabla Supabase todavía). Se modelan como funciones
-async aunque hoy sean síncronas internamente, para que migrar a Supabase
-después (ver Alternativas) sea un cambio de implementación interna, no de
-la interfaz que consume `page.tsx` — mismo patrón que `loadNews()` en
-`lib/news.ts`.
+en `lib/projects.ts`, consultando Supabase vía `getSupabase()`
+(`lib/supabase.ts`) — mismo patrón que `loadNews()` en `lib/news.ts`:
+
+- `loadProjects()`: `select("*")` sobre `projects`, más un `select("*")`
+  sobre `project_kpis` y `project_weekly_updates` filtrados por los ids
+  obtenidos (o un solo query con `select` anidado de Supabase,
+  `projects(*, project_kpis(*), project_weekly_updates(*))`, a definir por
+  `implementer` según lo que rinda mejor) — devuelve `Project[]` ya
+  ensamblados vía `rowToProject()`.
+- `loadProject(id)`: mismo `select` anidado filtrado por `id`, devuelve
+  `Project | null` (`null` si Supabase no encuentra la fila, cumple R7).
+- `rowToProject(row)`, `rowToKpi(row)`, `rowToUpdate(row)`: mappers
+  snake_case → camelCase, mismo patrón que `rowToNewsItem()` en
+  `lib/news.ts`.
 
 ## Supuestos a validar con el usuario
 
@@ -164,12 +236,11 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
 
 ## Alternativas consideradas y descartadas
 
-- **Persistir proyectos en Supabase desde ya** (tabla `projects` +
-  `project_weekly_updates`) — descartado por ahora: el usuario pidió dummy
-  data explícitamente ("Data: dummy data por ahora"); una migración a
-  Supabase es un cambio de implementación interna en `lib/projects.ts`
-  contenido, no bloquea nada de la UI, y se puede hacer como feature
-  separada cuando haya datos reales.
+- **Dummy data hardcodeada en `lib/projects.ts`, sin Supabase** — descartado:
+  primera decisión de esta spec, pero el usuario pidió explícitamente que
+  esta primera versión ya use Supabase. Se reemplaza por la migración con
+  seed descrita arriba; el modelo de datos (`Project`, `ProjectKpi`,
+  `WeeklyUpdate`) no cambia, solo de dónde vienen las filas.
 - **Listado como lista vertical (como `noticias/`) en vez de grid** —
   descartado: con solo 4 tarjetas y más campos por tarjeta (nombre, país,
   negocio, badge, fecha), un grid de 2 columnas usa mejor el espacio
@@ -190,5 +261,13 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
 
 ## Supabase / auth / cron
 
-No aplica — no hay cambios de schema, la ruta hereda `PinGate` sin
-modificaciones, y no hay ningún cron job asociado a esta feature.
+- **Sí hay cambio de schema** (ver "Esquema Supabase" arriba): 3 tablas
+  nuevas (`projects`, `project_kpis`, `project_weekly_updates`), con RLS
+  `anon full access` igual que el resto de las tablas de la app. Requiere
+  el paso manual de aplicar la migración en el proyecto Supabase de dev
+  (ver nota arriba) antes de que `implementer` pueda dar por verificada la
+  feature contra datos reales.
+- Auth: no aplica — la ruta hereda `PinGate` sin modificaciones.
+- Cron: no aplica — no hay ningún cron job asociado a esta feature; la
+  data se siembra una sola vez en la migración, no se refresca
+  periódicamente.
