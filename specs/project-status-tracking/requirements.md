@@ -59,9 +59,22 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   `projects`, permitiendo que cada proyecto tenga un número distinto de
   KPIs.
 - **R15**: WHEN `app/proyectos/page.tsx` o `/proyectos/<id>` necesitan
-  datos de proyectos THEN el sistema SHALL consultarlos desde Supabase (no
-  desde datos hardcodeados en `lib/`), usando el mismo cliente anon
-  (`lib/supabase.ts`) y el mismo patrón de `rowToX()` que `lib/news.ts`.
+  datos de proyectos THEN el sistema SHALL obtenerlos a través de una ruta
+  API propia del servidor (`/api/proyectos`, `/api/proyectos/<id>`) — el
+  navegador NUNCA consulta las tablas `projects`/`project_kpis`/
+  `project_weekly_updates` directamente contra Supabase con la anon key.
+
+## Confidencialidad y control de acceso
+
+- **R16**: WHEN una request a `/api/proyectos` o `/api/proyectos/<id>` no
+  incluye una cookie `spinai_token` válida (mismo JWT que usa `PinGate`)
+  THEN el sistema SHALL responder `401` sin incluir ningún dato de
+  proyectos en el cuerpo de la respuesta.
+- **R17**: WHEN se definen las políticas de RLS de `projects`,
+  `project_kpis` y `project_weekly_updates` THEN el sistema SHALL NO
+  otorgar ningún acceso (lectura ni escritura) al rol `anon` — solo el
+  rol `service_role`, usado exclusivamente server-side dentro de las
+  rutas API de esta feature, puede leer o escribir estas tablas.
 
 ## Navegación
 
@@ -72,9 +85,9 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 
 ## Fuera de alcance (explícito)
 
-- No se implementa autenticación/autorización adicional — la ruta hereda
-  la protección de `PinGate` en `app/layout.tsx` a nivel raíz (sin
-  requisito nuevo).
+- No se implementa un sistema de login nuevo — R16/R17 reutilizan el JWT
+  que ya emite `POST /api/auth` al validar el PIN; no hay usuarios,
+  roles ni permisos granulares por proyecto en esta iteración.
 - No se implementa edición/creación de proyectos ni de entradas del
   timeline desde la UI — es una vista de solo lectura; la carga de datos
   es vía la migración con seed (R11), no un formulario.

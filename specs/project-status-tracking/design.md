@@ -16,7 +16,7 @@ Nueva sección de rutas Next.js App Router:
 
 ```
 app/proyectos/
-  page.tsx              # listado: fetch de proyectos + grid de ProjectCard
+  page.tsx              # listado: fetch de /api/proyectos + grid de ProjectCard
   ProjectCard.tsx        # tarjeta individual del listado (progressive disclosure)
   HealthBadge.tsx         # badge de estado (on_track / at_risk / delayed / sin datos), compartido entre listado y detalle
   [id]/
@@ -24,8 +24,14 @@ app/proyectos/
     ProjectTimeline.tsx    # timeline vertical semanal, adaptado de state-of-ai/Timeline.tsx
     KpiList.tsx             # lista clave-valor de KPIs
 
+app/api/proyectos/
+  route.ts               # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project[]
+  [id]/route.ts           # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project | 404
+
 lib/
-  projects.ts             # tipos + loadProjects() / loadProject(id) + 4 proyectos dummy + healthFromTimeline()
+  projects.ts             # tipos + loadProjects()/loadProject(id) (fetch a /api/proyectos) + healthFromTimeline()
+  supabaseAdmin.ts         # getSupabaseAdmin() — cliente server-only con service role key
+  auth.ts                  # isAuthenticated(req) — verificación de spinai_token, compartida con /api/auth/check
 ```
 
 Sigue exactamente el patrón de `app/noticias/` (una sola carpeta de ruta,
@@ -37,9 +43,17 @@ inventar una nueva convención de carpetas.
 
 Nueva migración `supabase/migrations/<timestamp>_crear_projects.sql`,
 siguiendo el convenio de `supabase/migrations/README.md` (timestamp +
-descripción corta, nunca se edita una migración ya aplicada) y el mismo
-patrón de RLS que `news_items` (política `anon full access`, ya que toda
-la app se lee con la anon key detrás de `PinGate`, sin roles adicionales):
+descripción corta, nunca se edita una migración ya aplicada).
+
+**RLS deliberadamente distinto al resto del repo**: `news_items` y las
+demás tablas usan la política `anon full access` porque su contenido es
+público. Esta feature maneja información confidencial de negocio, así que
+las 3 tablas nuevas **no otorgan ningún acceso al rol `anon`** (RLS
+habilitado, sin políticas para `anon`/`authenticated` → deny por defecto).
+Solo el `service_role` key (que Supabase siempre deja bypass-ear RLS, sin
+necesidad de política) puede leer/escribir, y ese key solo se usa
+server-side dentro de las rutas API de esta feature — nunca llega al
+navegador (ver "Seguridad y acceso a datos" más abajo):
 
 ```sql
 create table if not exists projects (
@@ -75,9 +89,8 @@ alter table projects enable row level security;
 alter table project_kpis enable row level security;
 alter table project_weekly_updates enable row level security;
 
-create policy "anon full access" on projects for all to anon using (true) with check (true);
-create policy "anon full access" on project_kpis for all to anon using (true) with check (true);
-create policy "anon full access" on project_weekly_updates for all to anon using (true) with check (true);
+-- Sin `create policy` para anon/authenticated a propósito (R17): esta
+-- data es confidencial. Solo service_role (server-side) puede leer/escribir.
 ```
 
 La misma migración incluye los `insert` de los 4 proyectos dummy (R11):
@@ -96,6 +109,41 @@ y lo documenta en `progress/impl_project-status-tracking.md`, pero no
 puede verificar la feature end-to-end contra datos reales hasta que ese
 paso se haga. Esto es igual al flujo ya existente para cualquier otra
 migración de este repo (`supabase/migrations/README.md`).
+
+## Seguridad y acceso a datos
+
+El resto de la app confía en la anon key + RLS abierto porque su data es
+pública; acá no aplica ese patrón (ver R16/R17). Flujo real:
+
+1. **`lib/auth.ts`** — extrae la verificación de JWT que hoy vive inline
+   en `app/api/auth/check/route.ts` (`jwtVerify` sobre la cookie
+   `spinai_token` con `jose`) a una función compartida
+   `isAuthenticated(req: NextRequest): Promise<boolean>`. `check/route.ts`
+   se refactoriza para usarla (mismo comportamiento, sin duplicar lógica
+   de verificación de JWT en 3 archivos distintos).
+2. **`lib/supabaseAdmin.ts`** — `getSupabaseAdmin()`, análogo a
+   `getSupabase()` pero usando `SUPABASE_SERVICE_ROLE_KEY` (variable de
+   entorno **nueva**, server-only — sin prefijo `NEXT_PUBLIC_`, así que
+   Next.js nunca la incluye en el bundle del cliente). Este client
+   bypassea RLS por diseño de Supabase; por eso las tablas no necesitan
+   política para `anon`.
+3. **`app/api/proyectos/route.ts`** y **`app/api/proyectos/[id]/route.ts`**
+   — `GET`: primero `isAuthenticated(req)`; si es `false`, `401` sin
+   cuerpo de datos (R16). Si es `true`, consulta con `getSupabaseAdmin()`
+   y devuelve el JSON.
+4. **`lib/projects.ts`** — `loadProjects()`/`loadProject(id)` dejan de
+   llamar a Supabase directo: hacen `fetch("/api/proyectos")` /
+   `fetch(`/api/proyectos/${id}`)`. Como es same-origin, el navegador
+   manda la cookie `spinai_token` automáticamente — no hay que pasar token
+   a mano. Si el fetch devuelve `401` (sesión vencida), se propaga como
+   error y `page.tsx` puede redirigir a la raíz para que `PinGate` vuelva
+   a pedir el PIN (mismo comportamiento que ya ocurre si `/api/auth/check`
+   falla en cualquier otra página).
+
+Con esto, la anon key de Supabase (pública en el bundle) **nunca** tiene
+acceso a `projects`/`project_kpis`/`project_weekly_updates` — ni por RLS
+ni por policy — y los datos de proyecto no salen del servidor sin pasar
+primero por la verificación del PIN.
 
 ## Modelo de datos (`lib/types.ts` o `lib/projects.ts`)
 
@@ -132,20 +180,19 @@ exportada, testeable con Vitest sin mocks (cumple la regla de
 traceability de `docs/specs.md` para lógica en `lib/`).
 
 `loadProjects(): Promise<Project[]>` y `loadProject(id: string): Promise<Project | null>`
-en `lib/projects.ts`, consultando Supabase vía `getSupabase()`
-(`lib/supabase.ts`) — mismo patrón que `loadNews()` en `lib/news.ts`:
+en `lib/projects.ts` — ver "Seguridad y acceso a datos" arriba, hacen
+`fetch()` a las rutas API internas, **no** llaman a `getSupabase()`
+directo (deviación intencional del patrón de `loadNews()`, justificada
+por confidencialidad).
 
-- `loadProjects()`: `select("*")` sobre `projects`, más un `select("*")`
-  sobre `project_kpis` y `project_weekly_updates` filtrados por los ids
-  obtenidos (o un solo query con `select` anidado de Supabase,
-  `projects(*, project_kpis(*), project_weekly_updates(*))`, a definir por
-  `implementer` según lo que rinda mejor) — devuelve `Project[]` ya
-  ensamblados vía `rowToProject()`.
-- `loadProject(id)`: mismo `select` anidado filtrado por `id`, devuelve
-  `Project | null` (`null` si Supabase no encuentra la fila, cumple R7).
-- `rowToProject(row)`, `rowToKpi(row)`, `rowToUpdate(row)`: mappers
-  snake_case → camelCase, mismo patrón que `rowToNewsItem()` en
-  `lib/news.ts`.
+Dentro de las rutas API (server-side), el query a Supabase sí usa el
+mismo estilo que `lib/news.ts`: `select` anidado
+`projects(*, project_kpis(*), project_weekly_updates(*))` (o dos queries
+separados si el anidado no rinde bien, a criterio de `implementer`), con
+`rowToProject(row)` / `rowToKpi(row)` / `rowToUpdate(row)` como mappers
+snake_case → camelCase, mismo patrón que `rowToNewsItem()`. Estos mappers
+viven en `lib/projects.ts` y los usan las rutas API (import server-side es
+válido, no hay problema de "cliente" ahí).
 
 ## Supuestos a validar con el usuario
 
@@ -241,6 +288,20 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
   esta primera versión ya use Supabase. Se reemplaza por la migración con
   seed descrita arriba; el modelo de datos (`Project`, `ProjectKpi`,
   `WeeklyUpdate`) no cambia, solo de dónde vienen las filas.
+- **Cliente consulta Supabase directo con la anon key, mismo patrón que
+  `lib/news.ts`** — descartado: fue la primera versión de este design.md,
+  pero el usuario pidió explícitamente revisar la seguridad porque la
+  data es confidencial. La anon key es pública (va en el bundle del
+  navegador), así que "directo + RLS `anon full access`" expondría los
+  proyectos a cualquiera sin pasar por el PIN. Se reemplaza por rutas API
+  propias que verifican la sesión y usan el service role key server-side.
+- **RLS con policy para `authenticated` en vez de deny-by-default** —
+  descartado: este repo no usa Supabase Auth (el PIN genera un JWT propio,
+  no una sesión de `auth.uid()`), así que Supabase no tiene forma de saber
+  si la request "está autenticada" en términos de PinGate — el rol
+  `authenticated` de Supabase no aplica acá. La única distinción real que
+  Supabase puede hacer es anon vs. service_role, por eso el gate de acceso
+  vive en la ruta API (`isAuthenticated()`), no en una policy de RLS.
 - **Listado como lista vertical (como `noticias/`) en vez de grid** —
   descartado: con solo 4 tarjetas y más campos por tarjeta (nombre, país,
   negocio, badge, fecha), un grid de 2 columnas usa mejor el espacio
@@ -262,12 +323,18 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
 ## Supabase / auth / cron
 
 - **Sí hay cambio de schema** (ver "Esquema Supabase" arriba): 3 tablas
-  nuevas (`projects`, `project_kpis`, `project_weekly_updates`), con RLS
-  `anon full access` igual que el resto de las tablas de la app. Requiere
-  el paso manual de aplicar la migración en el proyecto Supabase de dev
-  (ver nota arriba) antes de que `implementer` pueda dar por verificada la
-  feature contra datos reales.
-- Auth: no aplica — la ruta hereda `PinGate` sin modificaciones.
+  nuevas (`projects`, `project_kpis`, `project_weekly_updates`), **sin**
+  policy de RLS para `anon` — deny por defecto, solo `service_role`
+  accede. Requiere el paso manual de aplicar la migración en el proyecto
+  Supabase de dev (ver nota arriba) antes de que `implementer` pueda dar
+  por verificada la feature contra datos reales.
+- **Sí hay cambio de auth**: nueva variable de entorno server-only
+  `SUPABASE_SERVICE_ROLE_KEY` (agregar a `.env.local` y a las env vars del
+  proyecto en Vercel — dev y prod por separado, igual que
+  `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY`; obtenerla del dashboard de
+  Supabase, Project Settings → API). La ruta `/proyectos` sigue detrás de
+  `PinGate` como el resto de la app, y además las rutas API que exponen
+  los datos verifican el mismo JWT (R16) — dos capas, no una sola.
 - Cron: no aplica — no hay ningún cron job asociado a esta feature; la
   data se siembra una sola vez en la migración, no se refresca
   periódicamente.

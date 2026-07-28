@@ -3,10 +3,13 @@
 Orden sugerido: datos primero (testeable de forma aislada), luego
 componentes compartidos, luego listado, luego detalle, luego navegación.
 
-- [ ] **T1 — Migración Supabase con seed** (`R11`, `R12`, `R13`)
+- [ ] **T1 — Migración Supabase con seed** (`R11`, `R12`, `R13`, `R17`)
   - Crear `supabase/migrations/<timestamp>_crear_projects.sql` con las
     tablas `projects`, `project_kpis`, `project_weekly_updates` (ver
-    `design.md` para el DDL exacto), índices, RLS `anon full access`.
+    `design.md` para el DDL exacto), índices, RLS habilitado **sin**
+    policy para `anon`/`authenticated` (R17 — deny por defecto, deviación
+    intencional del patrón `anon full access` que usa el resto del repo,
+    justificada por confidencialidad).
   - En la misma migración, `insert` de los 4 proyectos dummy: país
     `"Chile"` en los 4, negocio `"Paris"` o `"Easy"` distribuidos entre los
     4 (no los 4 en el mismo negocio), cada uno con ≥2 filas en
@@ -20,7 +23,7 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `progress/impl_project-status-tracking.md`, reportando al humano en
     vez de improvisar un workaround.
 
-- [ ] **T1b — Modelo de datos y query module** (`R11`, `R12`, `R13`, `R15`)
+- [ ] **T1b — Modelo de datos, tipos y mappers** (`R11`, `R12`, `R13`)
   - Agregar `ProjectKpi`, `HealthStatus`, `WeeklyUpdate`, `Project` a
     `lib/types.ts` (o definirlos en `lib/projects.ts` si se prefiere
     co-ubicarlos con el resto del módulo — seguir el criterio que ya usa
@@ -28,10 +31,38 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     junto a su lógica).
   - Implementar `healthFromTimeline(updates: WeeklyUpdate[]): HealthStatus | null`
     como función pura exportada.
-  - Implementar `loadProjects(): Promise<Project[]>` y
-    `loadProject(id: string): Promise<Project | null>` en `lib/projects.ts`
-    consultando Supabase vía `getSupabase()`, con `rowToProject()` /
-    `rowToKpi()` / `rowToUpdate()` (mismo patrón que `lib/news.ts`).
+  - Implementar `rowToProject(row)`, `rowToKpi(row)`, `rowToUpdate(row)` en
+    `lib/projects.ts` (mappers snake_case → camelCase, mismo patrón que
+    `rowToNewsItem()` en `lib/news.ts`) — los consumen las rutas API de T1d,
+    no el cliente.
+
+- [ ] **T1c — Verificación de sesión compartida y cliente admin** (`R16`, `R17`)
+  - Extraer la verificación de JWT de `app/api/auth/check/route.ts` a
+    `lib/auth.ts` como `isAuthenticated(req: NextRequest): Promise<boolean>`
+    (misma lógica `jwtVerify` + cookie `spinai_token`, sin duplicarla).
+    Refactorizar `check/route.ts` para usar esta función — mismo
+    comportamiento externo, sin lógica repetida.
+  - Crear `lib/supabaseAdmin.ts` con `getSupabaseAdmin()`, análogo a
+    `getSupabase()` pero usando `process.env.SUPABASE_SERVICE_ROLE_KEY`
+    (nueva env var server-only, sin prefijo `NEXT_PUBLIC_`). Documentar en
+    `progress/impl_project-status-tracking.md` que esta variable debe
+    agregarse manualmente en `.env.local` y en las env vars de Vercel
+    (dev y prod) — `implementer` no tiene forma de setearla, es un paso
+    del humano, igual que aplicar la migración en T1.
+
+- [ ] **T1d — Rutas API `/api/proyectos`** (`R15`, `R16`, `R17`)
+  - `app/api/proyectos/route.ts` (`GET`): `isAuthenticated(req)` primero
+    — si `false`, `401` sin datos; si `true`, consulta con
+    `getSupabaseAdmin()` (select anidado `projects(*, project_kpis(*),
+    project_weekly_updates(*))` o dos queries, lo que rinda mejor) y
+    devuelve `Project[]` vía los mappers de T1b.
+  - `app/api/proyectos/[id]/route.ts` (`GET`): mismo chequeo de auth,
+    mismo query filtrado por `id`; `404` si Supabase no encuentra la fila
+    (cumple R7 desde el server), `401` si no autenticado.
+  - `lib/projects.ts`: `loadProjects()` y `loadProject(id)` hacen `fetch()`
+    a estas rutas (same-origin, la cookie `spinai_token` viaja sola) — no
+    llaman a Supabase directo desde `lib/projects.ts` cuando se ejecuta en
+    el cliente.
 
 - [ ] **T2 — Test de `healthFromTimeline`** (`R2`, `R3`)
   - `lib/projects.test.ts`: casos — lista vacía devuelve `null`; una sola
@@ -79,12 +110,22 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
 
 - [ ] **T9 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state).
+  - Verificación manual específica de seguridad (R16, R17):
+    - `curl` (o Network tools sin la cookie) a `/api/proyectos` y
+      `/api/proyectos/<id>` sin `spinai_token` → confirmar `401` y que el
+      cuerpo de la respuesta no trae datos de proyectos.
+    - Confirmar en el dashboard de Supabase (Table Editor → Policies) que
+      `projects`/`project_kpis`/`project_weekly_updates` no tienen ninguna
+      policy activa para `anon`/`authenticated`.
+    - Confirmar que `NEXT_PUBLIC_SUPABASE_ANON_KEY` sigue siendo la única
+      key en el bundle del cliente (buscar `SUPABASE_SERVICE_ROLE_KEY` en
+      el output de `npm run build` / dev tools no debería aparecer).
   - Escribir `progress/impl_project-status-tracking.md` con, para cada
-    `R1`-`R15`: archivo(s) tocados y cómo se verificó (test de Vitest para
+    `R1`-`R17`: archivo(s) tocados y cómo se verificó (test de Vitest para
     `R2`/`R3` vía T2; QA manual para el resto — navegar `/proyectos`,
     abrir un detalle válido, probar un `id` inexistente, verificar el
-    nav link activo/inactivo en cada ruta, confirmar en las Network tools
-    o logs que `/proyectos` efectivamente consulta Supabase y no data
-    hardcodeada para R15).
-  - Si T1 quedó bloqueado por falta de acceso al dashboard de Supabase,
-    reportarlo explícitamente acá en vez de marcar la feature como lista.
+    nav link activo/inactivo en cada ruta, más los 3 checks de seguridad
+    de arriba para R15/R16/R17).
+  - Si T1 quedó bloqueado por falta de acceso al dashboard de Supabase, o
+    si `SUPABASE_SERVICE_ROLE_KEY` no está seteada, reportarlo
+    explícitamente acá en vez de marcar la feature como lista.
