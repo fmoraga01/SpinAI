@@ -108,15 +108,39 @@ Entry format:
   (`lib/projects.ts`), cubierta por 4 tests de Vitest. Timeline semanal
   adaptado de `state-of-ai/Timeline.tsx`. Nav actualizado con el link
   correspondiente, `design-check` sin hallazgos. `npm run verify` pasa
-  completo. **Quedan dos pasos manuales pendientes del humano, sin los
-  cuales la feature no sirve datos reales todavía**: aplicar
-  `supabase/migrations/20260728120000_crear_projects.sql` en el SQL Editor
-  del proyecto Supabase de dev, y setear `SUPABASE_SERVICE_ROLE_KEY` en
-  `.env.local`/Vercel. El gate de autenticación (R16) y la ausencia de la
-  service role key en el bundle del cliente (mitad de R17) se verificaron
-  igual, sin depender de esos pasos. Reviewer aprobó — ver
-  progress/review_project-status-tracking.md (con nota: mismo agente actuó
-  como implementer y reviewer en esta sesión por falta de herramienta de
-  subagentes, verificación hecha de forma independiente pero sin segundo
-  lector real).
-- Merged to dev: pending · Promoted to main: pending
+  completo.
+- **Ciclo de revisión real (3 rondas, no una)**:
+  1. La implementación inicial (commit `28512f2`) fue revisada por el mismo
+     agente/sesión que la escribió (actuando como `implementer` y
+     `reviewer` a la vez, por falta de herramienta de subagentes en ese
+     momento) — aprobó, con el caveat explícito de no ser una segunda
+     lectura independiente.
+  2. Un `reviewer` genuinamente independiente (contexto nuevo, sin haber
+     escrito el código) rechazó esa aprobación: los CTEs de escritura
+     `kpis`/`updates` en `supabase/migrations/20260728120000_crear_projects.sql`
+     no tenían `RETURNING`, así que el seed de los 4 proyectos dummy
+     **nunca se ejecutaba** contra Postgres real (0 filas, no las 4
+     declaradas) — R11 incumplido. Lo detectó ejecutando la migración
+     contra un Postgres local, no leyendo el `.sql`. También encontró, no
+     bloqueante, que un `id` no-UUID en `/api/proyectos/[id]` devolvía
+     `500` en vez de `404`.
+  3. Se corrigieron ambos (`returning 1` en los CTEs + manejo de
+     `error.code === "22P02"`), verificado ejecutando la migración
+     corregida contra Postgres real (4 proyectos, 8 KPIs, 12 avances, 0
+     policies). Un segundo pase del mismo `reviewer` independiente
+     re-verificó todo desde cero (incluida la corrida contra Postgres) y
+     aprobó — ver `progress/review_project-status-tracking.md` para el
+     detalle completo de las 3 rondas.
+  - Lección para el proceso: para una migración SQL, "leí el archivo" no
+    es verificación — hay que ejecutarlo. También se confirmó que la
+    migración **no es idempotente** (correrla dos veces duplica el seed) —
+    quien la aplique en Supabase debe correrla una sola vez.
+- **Quedan dos pasos manuales pendientes del humano, sin los cuales la
+  feature no sirve datos reales todavía**: aplicar
+  `supabase/migrations/20260728120000_crear_projects.sql` (la versión
+  corregida) en el SQL Editor del proyecto Supabase de dev, y setear
+  `SUPABASE_SERVICE_ROLE_KEY` en `.env.local`/Vercel. El gate de
+  autenticación (R16) y la ausencia de la service role key en el bundle
+  del cliente (mitad de R17) se verificaron igual, sin depender de esos
+  pasos.
+- Merged to dev: commits 28512f2, 5fb30e4 · Promoted to main: pending

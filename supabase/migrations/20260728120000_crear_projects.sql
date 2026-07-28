@@ -138,9 +138,11 @@ updates as (
   ) as u(week_of, status, note)
   returning 1
 )
--- Un CTE de escritura (insert/update/delete con WITH) se ejecuta siempre
--- que la query lo referencie, pero solo puede referenciarse si tiene
--- RETURNING (si no, no forma tabla temporal y Postgres lanza error). Este
--- SELECT final solo existe para dar ese RETURNING un destino y así forzar
--- la ejecución de ambos inserts.
+-- Un CTE de escritura (insert/update/delete dentro de un WITH) se ejecuta
+-- siempre, se referencie o no en el resto de la query — pero solo puede
+-- referenciarse (ej. en un SELECT posterior) si tiene RETURNING; sin eso,
+-- no forma una tabla temporal y Postgres lanza error al intentar leerlo.
+-- Este SELECT final no fuerza la ejecución de los inserts (ya se
+-- ejecutarían igual): solo existe para darle a cada RETURNING un destino
+-- válido, evitando el error de sintaxis.
 select (select count(*) from kpis) + (select count(*) from updates);

@@ -1,6 +1,15 @@
 # Review — project-status-tracking
 
-**Verdict: REJECTED**
+**Verdict: APPROVED** (ronda 3, re-revisión del 2026-07-28 — ver
+["Re-revisión"](#re-revisión-ronda-3--2026-07-28) al final del archivo).
+
+El cuerpo que sigue es la **ronda 2**, que dio `REJECTED`. Se conserva
+íntegro a propósito: documenta el defecto encontrado y cómo se demostró.
+El veredicto vigente es el de la re-revisión al final.
+
+---
+
+## Ronda 2 — Verdict: REJECTED (superado)
 
 > **Este archivo reemplaza la revisión anterior.** La revisión previa
 > (2026-07-28) la escribió el mismo agente/sesión que implementó la feature,
@@ -267,3 +276,203 @@ separación cliente/servidor de R15 leída correctamente en el código.
    `insert` del seed no es idempotente.
 
 Nada de lo anterior toca la parte de seguridad, que está sólida.
+
+---
+
+# Re-revisión (ronda 3) — 2026-07-28
+
+**Verdict: APPROVED**
+
+Re-revisión del fix aplicado tras el `REJECTED` de la ronda 2. Los dos
+arreglos los aplicó directamente la sesión `leader`, no un `implementer`
+separado, así que se verificó **todo por ejecución propia**, sin confiar en
+el reporte del commit ni en lo que declara `impl_project-status-tracking.md`
+— mismo criterio que hizo caer la ronda 2.
+
+Commit revisado: `5fb30e4` ("fix: corregir seed de migración de proyectos y
+404 de id inválido"), sobre `28512f2`. Rama `dev`. Árbol limpio.
+
+## 1. Bloqueante de la ronda 2 (R11) — RESUELTO
+
+`supabase/migrations/20260728120000_crear_projects.sql` ahora lleva
+`returning 1` en los CTEs `kpis` (línea 112) y `updates` (línea 139).
+
+Verificado **ejecutando el archivo**, no leyéndolo: `createdb rev2_check` +
+`psql -v ON_ERROR_STOP=1 -f` contra el cluster Postgres 16 local.
+
+- Salida: `CREATE TABLE` ×3, `CREATE INDEX` ×2, `ALTER TABLE` ×3 y el
+  `select` final devolviendo `20`. **Exit code 0**, sin el
+  `ERROR: WITH query "kpis" does not have a RETURNING clause` de la ronda 2.
+- Conteos reales post-inserción:
+
+  | tabla | filas |
+  |---|---|
+  | `projects` | 4 |
+  | `project_kpis` | 8 |
+  | `project_weekly_updates` | 12 |
+
+- Por proyecto (query a `pg_`/tablas, no lectura del `.sql`):
+
+  | proyecto | país | negocio | kpis | avances |
+  |---|---|---|---|---|
+  | App de fidelización de clientes | Chile | Paris | 2 | 3 |
+  | Automatización de reposición de stock | Chile | Easy | 2 | 3 |
+  | Optimización de bodegas regionales | Chile | Easy | 2 | 3 |
+  | Renovación de checkout online | Chile | Paris | 2 | 3 |
+
+- Distribución: `Chile/Paris` = 2, `Chile/Easy` = 2. Cumple "distribuidos
+  entre ambos, no los 4 en el mismo negocio".
+
+R11 pide literalmente "exactamente 4 proyectos dummy, todos con país
+`Chile`, con negocio `Paris` o `Easy` (distribuidos entre ambos), cada uno
+con al menos 2 KPIs y al menos 3 avances semanales". Se cumple al pie de la
+letra. **PASS.**
+
+(Nota: dos de los cuatro proyectos tienen los 3 avances con el mismo
+`status`. R11 no exige status distintos — eso era fraseo mío de la ronda 2,
+no del requisito. No es un gap.)
+
+## 2. R17 revalidado sobre la migración que sí corre — PASS
+
+Sobre la misma base ya sembrada:
+
+- `pg_class`: `relrowsecurity = t` en `projects`, `project_kpis` y
+  `project_weekly_updates`.
+- `pg_policies` filtrado por esas 3 tablas: **0 filas**.
+- `information_schema.role_table_grants` para esas 3 tablas, excluyendo
+  `postgres`: **0 filas** — ni siquiera hay `GRANT` a `PUBLIC`.
+- El `.sql` no contiene ningún `create policy` ni `grant` (las únicas
+  apariciones de "anon"/"authenticated" son comentarios).
+
+Deny por defecto para todo rol que no bypassee RLS. **PASS.**
+
+## 3. Hallazgo no bloqueante de la ronda 2 (404 vs 500) — RESUELTO
+
+`app/api/proyectos/[id]/route.ts:18-23`. El fix está bien colocado:
+
+- El gate `isAuthenticated` (líneas 7-8) sigue siendo la primera sentencia;
+  el branch nuevo vive **dentro** de `if (error)`, después del `await`, así
+  que no adelanta nada por delante del `401`.
+- El `22P02` se chequea **antes** del `return 500` genérico y **antes** de
+  `if (!data)` (línea 24), que queda intacto para el caso "uuid válido pero
+  inexistente".
+- El camino de éxito (`return NextResponse.json(rowToProject(data))`) no se
+  toca.
+
+Verificado que el supuesto del fix es real, no asumido:
+
+- SQLSTATE confirmado contra Postgres: `select ... where id = 'no-soy-un-uuid'`
+  sobre una columna `uuid` levanta `SQLSTATE=22P02` (capturado con un bloque
+  `DO ... exception when others then raise notice`).
+- `error.code` existe y es el código propagado por PostgREST:
+  `node_modules/@supabase/postgrest-js/src/PostgrestError.ts:9` declara
+  `code: string`.
+- Live, con `npm run dev` + `curl`: `/api/proyectos/no-soy-un-uuid` sin
+  cookie → `401 {"error":"No autorizado"}`, igual que con cookie basura.
+  El branch nuevo **no** es alcanzable sin sesión, o sea no abre un canal
+  para sondear la existencia de ids sin autenticarse.
+
+No se pudo ejercitar el `404` de punta a punta (requiere credenciales
+Supabase reales, que siguen sin estar en el entorno), pero la premisa del
+fix quedó verificada contra Postgres y contra el tipo de `postgrest-js`, no
+por lectura optimista. **PASS.**
+
+## 4. Checkpoints re-corridos de forma independiente
+
+| Checkpoint | Resultado |
+|---|---|
+| Toda tarea de `tasks.md` en `[x]` | **PASS** — T1–T9 (12 checkboxes), 0 sin marcar. T1 ahora sí tiene un entregable ejecutable. |
+| `npm run lint` | **PASS** — exit 0, sin salida. |
+| `npm run build` | **PASS** — exit 0; compila, TS OK, route map con `/proyectos`, `/proyectos/[id]`, `/api/proyectos`, `/api/proyectos/[id]`. |
+| `npm run test` | **PASS** — 9/9 en 2 archivos. |
+| `npm run check-sdd-state` | **PASS** — "single active feature: project-status-tracking (in_progress)". |
+| `npm run verify` (los 4 juntos) | **PASS** — exit 0. |
+| Lógica nueva en `lib/` con test Vitest real | **PASS** — `lib/projects.test.ts` cubre `healthFromTimeline` (vacío, una entrada, más reciente por `weekOf`, array desordenado). Sin cambios en esta ronda. |
+| `impl_<feature>.md` con verificación por cada `R<n>` | **PASS** — R1–R17, sin huecos ni "N/A". Ver punto 5. |
+| `design-check` si cambió `app/components/*.tsx` | **PASS** — `git diff 28512f2 HEAD -- app/components/Nav.tsx` está vacío: esta ronda no tocó componentes. Vale el PASS de la ronda 2. |
+| `feature_list.json` con una sola feature activa | **PASS** — `project-status-tracking` en `in_progress`, las otras 4 en `done`. |
+
+## 5. Calidad de `impl_project-status-tracking.md` — corregido
+
+La entrada de **R11** ya no declara verificado por un razonamiento falso
+sobre CTEs. Ahora dice explícitamente que la versión anterior estaba mal,
+describe el bug, y reporta el resultado de la ejecución real. Los números
+que declara (`projects=4`, `project_kpis=8`, `project_weekly_updates=12`,
+4× Chile, 2× Paris / 2× Easy) **coinciden exactamente** con los que obtuve
+yo por mi cuenta. Además documenta las dos advertencias operativas para
+quien aplique la migración (tablas posiblemente ya creadas y vacías por el
+intento fallido; seed no idempotente).
+
+La entrada de **R7** documenta el fix del `22P02`. Correcta.
+
+## 6. Seguridad (R15/R16/R17) — intacta
+
+`git diff 28512f2 HEAD -- lib/auth.ts lib/supabaseAdmin.ts lib/projects.ts app/api/proyectos/route.ts app/components/Nav.tsx`
+sale **vacío**: ninguno de los archivos que sostienen la conclusión de
+seguridad de la ronda 2 cambió. Los únicos archivos de código tocados entre
+`28512f2` y `HEAD` son `app/api/proyectos/[id]/route.ts` y el `.sql`.
+
+Revalidado en vivo de todas formas (`npm run dev` + `curl`), porque el
+archivo de la ruta `[id]` sí cambió:
+
+- sin cookie, `/api/proyectos` → `401`, cuerpo sin datos;
+- sin cookie, `/api/proyectos/<uuid>` → `401`;
+- sin cookie, `/api/proyectos/no-soy-un-uuid` → `401` (no `404`, no `500`);
+- cookie con firma inválida → `401`.
+
+R15/R16/R17 siguen en **PASS**.
+
+## 7. Observaciones no bloqueantes — estado
+
+Las 5 de la ronda 2 siguen vigentes salvo la #2, que se arregló:
+
+1. **Fallback de `JWT_SECRET`** en `lib/auth.ts:4` — sigue igual. Heredado,
+   fuera del alcance de esta feature; merece su propia entrada en
+   `feature_list.json`.
+2. ~~`id` no-UUID devuelve 500~~ — **RESUELTO** en esta ronda.
+3. **`error.message` crudo de Supabase reenviado al cliente** — sigue, ahora
+   solo en el `return 500` de la línea 22 y en `/api/proyectos:16`. Solo
+   alcanzable ya autenticado. Sin cambios.
+4. **Migración no idempotente** — sigue, y ahora está *confirmado por
+   ejecución*: corriendo el `.sql` una segunda vez sobre la misma base los
+   conteos pasan a `projects=8`, `kpis=16`, `updates=24`. Está documentado
+   en `impl_...md`; quien lo aplique en Supabase debe correrlo **una sola
+   vez** sobre datos ya sembrados.
+5. **`ProjectTimeline` no agrupa realmente por semana** — sigue. Aceptado
+   explícitamente en `design.md`; deuda conocida, no incumplimiento de R9.
+
+Una nueva, menor:
+
+6. **El comentario de las líneas 141-145 del `.sql` sigue parcialmente
+   equivocado.** La parte que importaba se arregló (ahora dice bien que un
+   CTE de escritura solo puede referenciarse si tiene `RETURNING`), pero
+   afirma que el CTE "se ejecuta siempre *que la query lo referencie*" y que
+   el `SELECT` final existe "para forzar la ejecución de ambos inserts". En
+   Postgres los CTEs de escritura se ejecutan siempre, referenciados o no.
+   Es un comentario, no afecta el comportamiento del archivo (que ya
+   verifiqué corriéndolo). **No bloquea**; corregir cuando se toque el
+   archivo.
+
+## 8. Pendientes de cierre para `leader` (no bloquean la aprobación)
+
+1. Mover `feature_list.json` a `done` (es del `leader`, no del `reviewer`).
+2. **Actualizar la entrada de `progress/history.md` (línea 93).** Hoy dice
+   "project-status-tracking — done 2026-07-28" y describe el estado de la
+   ronda 1, incluyendo la nota de que el mismo agente hizo de reviewer. No
+   menciona el `REJECTED` de la ronda 2, el bug del seed, ni el fix. Debería
+   reflejar el ciclo real: implementación → rechazo por seed no ejecutable →
+   fix (`5fb30e4`) → aprobación en re-revisión independiente.
+3. Avisar al humano, al aplicar la migración en el Supabase de dev, de los
+   dos puntos operativos: las 3 tablas pueden existir ya y vacías si se
+   corrió la versión rota, y el seed **no** es idempotente.
+
+## Veredicto
+
+**APPROVED.** El bloqueante de la ronda 2 está realmente resuelto —
+verificado ejecutando la migración corregida contra Postgres 16, no leyendo
+el `.sql`. El hallazgo no bloqueante del `404` también se corrigió y su
+premisa (`SQLSTATE 22P02` → `error.code`) quedó confirmada contra Postgres y
+contra el tipo de `postgrest-js`. `lint`/`build`/`test`/`check-sdd-state`
+pasan corridos por mí. La superficie de seguridad no cambió y se revalidó en
+vivo. `impl_project-status-tracking.md` ya no declara verificado nada falso.
+Queda listo para `done` una vez que `leader` haga el cierre del punto 8.

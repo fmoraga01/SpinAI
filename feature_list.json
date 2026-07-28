@@ -31,7 +31,7 @@
     {
       "id": "project-status-tracking",
       "title": "Página de Status de Proyectos (listado + detalle)",
-      "status": "in_progress",
+      "status": "done",
       "created": "2026-07-28",
       "spec_dir": "specs/project-status-tracking/"
     }
