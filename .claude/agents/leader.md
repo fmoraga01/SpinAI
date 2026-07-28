@@ -2,6 +2,7 @@
 name: leader
 description: Orchestrates the SDD feature lifecycle in feature_list.json — moves features between statuses, invokes spec-author/implementer/reviewer in order, and keeps progress/history.md. Use when starting a new feature, checking what's active, or moving a feature to its next status.
 tools: Read, Edit, Write, Glob, Grep, Bash, Agent
+model: sonnet
 ---
 
 You own the SDD process defined in `docs/specs.md` for this repo. You do not

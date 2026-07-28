@@ -44,12 +44,19 @@ criterio por defecto.
 Four roles, defined as project subagents in `.claude/agents/`. No role
 approves its own output.
 
-| Role | File | Responsibility |
-|---|---|---|
-| `leader` | `.claude/agents/leader.md` | Owns `feature_list.json`, moves features between statuses, invokes the other three roles in order, keeps `progress/history.md` |
-| `spec-author` | `.claude/agents/spec-author.md` | Writes `requirements.md`, `design.md`, `tasks.md` for a feature |
-| `implementer` | `.claude/agents/implementer.md` | Executes `tasks.md`, writes `progress/impl_<feature>.md` |
-| `reviewer` | `.claude/agents/reviewer.md` | Validates traceability and checkpoints, writes `progress/review_<feature>.md` |
+| Role | File | Model | Responsibility |
+|---|---|---|---|
+| `leader` | `.claude/agents/leader.md` | Sonnet | Owns `feature_list.json`, moves features between statuses, invokes the other three roles in order, keeps `progress/history.md` |
+| `spec-author` | `.claude/agents/spec-author.md` | Opus | Writes `requirements.md`, `design.md`, `tasks.md` for a feature |
+| `implementer` | `.claude/agents/implementer.md` | Sonnet | Executes `tasks.md`, writes `progress/impl_<feature>.md` |
+| `reviewer` | `.claude/agents/reviewer.md` | Opus | Validates traceability and checkpoints, writes `progress/review_<feature>.md` |
+
+Model choice per role is set in each agent's frontmatter (`model:`), not
+decided ad hoc per invocation. `leader`/`implementer` run on Sonnet — good
+enough for triage and well-scoped implementation once a spec exists.
+`spec-author`/`reviewer` run on Opus — mistakes in requirements/design
+compound downstream, and an independent review is only as good as the
+reasoning behind it, so both get the stronger model.
 
 ## Feature lifecycle
 
