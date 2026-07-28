@@ -10,9 +10,9 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     el repo: tipos compartidos en `types.ts`, tipos de un solo módulo
     junto a su lógica).
   - Crear `lib/projects.ts` con los 4 proyectos dummy (país `"Chile"` en
-    los 4, negocio distinto por proyecto entre Retail/Banca/Seguros/Telco),
-    cada uno con al menos 2 KPIs y al menos 3 entradas de timeline semanal
-    con distintos `status`.
+    los 4, negocio `"Paris"` o `"Easy"` distribuidos entre los 4 — no los
+    4 en el mismo negocio), cada uno con al menos 2 KPIs y al menos 3
+    entradas de timeline semanal con distintos `status`.
   - Implementar `healthFromTimeline(updates: WeeklyUpdate[]): HealthStatus | null`
     como función pura exportada.
   - Implementar `loadProjects(): Promise<Project[]>` y

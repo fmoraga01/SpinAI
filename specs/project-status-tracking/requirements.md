@@ -46,9 +46,8 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 
 - **R11**: WHEN se carga el módulo de datos de proyectos (`lib/projects.ts`
   o equivalente) THEN el sistema SHALL exponer exactamente 4 proyectos
-  dummy, todos con país `"Chile"`, cada uno con un negocio distinto entre
-  un conjunto razonable de unidades de negocio (ej. Retail, Banca, Seguros,
-  Telco).
+  dummy, todos con país `"Chile"`, con negocio `"Paris"` o `"Easy"`
+  (distribuidos entre ambos, no los 4 en el mismo negocio).
 - **R12**: WHEN se modela el campo país de un proyecto THEN el sistema
   SHALL representarlo como un campo de texto libre/tipado (no un enum
   cerrado a un solo valor), de forma que agregar países adicionales en el

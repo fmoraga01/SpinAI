@@ -77,11 +77,10 @@ la interfaz que consume `page.tsx` — mismo patrón que `loadNews()` en
 
 ## Supuestos a validar con el usuario
 
-- **`businessUnit` es un placeholder**: se usa un conjunto razonable
-  (Retail, Banca, Seguros, Telco) sin que el usuario haya confirmado una
-  taxonomía real de negocios. Fácil de ajustar después — es solo texto
-  libre en el modelo, no un enum. Marcado explícitamente aquí para que
-  quede claro en la revisión humana del spec.
+- **`businessUnit` confirmado por el usuario**: `"Paris"` y `"Easy"`,
+  distribuidos entre los 4 proyectos dummy. Sigue modelado como `string`
+  libre (no enum) para poder agregar más negocios después sin migrar el
+  tipo.
 - **4 proyectos dummy, todos país `"Chile"`**: decisión explícita del
   usuario, documentada en el brief. El modelo soporta múltiples países sin
   cambios de forma (`country: string`), así que agregar proyectos de otros
