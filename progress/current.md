@@ -1,10 +1,13 @@
 # Current session state
 
-- **Feature:** _(ninguna activa)_
-- **Status:** —
-- **Started:** —
-- **Role active:** —
-- **Next step:** No hay feature en curso. `members-panel-content-animation` cerró en `done` (2026-07-21) y quedó mergeada en `dev`; ver progress/history.md. La promoción a `main` está pendiente de aprobación explícita del usuario. El `leader` reemplaza este bloque al arrancar la próxima feature.
+- **Feature:** project-status-tracking
+- **Status:** spec_ready
+- **Started:** 2026-07-28
+- **Role active:** spec-author (done) — awaiting human approval
+- **Next step:** Human review/approval of `specs/project-status-tracking/`
+  (requirements.md, design.md, tasks.md). Once approved explicitly, `leader`
+  sets status to `in_progress` and invokes `implementer`. Do not proceed to
+  implementation without that explicit approval.
 
 When `leader` starts a feature, this file gets replaced with:
 

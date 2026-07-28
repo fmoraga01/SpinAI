@@ -27,6 +27,13 @@
       "status": "done",
       "created": "2026-07-21",
       "spec_dir": "specs/members-panel-content-animation/"
+    },
+    {
+      "id": "project-status-tracking",
+      "title": "Página de Status de Proyectos (listado + detalle)",
+      "status": "spec_ready",
+      "created": "2026-07-28",
+      "spec_dir": "specs/project-status-tracking/"
     }
   ]
 }
