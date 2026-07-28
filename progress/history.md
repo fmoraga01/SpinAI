@@ -89,3 +89,34 @@ Entry format:
   cada R1–R9 contra el diff real, aprobando sin objeciones — ver
   progress/review_members-panel-content-animation.md.
 - Merged to dev: commits b1f5ad0, 97cfcf4, 71c30bb, b5d5165 · Promoted to main: 2026-07-21
+
+## project-status-tracking — done 2026-07-28
+
+- Requirements: R1–R17, see specs/project-status-tracking/requirements.md
+- Summary: nueva sección "Status de Proyectos" (`/proyectos` listado +
+  `/proyectos/[id]` detalle) para trackear iniciativas internas con KPIs y
+  avances semanales. Primera feature del repo con datos confidenciales:
+  3 tablas Supabase nuevas (`projects`, `project_kpis`,
+  `project_weekly_updates`) con RLS habilitado y **sin** policy para
+  `anon`/`authenticated` (deviación intencional del patrón `anon full
+  access` del resto del repo), servidas solo a través de rutas API propias
+  (`/api/proyectos`, `/api/proyectos/[id]`) que verifican el JWT de
+  `spinai_token` (`lib/auth.ts`, extraído de `check/route.ts`) antes de
+  usar un cliente `service_role` server-only (`lib/supabaseAdmin.ts`). El
+  badge de salud (`on_track`/`at_risk`/`delayed`/sin datos) se deriva de la
+  entrada más reciente del timeline vía `healthFromTimeline()`
+  (`lib/projects.ts`), cubierta por 4 tests de Vitest. Timeline semanal
+  adaptado de `state-of-ai/Timeline.tsx`. Nav actualizado con el link
+  correspondiente, `design-check` sin hallazgos. `npm run verify` pasa
+  completo. **Quedan dos pasos manuales pendientes del humano, sin los
+  cuales la feature no sirve datos reales todavía**: aplicar
+  `supabase/migrations/20260728120000_crear_projects.sql` en el SQL Editor
+  del proyecto Supabase de dev, y setear `SUPABASE_SERVICE_ROLE_KEY` en
+  `.env.local`/Vercel. El gate de autenticación (R16) y la ausencia de la
+  service role key en el bundle del cliente (mitad de R17) se verificaron
+  igual, sin depender de esos pasos. Reviewer aprobó — ver
+  progress/review_project-status-tracking.md (con nota: mismo agente actuó
+  como implementer y reviewer en esta sesión por falta de herramienta de
+  subagentes, verificación hecha de forma independiente pero sin segundo
+  lector real).
+- Merged to dev: pending · Promoted to main: pending

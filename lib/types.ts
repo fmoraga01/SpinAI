@@ -69,3 +69,27 @@ export interface NewsItem {
   imageUrl: string | null;
   publishedAt: string;
 }
+
+export interface ProjectKpi {
+  label: string; // "Adopción"
+  value: string; // "42%" — string libre, admite unidades/formato variado
+}
+
+export type HealthStatus = "on_track" | "at_risk" | "delayed";
+
+export interface WeeklyUpdate {
+  id: string;
+  weekOf: string; // ISO date (lunes de la semana)
+  status: HealthStatus;
+  note: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  summary: string;
+  country: string; // texto libre — hoy siempre "Chile"
+  businessUnit: string; // texto libre — "Paris" | "Easy" hoy
+  kpis: ProjectKpi[];
+  updates: WeeklyUpdate[]; // orden de inserción arbitrario; se ordena al leer
+}

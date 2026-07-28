@@ -3,7 +3,7 @@
 Orden sugerido: datos primero (testeable de forma aislada), luego
 componentes compartidos, luego listado, luego detalle, luego navegación.
 
-- [ ] **T1 — Migración Supabase con seed** (`R11`, `R12`, `R13`, `R17`)
+- [x] **T1 — Migración Supabase con seed** (`R11`, `R12`, `R13`, `R17`)
   - Crear `supabase/migrations/<timestamp>_crear_projects.sql` con las
     tablas `projects`, `project_kpis`, `project_weekly_updates` (ver
     `design.md` para el DDL exacto), índices, RLS habilitado **sin**
@@ -23,7 +23,7 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `progress/impl_project-status-tracking.md`, reportando al humano en
     vez de improvisar un workaround.
 
-- [ ] **T1b — Modelo de datos, tipos y mappers** (`R11`, `R12`, `R13`)
+- [x] **T1b — Modelo de datos, tipos y mappers** (`R11`, `R12`, `R13`)
   - Agregar `ProjectKpi`, `HealthStatus`, `WeeklyUpdate`, `Project` a
     `lib/types.ts` (o definirlos en `lib/projects.ts` si se prefiere
     co-ubicarlos con el resto del módulo — seguir el criterio que ya usa
@@ -36,7 +36,7 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `rowToNewsItem()` en `lib/news.ts`) — los consumen las rutas API de T1d,
     no el cliente.
 
-- [ ] **T1c — Verificación de sesión compartida y cliente admin** (`R16`, `R17`)
+- [x] **T1c — Verificación de sesión compartida y cliente admin** (`R16`, `R17`)
   - Extraer la verificación de JWT de `app/api/auth/check/route.ts` a
     `lib/auth.ts` como `isAuthenticated(req: NextRequest): Promise<boolean>`
     (misma lógica `jwtVerify` + cookie `spinai_token`, sin duplicarla).
@@ -50,7 +50,7 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     (dev y prod) — `implementer` no tiene forma de setearla, es un paso
     del humano, igual que aplicar la migración en T1.
 
-- [ ] **T1d — Rutas API `/api/proyectos`** (`R15`, `R16`, `R17`)
+- [x] **T1d — Rutas API `/api/proyectos`** (`R15`, `R16`, `R17`)
   - `app/api/proyectos/route.ts` (`GET`): `isAuthenticated(req)` primero
     — si `false`, `401` sin datos; si `true`, consulta con
     `getSupabaseAdmin()` (select anidado `projects(*, project_kpis(*),
@@ -64,19 +64,19 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     llaman a Supabase directo desde `lib/projects.ts` cuando se ejecuta en
     el cliente.
 
-- [ ] **T2 — Test de `healthFromTimeline`** (`R2`, `R3`)
+- [x] **T2 — Test de `healthFromTimeline`** (`R2`, `R3`)
   - `lib/projects.test.ts`: casos — lista vacía devuelve `null`; una sola
     entrada devuelve su status; varias entradas devuelven el status de la
     de `weekOf` más reciente (no la última del array en orden de
     inserción, para cubrir el caso de datos desordenados).
 
-- [ ] **T3 — `HealthBadge.tsx`** (`R2`, `R3`)
+- [x] **T3 — `HealthBadge.tsx`** (`R2`, `R3`)
   - Componente compartido en `app/proyectos/HealthBadge.tsx` que recibe
     `status: HealthStatus | null` y renderiza los 4 estados visuales
     (`on_track`/`at_risk`/`delayed`/`null` → "sin datos") descritos en
     `design.md`.
 
-- [ ] **T4 — Listado `/proyectos`** (`R1`, `R4`, `R5`)
+- [x] **T4 — Listado `/proyectos`** (`R1`, `R4`, `R5`)
   - `app/proyectos/ProjectCard.tsx`: tarjeta con nombre, país, negocio,
     `HealthBadge`, fecha de última actualización; `Link` a
     `/proyectos/<id>`.
@@ -84,31 +84,31 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `loadProjects()` + loading skeleton + empty state + grid de
     `ProjectCard`.
 
-- [ ] **T5 — `KpiList.tsx`** (`R6`, `R8`)
+- [x] **T5 — `KpiList.tsx`** (`R6`, `R8`)
   - `app/proyectos/[id]/KpiList.tsx`: grid de tarjetas clave-valor; si
     `kpis.length === 0`, omite la sección o muestra un estado vacío
     explícito (no una lista en blanco).
 
-- [ ] **T6 — `ProjectTimeline.tsx`** (`R6`, `R9`, `R10`)
+- [x] **T6 — `ProjectTimeline.tsx`** (`R6`, `R9`, `R10`)
   - `app/proyectos/[id]/ProjectTimeline.tsx`, adaptado de
     `app/state-of-ai/Timeline.tsx` según lo descrito en `design.md`
     (agrupado por `weekOf`, orden descendente, fila no-link con
     `HealthBadge` + texto). Si `updates.length === 0`, mostrar estado
     vacío explícito.
 
-- [ ] **T7 — Detalle `/proyectos/[id]`** (`R6`, `R7`)
+- [x] **T7 — Detalle `/proyectos/[id]`** (`R6`, `R7`)
   - `app/proyectos/[id]/page.tsx`: `Nav` + fetch de `loadProject(id)` +
     loading skeleton + estado "no encontrado" si `null` + header
     (nombre/país/negocio/badge) + resumen + `KpiList` + `ProjectTimeline`.
 
-- [ ] **T8 — Navegación** (`R14`)
+- [x] **T8 — Navegación** (`R14`)
   - Editar `app/components/Nav.tsx`: agregar `proyectosActive` y el
     `NavLink` a `/proyectos` entre "Noticias de IA" y "State of AI".
   - Correr el skill `design-check` (obligatorio por tocar
     `app/components/*.tsx`) y anotar el resultado en
     `progress/impl_project-status-tracking.md`.
 
-- [ ] **T9 — Verificación y traceability**
+- [x] **T9 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state).
   - Verificación manual específica de seguridad (R16, R17):
     - `curl` (o Network tools sin la cookie) a `/api/proyectos` y
