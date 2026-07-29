@@ -278,3 +278,65 @@ Entry format:
   500/200. Mismo blocker de entorno que las tres features anteriores (sin
   `.env.local`/PIN); 401/400 sí verificados por `curl` real.
 - Merged to dev: commit 703c684 · Promoted to main: pending
+
+## project-status-field — done 2026-07-29
+
+- Requirements: R1–R32, see specs/project-status-field/requirements.md
+  (más una sección explícita de requirements retirados/modificados en las
+  4 specs previas — ver abajo)
+- Summary: cambio de modelo de datos a pedido explícito del usuario
+  ("el estado es propio del proyecto, el avance no debe tener estados").
+  El campo `status` (`on_track`/`at_risk`/`delayed`) se muda de
+  `project_weekly_updates` a `projects`. Migración nueva
+  (`20260729120000_mover_status_a_projects.sql`, **no aplicada por ningún
+  agente**, queda como paso manual del humano en el SQL Editor): agrega
+  `projects.status` nullable, hace backfill por proyecto desde el `status`
+  del avance más reciente (subquery correlacionada, sin hardcodear
+  "Probador Virtual" ni asumir un solo proyecto, `coalesce` a `'on_track'`
+  si un proyecto no tiene avances), recién ahí aplica `not null` + el
+  mismo `check` de 3 valores, y por último elimina `status` de
+  `project_weekly_updates` (irreversible, decisión consciente del
+  usuario). `healthFromTimeline()` se elimina junto con sus tests viejos
+  — el badge de estado (`ProjectCard`/`ProjectDrawer`) pasa a leer
+  `project.status` directo, ya no se deriva del timeline. `ProjectForm.tsx`
+  gana "Estado" como quinto campo obligatorio; `WeeklyUpdateFields.tsx`
+  pierde su selector de estado en los tres lugares donde se usa (sección
+  opcional de creación, agregar avance, editar avance). Las 4 rutas API
+  de `/proyectos` ganan validación/persistencia de `status`; las 2 rutas
+  de `/avances` la pierden (un `status` en el body ahora se ignora en
+  silencio, no rechaza con 400). `VALID_STATUSES` se centraliza en
+  `lib/projects.ts` en vez de seguir duplicado en 4 archivos.
+  **Consecuencia de UX documentada**: editar/eliminar un avance semanal
+  ya no mueve el badge del proyecto (se desacopló del timeline).
+- **Ciclo de revisión (2 rondas)**. Primera vuelta (commit `3b22702`)
+  rechazada por un único gap acotado: los cambios de lógica en
+  `lib/projects.ts` (`rowToProject()` ahora mapea `status`, `rowToUpdate()`
+  dejó de mapearlo, `VALID_STATUSES` nuevo) no tenían test de Vitest —
+  "verificado por lectura de código" no satisface `docs/specs.md` para
+  lógica en `lib/`. La migración SQL, que era el riesgo real de esta
+  feature (schema contra datos de producción), fue auditada línea por
+  línea en la primera vuelta y aprobada sin objeciones — secuencia
+  backfill-antes-de-`not null` correcta, sin `not null`/`default`
+  prematuro, `drop column` al final. Fix (commit `a38925c`): 3 tests
+  nuevos en `lib/projects.test.ts`. Segunda vuelta de `reviewer` no se
+  conformó con que los tests existieran y pasaran — **revirtió
+  `lib/projects.ts` a la versión pre-feature mutación por mutación** y
+  confirmó que las 4 mutaciones (quitar el mapeo de `status`, reintroducir
+  `status` en `rowToUpdate`, agregar un 4º valor a `VALID_STATUSES`,
+  reordenarlo) hacen fallar los tests nuevos. Encontró además que una de
+  las aserciones (`toEqual`) era débil por cómo Vitest ignora claves
+  `undefined`, y que la aserción `not.toHaveProperty("status")` — que
+  parecía redundante — es en realidad la única que cubre esa regresión;
+  quedó anotado en el review para que nadie la "limpie" después. Aprobó
+  — ver `progress/review_project-status-field.md` (ambas rondas).
+- **Acción requerida del humano antes de usar `/proyectos` en dev — no es
+  QA opcional como en features anteriores**: aplicar
+  `supabase/migrations/20260729120000_mover_status_a_projects.sql`
+  manualmente en el SQL Editor de Supabase. El código ya asume que
+  `projects.status` existe; sin la migración aplicada, el badge de
+  estado se rompe (columna inexistente en la fila real). Después de
+  aplicarla, confirmar que "Probador Virtual" quedó con `status
+  'on_track'` (el backfill lo deriva de su único avance existente) y
+  hacer QA end-to-end de crear/editar proyecto y de agregar/editar
+  avance.
+- Merged to dev: commits 3b22702, a38925c · Promoted to main: pending

@@ -62,9 +62,10 @@
     {
       "id": "project-status-field",
       "title": "Mover el campo de estado (on_track/at_risk/delayed) de los avances semanales al proyecto",
-      "status": "in_review",
+      "status": "done",
       "created": "2026-07-29",
-      "spec_dir": "specs/project-status-field/"
+      "spec_dir": "specs/project-status-field/",
+      "note": "ACCIÓN REQUERIDA antes de usar /proyectos en dev: aplicar supabase/migrations/20260729120000_mover_status_a_projects.sql manualmente en el SQL Editor de Supabase (ningún agente tiene credenciales). A diferencia de las notas de QA de features anteriores, esto no es opcional — el código ya espera projects.status, así que sin la migración el badge de estado se rompe (columna inexistente). Después de aplicarla: verificar que 'Probador Virtual' quedó con status 'on_track' (backfill desde su último avance), y hacer QA end-to-end de crear/editar proyecto (status obligatorio) y de agregar/editar avance (ya sin campo estado)."
     }
   ]
 }

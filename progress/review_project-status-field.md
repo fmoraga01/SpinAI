@@ -228,3 +228,103 @@ Aplicar la migración en el SQL Editor de dev; setear
 `SUPABASE_SERVICE_ROLE_KEY`/`NEXT_PUBLIC_SUPABASE_URL` para ejercitar los
 201/200 reales (R28/R29/R31/R32); setear `PIN` para el QA visual de R15-R26;
 confirmar RLS en el dashboard (R6).
+
+---
+
+# Segunda vuelta — commit `a38925c`
+
+**Veredicto: APPROVED.** El único motivo bloqueante de la primera vuelta
+(checkpoint 3b) queda resuelto. La feature completa — incluida la migración
+SQL ya auditada arriba, que este commit no tocó — queda aprobada para pasar
+a `done`.
+
+Revisado por el mismo contexto de review (distinto del que implementó), rama
+`dev`, árbol limpio antes y después.
+
+## Alcance real del fix (verificado contra el diff, no contra el reporte)
+
+`git show --stat a38925c` → **3 archivos**: `lib/projects.test.ts` (+43),
+`app/proyectos/HealthBadge.tsx` (comentario, 1 línea),
+`progress/impl_project-status-field.md`. **Cero cambios en implementación**:
+`lib/projects.ts`, las 4 rutas API, los `.tsx` de `app/proyectos/` y la
+migración SQL están byte-idénticos al commit `3b22702` ya auditado. No hace
+falta reabrir nada de la primera vuelta.
+
+## Checkpoint 3b — ahora PASS, verificado por mutación
+
+No basta con que los tests existan y pasen; hay que confirmar que **fallan**
+si la lógica vuelve atrás. Lo verifiqué revirtiendo `lib/projects.ts` a su
+versión pre-feature, una mutación a la vez, corriendo `npx vitest run
+lib/projects.test.ts` y restaurando el archivo (árbol limpio al terminar,
+`git status --porcelain` → 0):
+
+| Mutación aplicada a `lib/projects.ts` | Resultado |
+|---|---|
+| `rowToProject()` sin `status: row.status` | **FAIL** — `expected undefined to be 'at_risk'` (R9) |
+| `rowToUpdate()` con `status: row.status` reintroducido (versión vieja) | **FAIL** — `expected { Object } to not have property "status"` (R10) |
+| `VALID_STATUSES` con un 4º valor (`"blocked"`) fuera del `check` SQL | **FAIL** — `toEqual` (R14) |
+| `VALID_STATUSES` solo reordenado | **FAIL** — `toEqual` (R14) |
+
+Los 3 tests son load-bearing, no decorativos.
+
+**Hallazgo relevante sobre la duda planteada ("¿el `toEqual` de `rowToUpdate`
+es débil?"): sí, lo es — pero el test no depende de él.** En la mutación 2, la
+línea 34 (`expect(update).toEqual({id, weekOf, note})`) **pasó** igual: el
+`rowToUpdate` viejo devuelve `status: row.status` y, como la fila de test no
+trae `status`, el valor es `undefined`, y `toEqual` de Vitest ignora las claves
+con valor `undefined`. Lo que atrapó la regresión fue exclusivamente la línea
+35, `expect(update).not.toHaveProperty("status")`, que sí distingue "clave
+ausente" de "clave presente con `undefined`". Por el mismo motivo, el
+`expect(project.updates).toEqual([...])` de `rowToProject` tampoco detectó la
+mutación. Conclusión: la segunda aserción no es redundante — **es la única que
+cubre R10**. No tocar.
+
+## Verificación por checkpoint
+
+| # | Checkpoint | Resultado |
+|---|---|---|
+| 1 | Tasks de `tasks.md` | **PASS** — 10 `[x]`, 0 `[ ]`; el fix no agregó tasks nuevas |
+| 2 | `npm run lint` | **PASS** — corrido por el reviewer dentro de `verify` |
+| 3 | `npm run build` | **PASS** — compila + TS check ok |
+| 3b | Test Vitest para lógica de `lib/` | **PASS** — ver mutaciones arriba |
+| 4 | `impl_<feature>.md` con verificación por `R<n>` | **PASS** — R9/R10/R14 pasan de "por lectura" a test real citado por nombre; R12/R13 siguen por lectura+`tsc`, pero con justificación explícita y correcta (son `interface` de TypeScript, sin runtime que testear — quedan fuera de "logic in `lib/`" de `docs/specs.md:113`, que habla de data fetching, parsing y funciones puras) |
+| 5 | `design-check` si cambió `app/components/*.tsx` | **PASS (N/A)** — el único cambio en `.tsx` es un comentario; no se tocó `app/components/` |
+| 6 | Una sola feature activa | **PASS** — `check-sdd-state`: "single active feature: project-status-field (in_review)" |
+
+`npm run verify` corrido por el reviewer: **exit 0**, con **12 tests en 2
+archivos** (4 `mondayOf` + 3 nuevos en `lib/projects.test.ts` + 5 de
+`lib/sizes.test.ts`). Coincide exactamente con lo que reporta el implementer;
+el conteo invertido de la primera vuelta quedó corregido en
+`impl_project-status-field.md`.
+
+## Observaciones menores de la primera vuelta — ambas cerradas
+
+1. **Comentario de `HealthBadge.tsx`: corregido y ahora exacto.** Dice
+   "Reutilizado por ProjectForm.tsx (`<select>` de estado del proyecto)".
+   Verificado: `HEALTH_STATUS_LABELS` tiene **un solo** consumidor en todo el
+   árbol, `ProjectForm.tsx:6`, que lo usa en `HEALTH_STATUS_OPTIONS`
+   (`:52`) para alimentar el `<select value={values.status}>` de `:123-131`.
+   El comentario apunta al archivo real, al elemento real y a la entidad real
+   (proyecto, no avance).
+2. **Conteo de tests del reporte: corregido** (12 = 4 + 3 + 5), y la resta
+   neta contra los 13 originales queda explicada (-4 `healthFromTimeline`,
+   +3 nuevos).
+
+## Nota informativa (no bloquea, no requiere acción)
+
+El test de `VALID_STATUSES` usa `toEqual` sobre el array, así que es sensible
+al **orden** (mutación 3b lo confirma). El `check` de Postgres no lo es, y el
+orden sí afecta la UI (`Object.entries(HEALTH_STATUS_LABELS)` define el orden
+de las `<option>`, aunque ese orden viene de `HEALTH_STATUS_LABELS`, no de
+`VALID_STATUSES`). Es una aserción algo más estricta de lo que exige R14, lo
+cual falla del lado seguro: un reorden intencional futuro solo cuesta editar
+una línea de test. Se deja como está.
+
+## Pendientes del humano (sin cambios respecto de la primera vuelta)
+
+Siguen vigentes y correctamente documentados en `impl_project-status-field.md`:
+aplicar la migración en el SQL Editor de dev (no fue aplicada contra ninguna
+base — no hay credenciales en el repo), setear
+`NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` para ejercitar los
+201/200 reales (R28/R29/R31/R32), setear `PIN` para el QA visual de R15-R26 y
+confirmar RLS en el dashboard (R6). No son motivo de rechazo.
