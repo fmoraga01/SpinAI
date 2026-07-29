@@ -38,7 +38,7 @@
     {
       "id": "project-crud",
       "title": "CRUD completo (crear, editar, eliminar) en /proyectos",
-      "status": "in_progress",
+      "status": "in_review",
       "created": "2026-07-29",
       "spec_dir": "specs/project-crud/"
     }
