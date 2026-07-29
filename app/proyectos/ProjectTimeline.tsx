@@ -66,7 +66,7 @@ export default function ProjectTimeline({ updates }: { updates: WeeklyUpdate[] }
 
           {/* Contenido de la semana */}
           <div style={{ flex: 1, minWidth: 0, paddingBottom: gi < groups.length - 1 ? 20 : 0 }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--color-tertiary)", textTransform: "capitalize", margin: "0 0 8px" }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "var(--color-tertiary)", margin: "0 0 8px" }}>
               Semana del {weekLabel(group.update.weekOf)}
             </p>
             <div
