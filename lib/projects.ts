@@ -1,4 +1,4 @@
-import { HealthStatus, Project, ProjectKpi, WeeklyUpdate } from "./types";
+import { ProjectStatus, Project, ProjectKpi, WeeklyUpdate } from "./types";
 
 interface KpiRow {
   label: string;
@@ -18,12 +18,12 @@ interface ProjectRow {
   summary: string;
   country: string;
   business_unit: string;
-  status: HealthStatus;
+  status: ProjectStatus;
   project_kpis?: KpiRow[] | null;
   project_weekly_updates?: UpdateRow[] | null;
 }
 
-export const VALID_STATUSES: HealthStatus[] = ["on_track", "at_risk", "delayed"];
+export const VALID_STATUSES: ProjectStatus[] = ["desarrollo", "piloto", "produccion"];
 
 export function rowToKpi(row: KpiRow): ProjectKpi {
   return { label: row.label, value: row.value };
@@ -85,7 +85,7 @@ export interface ProjectFormValues {
   country: string;
   businessUnit: string;
   summary: string;
-  status: HealthStatus;
+  status: ProjectStatus;
 }
 
 export async function createProject(values: ProjectFormValues): Promise<Project> {

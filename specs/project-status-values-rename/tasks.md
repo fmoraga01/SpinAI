@@ -6,7 +6,7 @@ siguiente.
 
 ## Migración Supabase
 
-- [ ] **T1** (R1-R4) Crear
+- [x] **T1** (R1-R4) Crear
       `supabase/migrations/20260729180000_cambiar_valores_status_projects.sql`
       con el contenido exacto de `design.md` sección 1: `drop constraint
       projects_status_check` → los 3 `update ... where id = '<uuid>'`
@@ -23,11 +23,11 @@ siguiente.
 
 ## Tipos y constantes
 
-- [ ] **T2** (R5) En `lib/types.ts`: renombrar `HealthStatus` →
+- [x] **T2** (R5) En `lib/types.ts`: renombrar `HealthStatus` →
       `ProjectStatus`, redefinir los literales a `"desarrollo" | "piloto" |
       "produccion"`, y actualizar `status: HealthStatus` → `status:
       ProjectStatus` en la interfaz `Project`.
-- [ ] **T3** (R6, R7) En `lib/projects.ts`: actualizar el import de
+- [x] **T3** (R6, R7) En `lib/projects.ts`: actualizar el import de
       `HealthStatus` a `ProjectStatus`; actualizar `ProjectRow.status` y
       `ProjectFormValues.status` al tipo nuevo; redefinir
       `VALID_STATUSES` como `["desarrollo", "piloto", "produccion"]`.
@@ -37,7 +37,7 @@ siguiente.
 
 ## Badge y formulario
 
-- [ ] **T4** (R8, R9, R10) Renombrar `app/proyectos/HealthBadge.tsx` →
+- [x] **T4** (R8, R9, R10) Renombrar `app/proyectos/HealthBadge.tsx` →
       `app/proyectos/StatusBadge.tsx`. Dentro: renombrar el componente
       `HealthBadge` → `StatusBadge`, `HEALTH_STATUS_LABELS` →
       `PROJECT_STATUS_LABELS`, usar `ProjectStatus` como tipo, y aplicar el
@@ -45,11 +45,11 @@ siguiente.
       `#94A3B8` / azul `#2C40FF` / verde `#22C55E` para
       desarrollo/piloto/producción respectivamente) y las labels
       "Desarrollo"/"Piloto"/"Producción" (con tilde solo en la label).
-- [ ] **T5** (R11) En `app/proyectos/ProjectDrawer.tsx` y
+- [x] **T5** (R11) En `app/proyectos/ProjectDrawer.tsx` y
       `app/proyectos/ProjectCard.tsx`: actualizar el import a `StatusBadge`
       desde `./StatusBadge` y el nombre de componente usado en el JSX. Sin
       otros cambios.
-- [ ] **T6** (R12) En `app/proyectos/ProjectForm.tsx`: actualizar imports
+- [x] **T6** (R12) En `app/proyectos/ProjectForm.tsx`: actualizar imports
       (`HealthStatus` → `ProjectStatus`, `HEALTH_STATUS_LABELS` →
       `PROJECT_STATUS_LABELS` desde `./StatusBadge`), renombrar
       `HEALTH_STATUS_OPTIONS` → `PROJECT_STATUS_OPTIONS`, y actualizar el
@@ -59,7 +59,7 @@ siguiente.
 
 ## API (verificación, sin cambio de código esperado)
 
-- [ ] **T7** (R13, R14) Confirmar por lectura (no se espera edición) que
+- [x] **T7** (R13, R14) Confirmar por lectura (no se espera edición) que
       `app/api/proyectos/route.ts` y `app/api/proyectos/[id]/route.ts`
       solo referencian `VALID_STATUSES` (no un literal `HealthStatus` ni
       los 3 valores viejos hardcodeados) — si por algún motivo alguna de
@@ -70,10 +70,10 @@ siguiente.
 
 ## Tests
 
-- [ ] **T8** (R15) En `lib/projects.test.ts`, bloque
+- [x] **T8** (R15) En `lib/projects.test.ts`, bloque
       `describe("VALID_STATUSES", ...)`: actualizar el `expect(...)` a
       `["desarrollo", "piloto", "produccion"]`.
-- [ ] **T9** (R16) En `lib/projects.test.ts`, bloque
+- [x] **T9** (R16) En `lib/projects.test.ts`, bloque
       `describe("rowToProject", ...)`: cambiar el `status: "at_risk"` del
       row de ejemplo a `status: "piloto"`, y el
       `expect(project.status).toBe("at_risk")` a
@@ -81,16 +81,16 @@ siguiente.
 
 ## Barrido final y verificación
 
-- [ ] **T10** Barrido completo: `grep -rn "on_track\|at_risk\|delayed\|HealthStatus\|HealthBadge\|HEALTH_STATUS_LABELS" app lib` (excluyendo
+- [x] **T10** Barrido completo: `grep -rn "on_track\|at_risk\|delayed\|HealthStatus\|HealthBadge\|HEALTH_STATUS_LABELS" app lib` (excluyendo
       `specs/`, que se trata aparte en T11) no debe devolver resultados —
       confirma que no quedó ningún literal o nombre viejo suelto fuera de
       los archivos ya cubiertos por T2-T9.
-- [ ] **T11** Anotar (no reescribir) `specs/project-status-field/requirements.md`
+- [x] **T11** Anotar (no reescribir) `specs/project-status-field/requirements.md`
       y `design.md` con una nota breve fechada 2026-07-29 señalando que los
       3 valores documentados ahí fueron reemplazados por
       `specs/project-status-values-rename/`, mismo criterio ya usado en
       esa spec para las 4 specs anteriores a ella.
-- [ ] **T12** Correr `npm run verify` completo (lint + build + test +
+- [x] **T12** Correr `npm run verify` completo (lint + build + test +
       check-sdd-state) y documentar el resultado en
       `progress/impl_project-status-values-rename.md`, junto con una
       checklist de QA manual: abrir `/proyectos` en el navegador y

@@ -75,7 +75,7 @@ export interface ProjectKpi {
   value: string; // "42%" — string libre, admite unidades/formato variado
 }
 
-export type HealthStatus = "on_track" | "at_risk" | "delayed";
+export type ProjectStatus = "desarrollo" | "piloto" | "produccion";
 
 export interface WeeklyUpdate {
   id: string;
@@ -89,7 +89,7 @@ export interface Project {
   summary: string;
   country: string; // texto libre — hoy siempre "Chile"
   businessUnit: string; // texto libre — "Paris" | "Easy" hoy
-  status: HealthStatus;
+  status: ProjectStatus;
   kpis: ProjectKpi[];
   updates: WeeklyUpdate[]; // orden de inserción arbitrario; se ordena al leer
 }

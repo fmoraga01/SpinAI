@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { HealthStatus } from "@/lib/types";
+import { ProjectStatus } from "@/lib/types";
 import { mondayOf, ProjectFormValues, WeeklyUpdateFormValues } from "@/lib/projects";
-import { HEALTH_STATUS_LABELS } from "./HealthBadge";
+import { PROJECT_STATUS_LABELS } from "./StatusBadge";
 import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
 
 interface Props {
@@ -49,7 +49,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const HEALTH_STATUS_OPTIONS = Object.entries(HEALTH_STATUS_LABELS) as [HealthStatus, string][];
+const PROJECT_STATUS_OPTIONS = Object.entries(PROJECT_STATUS_LABELS) as [ProjectStatus, string][];
 
 export default function ProjectForm({
   initialValues,
@@ -122,11 +122,11 @@ export default function ProjectForm({
       <Field label="Estado">
         <select
           value={values.status}
-          onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as HealthStatus }))}
+          onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as ProjectStatus }))}
           style={inputStyle}
           {...focusHandlers()}
         >
-          {HEALTH_STATUS_OPTIONS.map(([status, label]) => (
+          {PROJECT_STATUS_OPTIONS.map(([status, label]) => (
             <option key={status} value={status}>
               {label}
             </option>

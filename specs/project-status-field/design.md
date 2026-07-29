@@ -1,5 +1,12 @@
 # Design — Mover el campo de estado al proyecto
 
+**Nota (2026-07-29):** los 3 valores de `status` documentados en este
+archivo (`on_track`/`at_risk`/`delayed`, semáforo de salud/riesgo) fueron
+reemplazados por `specs/project-status-values-rename/` (`desarrollo` /
+`piloto` / `produccion`, etapa de ciclo de vida). Este documento no se
+reescribe — queda tal cual documentó el momento en que se movió el campo;
+ver la spec nueva para los valores vigentes y su migración SQL.
+
 ## Alcance técnico
 
 ```

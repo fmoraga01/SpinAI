@@ -1,7 +1,7 @@
 "use client";
 
 import { Project } from "@/lib/types";
-import HealthBadge from "./HealthBadge";
+import StatusBadge from "./StatusBadge";
 
 function latestUpdateDate(project: Project): string | null {
   if (project.updates.length === 0) return null;
@@ -38,7 +38,7 @@ export default function ProjectCard({ project, onSelect }: { project: Project; o
           <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", margin: 0, lineHeight: "22px" }}>
             {project.name}
           </h3>
-          <HealthBadge status={status} />
+          <StatusBadge status={status} />
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>{project.country}</span>

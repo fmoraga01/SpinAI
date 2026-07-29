@@ -26,7 +26,9 @@ lo afectado.
   SHALL agregar una columna `status` a `projects` con el mismo dominio de
   valores que hoy tiene `project_weekly_updates.status`
   (`check (status in ('on_track', 'at_risk', 'delayed'))`), y SHALL dejarla
-  `not null` al finalizar la migración.
+  `not null` al finalizar la migración. *(nota 2026-07-29: el dominio de
+  valores de la constraint aquí documentado fue reemplazado por
+  `specs/project-status-values-rename/` — ver R1-R4 de esa spec.)*
 - **R2**: WHEN la migración agrega la columna `status` a `projects` en un
   entorno donde `projects` ya tiene filas (como el Supabase de dev del
   usuario, que ya tiene al menos el proyecto "Probador Virtual") THEN el
@@ -93,7 +95,10 @@ lo afectado.
   constante (p. ej. `VALID_STATUSES`) desde `lib/projects.ts` y SHALL
   reutilizarla desde las rutas de `/api/proyectos` (que ahora la necesitan
   para validar `status` de un proyecto) en vez de mantener una tercera
-  copia — no se acepta una nueva duplicación de este array.
+  copia — no se acepta una nueva duplicación de este array. *(nota
+  2026-07-29: el contenido de `VALID_STATUSES` aquí documentado fue
+  reemplazado por `specs/project-status-values-rename/` R7 — sigue
+  centralizada en `lib/projects.ts`, sin duplicación nueva.)*
 
 ## Formulario de proyecto (`ProjectForm.tsx`)
 
@@ -166,7 +171,10 @@ lo afectado.
   "delayed"]` THEN el sistema SHALL responder `400` sin crear/modificar el
   registro, incluyendo `"status"` en el mensaje de campos
   faltantes/inválidos (mismo formato de mensaje que ya usan estas rutas
-  para `name`/`country`/`businessUnit`/`summary`).
+  para `name`/`country`/`businessUnit`/`summary`). *(nota 2026-07-29: el
+  dominio de valores aquí documentado pasó a `["desarrollo", "piloto",
+  "produccion"]` por `specs/project-status-values-rename/` R13 — el
+  comportamiento de `400` sin crear/modificar no cambia.)*
 - **R28**: WHEN `POST /api/proyectos` recibe un body válido (incluyendo
   `status`) y la sesión es válida THEN el sistema SHALL insertar la fila en
   `projects` incluyendo `status` y SHALL responder `201` con el `Project`

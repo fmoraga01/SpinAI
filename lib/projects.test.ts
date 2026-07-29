@@ -9,7 +9,7 @@ describe("rowToProject", () => {
       summary: "Resumen",
       country: "Chile",
       business_unit: "Unidad A",
-      status: "at_risk",
+      status: "piloto",
       project_kpis: [
         { label: "KPI B", value: "2", position: 1 },
         { label: "KPI A", value: "1", position: 0 },
@@ -17,7 +17,7 @@ describe("rowToProject", () => {
       project_weekly_updates: [{ id: "u1", week_of: "2026-07-06", note: "Avance" }],
     });
 
-    expect(project.status).toBe("at_risk");
+    expect(project.status).toBe("piloto");
     expect(project.businessUnit).toBe("Unidad A");
     expect(project.kpis).toEqual([
       { label: "KPI A", value: "1" },
@@ -38,7 +38,7 @@ describe("rowToUpdate", () => {
 
 describe("VALID_STATUSES", () => {
   it("contains exactly the 3 expected statuses (R14)", () => {
-    expect(VALID_STATUSES).toEqual(["on_track", "at_risk", "delayed"]);
+    expect(VALID_STATUSES).toEqual(["desarrollo", "piloto", "produccion"]);
   });
 });
 
