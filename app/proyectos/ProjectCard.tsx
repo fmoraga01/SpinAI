@@ -28,17 +28,11 @@ export default function ProjectCard({ project }: { project: Project }) {
           background: "var(--color-surface-elevated)",
           border: "1px solid var(--color-border)",
           borderRadius: "var(--radius-md)",
-          transition: "border-color 150ms ease, box-shadow 150ms ease",
+          transition: "border-color 150ms ease",
           height: "100%",
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = "#2C40FF44";
-          e.currentTarget.style.boxShadow = "var(--shadow-glow)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = "var(--color-border)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2C40FF44"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
           <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", margin: 0, lineHeight: "22px" }}>
