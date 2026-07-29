@@ -189,3 +189,51 @@ Entry format:
   se verificaron por `curl` real contra rutas API con un JWT firmado a
   mano.
 - Merged to dev: commits e59d793, b61b0bd · Promoted to main: pending
+
+## weekly-update-entry — done 2026-07-29
+
+- Requirements: R1–R19, see specs/weekly-update-entry/requirements.md
+- Summary: agrega la posibilidad de **crear** (no editar/eliminar) avances
+  semanales (`project_weekly_updates`) desde la UI de `/proyectos`, en dos
+  puntos: una sección opcional "Primer avance semanal" en `ProjectForm.tsx`
+  al crear un proyecto (crea el proyecto y, si se completó, el avance en
+  dos pasos — si el avance falla, el proyecto queda igual creado y el
+  error se muestra aparte, sin perder ni duplicar nada), y un botón
+  "Agregar avance" con formulario inline (`AddUpdateForm.tsx`) en el
+  drawer de detalle de un proyecto ya existente. Nueva ruta `POST
+  /api/proyectos/[id]/avances`, mismo patrón `isAuthenticated()` +
+  `getSupabaseAdmin()` que el resto. La UI garantiza que `week_of` sea
+  siempre el lunes de la semana elegida vía una función pura nueva
+  `mondayOf()` en `lib/projects.ts` (el usuario nunca elige el lunes a
+  mano, ve "Semana del ..." como confirmación) — sin constraint SQL nuevo,
+  garantía 100% del lado del cliente, decisión documentada con su
+  alternativa en `design.md`. Componente compartido `WeeklyUpdateFields.tsx`
+  reutilizado entre ambos puntos de entrada. `mondayOf()` cubierta por 4
+  tests de Vitest reales (lunes se mapea a sí mismo, domingo → lunes
+  anterior, miércoles mid-week, sábado cruzando fin de mes). `npm run
+  verify` pasa completo (13 tests).
+- **Ciclo de revisión (2 rondas)**: la primera entrega (commit `8960850`)
+  fue rechazada por `reviewer` independiente por un gap acotado en R16 —
+  la ruta nueva validaba que `weekOf` estuviera presente, pero no que
+  fuera parseable como fecha; un valor como `"banana"` atravesaba la
+  validación y terminaba en `500` en vez del `400` que exige el
+  requirement (en producción, contra Supabase real, habría sido un error
+  de cast de Postgres en la columna `date`, igual de no-manejado). Todo lo
+  demás pasó sin objeciones en la primera vuelta, incluida una verificación
+  explícita de que la feature **no rompió nada** de `project-crud` ni de
+  `project-status-tracking` (el cambio en `lib/projects.ts` es puramente
+  aditivo, el empty state del timeline y los tres modos del drawer quedan
+  intactos). Fix (commit `5e724dd`): un chequeo de parseabilidad
+  (`Number.isNaN(new Date(weekOf).getTime())`) antes de usar el valor.
+  Segunda vuelta de `reviewer` reprodujo el fix por `curl` real
+  (incluyendo un caso extra no probado por `implementer`, una fecha con
+  forma válida pero fuera de rango) y aprobó — ver
+  `progress/review_weekly-update-entry.md` (ambas rondas).
+- **Pendiente de QA humana end-to-end antes de uso real en dev**: agregar
+  el primer avance al crear un proyecto (201), agregar un avance desde el
+  drawer de un proyecto existente (201), y confirmar 404 con id de
+  proyecto inexistente. Mismo blocker que las dos features anteriores
+  (sin `.env.local`/credenciales Supabase, sin PIN configurado en este
+  sandbox) — los 401/400 sí se verificaron por `curl` real contra rutas
+  API con un JWT firmado a mano.
+- Merged to dev: commits 8960850, 5e724dd · Promoted to main: pending

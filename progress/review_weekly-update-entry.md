@@ -1,6 +1,14 @@
 # Review — weekly-update-entry
 
-## Veredicto
+## Veredicto final (segunda vuelta, commit `5e724dd`)
+
+**APROBADO** — el único gap bloqueante de la primera vuelta (R16) está
+resuelto y verificado por ejecución real. La feature queda lista para pasar
+a `done`. Detalle en la sección "Segunda vuelta" al final de este archivo.
+
+---
+
+## Veredicto — primera vuelta (histórico, ya resuelto)
 
 **RECHAZADO** — 1 gap bloqueante:
 
@@ -215,3 +223,140 @@ Devolver a `in_progress` con un alcance chico y acotado: cerrar R16 por la
 vía (a) o (b) de arriba. El resto de la feature está en condiciones de
 `done` — no hace falta re-verificar lo ya validado acá, solo el requirement
 afectado (más `npm run verify` de nuevo).
+
+
+---
+
+# Segunda vuelta — re-review del fix de R16 (commit `5e724dd`)
+
+## Veredicto: **APROBADO**
+
+El gap bloqueante está cerrado por la vía (a) que proponía la primera
+vuelta (fix en la ruta, sin enmendar el requirement). Re-verificado por el
+reviewer de forma independiente, sin confiar en el reporte del
+`implementer`.
+
+## 1. Lectura del código real — **CORRECTO**
+
+`app/api/proyectos/[id]/avances/route.ts:16`:
+
+```ts
+(!weekOf || Number.isNaN(new Date(weekOf).getTime())) && "weekOf",
+```
+
+`git show 5e724dd` confirma que el cambio de código es **exactamente una
+línea** (`!weekOf && "weekOf"` → la de arriba); los demás archivos del
+commit son solo `progress/impl_weekly-update-entry.md`. Sin efectos
+colaterales en el resto de la ruta.
+
+La lógica cubre las dos mitades que pide R16, en cortocircuito:
+
+- `weekOf` ausente (`undefined`) / `""` → `!weekOf` es `true` → se agrega a
+  `missing` (rama original preservada, sin regresión).
+- `weekOf` presente pero no parseable → `new Date(weekOf)` es `Invalid
+  Date`, `getTime()` es `NaN`, `Number.isNaN(...)` es `true` → se agrega.
+- `weekOf` válido → ambas ramas `false` → no se agrega, sigue al `insert`.
+
+El `||` garantiza que `new Date()` solo se evalúa con un `weekOf` truthy, y
+el resultado se suma a la misma lista `missing`, así que el mensaje sigue
+nombrando el campo inválido — la parte de R16 que exige "un mensaje
+indicando qué campo falta o es inválido", no solo el status code.
+
+## 2. Verificación empírica propia (`curl` contra `npm run dev` local)
+
+Reproducido por el reviewer, no copiado del reporte. JWT firmado a mano con
+`jose` y el secreto de fallback de `lib/auth.ts` (`fallback-secret-change-me`),
+cookie `spinai_token`, sin tocar ningún archivo del repo:
+
+```
+sin cookie (body válido)            -> 401 {"error":"No autorizado"}                    (R15 ok)
+{}                                  -> 400 "...faltantes o inválidos: weekOf, status, note"
+{"weekOf":"banana",...}             -> 400 "...faltantes o inválidos: weekOf"   <-- EL FIX
+{"weekOf":"",...}                   -> 400 "...faltantes o inválidos: weekOf"   (sin regresión)
+weekOf ausente                      -> 400 "...faltantes o inválidos: weekOf"   (sin regresión)
+{"weekOf":"2026-13-45",...}         -> 400 "...faltantes o inválidos: weekOf"   (extra del reviewer)
+{"status":"bogus",...}              -> 400 "...faltantes o inválidos: status"   (sin regresión)
+{"note":"   ",...}                  -> 400 "...faltantes o inválidos: note"     (sin regresión)
+banana + bogus + blank              -> 400 "...faltantes o inválidos: weekOf, status, note"
+{"weekOf":"2026-07-06",...} válido  -> 500 (baseline: env Supabase ausente)
+```
+
+Dos comprobaciones adicionales que el reviewer hizo y el reporte no
+declaraba:
+
+- **`"2026-13-45"`** (string con forma de fecha pero fuera de rango, no solo
+  basura tipo `"banana"`) también devuelve `400`. El fix no depende de que
+  el input sea obviamente no-fecha.
+- **El log del server tiene exactamente UN `500`**, y es el error explícito
+  de `getSupabaseAdmin` (`lib/supabaseAdmin.ts:20`, "Faltan
+  NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY"), correspondiente a
+  la única request con body válido. Esto prueba dos cosas a la vez: (a)
+  ningún caso inválido llegó a tocar Supabase — todos cortaron en el `400`,
+  o sea que **no se crea el registro**, como exige R16; y (b) el caso de
+  fecha válida **sigue atravesando la validación** igual que antes del fix
+  (el `500` es idéntico al baseline de la primera vuelta), o sea que el
+  chequeo nuevo no rechaza fechas legítimas.
+
+Contraste con la primera vuelta: `"banana"` devolvía el mismo `500` que un
+body válido (prueba de que atravesaba la validación entera). Ahora devuelve
+`400` nombrando `weekOf`, y ya no aparece en el log de Supabase.
+
+## 3. `npm run verify` — **PASS, exit 0**
+
+Corrido por el reviewer, end-to-end:
+
+```
+npm run lint            -> sin errores
+npm run build           -> compila + TS check ok
+npm run test            -> 13/13 (2 archivos), incluidos los 4 de mondayOf()
+npm run check-sdd-state -> ✓ single active feature: weekly-update-entry (in_review)
+VERIFY EXIT=0
+```
+
+## 4. Checkpoints re-confirmados
+
+| # | Checkpoint | Resultado |
+|---|---|---|
+| 1 | Tasks `tasks.md` marcadas `[x]` | **PASS** — T1-T8 |
+| 2 | `npm run lint` | **PASS** (corrido por el reviewer) |
+| 3 | `npm run build` | **PASS** (corrido por el reviewer) |
+| 4 | `impl_<feature>.md` con verificación para cada `R1`-`R19` | **PASS** — la entrada de R16 ahora lista los 4 casos reales y **ya no sobredeclara**: documenta el gap previo, el fix y los 3 casos de re-verificación. Coincide con lo que el reviewer reprodujo. |
+| 5 | `design-check` si cambió `app/components/*.tsx` | **N/A → PASS** — el fix es server-side; no se tocó ningún `.tsx` en `5e724dd` |
+| 6 | `feature_list.json`: una sola feature activa | **PASS** — solo `weekly-update-entry` (`in_review`) |
+
+## 5. Alcance del re-review
+
+Conforme a lo acordado, **no se re-evaluó** lo ya aprobado en la primera
+vuelta (`mondayOf()`, orquestación de creación en dos pasos, ausencia de
+regresiones sobre `project-crud` / `project-status-tracking`, las 4
+decisiones no explícitas en `design.md`, y los bloqueos de entorno
+aceptados). El commit `5e724dd` no toca ninguno de esos archivos, así que
+esas conclusiones siguen vigentes.
+
+Los bloqueos de entorno (sin credenciales de Supabase → `201`/`404` reales
+de R17/R18 no ejercitables; sin `PIN`/browser → QA visual de R1-R14 no
+ejercitable) **siguen presentes y siguen siendo aceptables**, con el mismo
+criterio ya aplicado a `project-crud` y `project-status-tracking`. Están
+declarados en `impl_weekly-update-entry.md` como pasos pendientes del
+humano. No son motivo de rechazo.
+
+## 6. Observación menor (heredada, no bloqueante)
+
+Sigue en pie lo anotado en la primera vuelta: `await req.json()` sin
+`try/catch` → un body con JSON malformado da `500` en vez de `400`. Ningún
+requirement lo exige y las 3 rutas de `project-crud` tienen el mismo
+patrón, así que es consistente con el repo. **No bloquea.**
+
+Nota de precisión sobre el fix (tampoco bloqueante): `new Date(x)` acepta
+también números y booleanos (`new Date(123)` es una fecha válida), así que
+un `weekOf` no-string pasaría la validación y moriría en el cast de
+Postgres. R16 habla de "no parseable como fecha" y el cliente siempre manda
+el string de `mondayOf()`, así que el requirement se cumple; se deja
+anotado solo por si a futuro se endurece la validación de tipos del body.
+
+## 7. Para el `leader`
+
+**Aprobado para `done`.** Pendiente el paso de cierre habitual del `leader`
+(entrada en `progress/history.md`), que no es responsabilidad del
+`implementer` ni del `reviewer`. El `reviewer` no tocó `feature_list.json`
+ni `progress/current.md`, ni hizo commit/push.

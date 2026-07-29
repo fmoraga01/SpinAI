@@ -1,13 +1,17 @@
 # Current session state
 
-- **Feature:** weekly-update-entry
-- **Status:** in_review (segunda vuelta)
-- **Started:** 2026-07-29
-- **Role active:** reviewer
-- **Next step:** `implementer` corrigió el único motivo de rechazo (R16:
-  `weekOf` no parseable ahora devuelve 400 en vez de 500, verificado por
-  curl real; casos existentes sin regresión). Commit `5e724dd`. `reviewer`
-  debe auditar puntualmente este fix (no repetir la revisión completa) y
-  dar veredicto final. Si aprueba: `done`, resumen en
-  `progress/history.md`, limpiar este archivo. Si rechaza de nuevo:
-  reportar al humano antes de otro ciclo.
+When `leader` starts a feature, this file gets replaced with:
+
+```markdown
+# Current session state
+
+- **Feature:** <feature-id>
+- **Status:** in_progress | in_review
+- **Started:** YYYY-MM-DD
+- **Role active:** spec-author | implementer | reviewer
+- **Next step:** <what happens next and who does it>
+```
+
+This file always reflects the *single* active feature (see the one-feature-
+at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
+is cleared from here and summarized in `progress/history.md`.

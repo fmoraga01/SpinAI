@@ -46,9 +46,10 @@
     {
       "id": "weekly-update-entry",
       "title": "Agregar avances semanales (project_weekly_updates) desde /proyectos: formulario de creación + drawer de detalle",
-      "status": "in_review",
+      "status": "done",
       "created": "2026-07-29",
-      "spec_dir": "specs/weekly-update-entry/"
+      "spec_dir": "specs/weekly-update-entry/",
+      "note": "Pendiente de QA humana end-to-end antes de uso real en dev: agregar el primer avance al crear un proyecto (201), agregar un avance desde el drawer de un proyecto existente (201), y confirmar 404 con id de proyecto inexistente. No se pudo ejercitar en este sandbox por falta de credenciales Supabase y PIN — los 401/400 sí se verificaron por curl real."
     }
   ]
 }
