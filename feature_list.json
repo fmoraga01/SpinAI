@@ -54,7 +54,7 @@
     {
       "id": "weekly-update-edit-delete",
       "title": "Editar y eliminar avances semanales (project_weekly_updates) desde el timeline de /proyectos",
-      "status": "in_progress",
+      "status": "in_review",
       "created": "2026-07-29",
       "spec_dir": "specs/weekly-update-edit-delete/"
     }
