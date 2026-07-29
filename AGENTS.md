@@ -72,7 +72,8 @@ Antes de terminar:
 
 Todo cambio (features, fixes, copy, config) se desarrolla y commitea primero en la rama `dev`. Nunca se hace push ni merge directo a `main` sin que el usuario lo haya probado en `dev` y haya dado su aprobación explícita para pasar a producción.
 
-- **`dev` es la rama de partida por defecto.** Al iniciar cualquier sesión nueva de trabajo en este repo, hacer checkout/fetch de `dev` (no `main`) antes de empezar a trabajar, salvo que el usuario indique explícitamente otra rama. Si el harness o el entorno asigna una rama de sesión distinta, sincronizar esa rama con `dev` al terminar (fast-forward), como se viene haciendo.
+- **`dev` es la rama de partida por defecto.** Al iniciar cualquier sesión nueva de trabajo en este repo, hacer checkout/fetch de `dev` (no `main`) antes de empezar a trabajar, salvo que el usuario indique explícitamente otra rama.
+- **Trabajar solo en `dev`, sin ramas adicionales.** [2026-07-29] Directriz explícita del usuario: no sincronizar ni pushear a ninguna rama de sesión que el harness asigne (ej. `claude/...`) — todo commit y push va únicamente a `dev`. Si el harness asignó una rama de sesión distinta, dejarla como está, sin tocarla, salvo que el usuario pida explícitamente lo contrario.
 - Todo commit nuevo va a `dev`, sin excepción — incluidos cambios "menores" como texto o estilos.
 - No mergear `dev` → `main` de forma proactiva. Esperar una confirmación explícita del usuario (ej. "pásalo a prod", "mergea a main") antes de tocar `main`.
 - Si por error algo llega a `main` sin pasar por este flujo, revertirlo y rehacerlo correctamente por `dev`.
