@@ -54,9 +54,10 @@
     {
       "id": "weekly-update-edit-delete",
       "title": "Editar y eliminar avances semanales (project_weekly_updates) desde el timeline de /proyectos",
-      "status": "in_review",
+      "status": "done",
       "created": "2026-07-29",
-      "spec_dir": "specs/weekly-update-edit-delete/"
+      "spec_dir": "specs/weekly-update-edit-delete/",
+      "note": "Pendiente de QA humana end-to-end antes de uso real en dev: editar un avance (200), eliminar un avance (200), y en particular el caso R18 — pedir un updateId que pertenece a otro proyecto debe dar 404, no 500/200. No se pudo ejercitar en este sandbox por falta de credenciales Supabase y PIN; 401/400 sí se verificaron por curl real, y la lógica de findUpdate() (filtra por id + project_id con maybeSingle()) fue revisada en código por reviewer."
     }
   ]
 }

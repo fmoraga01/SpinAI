@@ -226,8 +226,12 @@ todo el drawer para un problema que es específico de una fila entre
 potencialmente muchas — mismo motivo por el que `MembersPanel` no necesita
 un estado de error global para sus acciones por fila.
 
-`ProjectDrawer` pasa `onEditUpdate={handleEditUpdate}`
-`onDeleteUpdate={handleDeleteUpdate}` a `ProjectTimeline`. No se agrega
+`ProjectDrawer` pasa `onEdit={handleEditUpdate}`
+`onDelete={handleDeleteUpdate}` a `ProjectTimeline` — nombres de prop
+alineados con la interfaz real (`onEdit`/`onDelete`), corregido post-review
+para no dejar el documento contradiciendo al código ya mergeado (ver
+"Alternativas"/nota de `implementer` en `progress/impl_weekly-update-edit-delete.md`).
+No se agrega
 ningún `useState` nuevo en `ProjectDrawer` para esta feature — todo el
 estado de interacción de editar/borrar vive en `ProjectTimeline` (más
 cohesivo: es estado de UI de esa lista específica, no del drawer en

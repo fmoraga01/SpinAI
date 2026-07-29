@@ -237,3 +237,44 @@ Entry format:
   sandbox) — los 401/400 sí se verificaron por `curl` real contra rutas
   API con un JWT firmado a mano.
 - Merged to dev: commits 8960850, 5e724dd · Promoted to main: pending
+
+## weekly-update-edit-delete — done 2026-07-29
+
+- Requirements: R1–R21, see specs/weekly-update-edit-delete/requirements.md
+- Summary: cierra el hueco dejado a propósito por `weekly-update-entry`
+  (solo crear) agregando **editar** y **eliminar** avances semanales
+  existentes desde el timeline del drawer de detalle. Edición: la fila se
+  expande a un formulario completo reutilizando `WeeklyUpdateFields.tsx`
+  (mismo cálculo `mondayOf()` que crear), un solo submit vía `PATCH`.
+  Eliminación: confirmación inline de dos pasos con auto-revert a 3s
+  (patrón de `MembersPanel.tsx`), no el modal pesado de borrar-proyecto —
+  justificado porque un avance individual no tiene cascada. Solo una fila
+  editable o con confirmación de borrado a la vez, garantizado
+  estructuralmente. Rutas nuevas `PATCH`/`DELETE
+  /api/proyectos/[id]/avances/[updateId]`, con `findUpdate()` filtrando
+  por `id` **y** `project_id` en una sola query vía `.maybeSingle()` (no
+  `.single()`, deliberado — evita que "0 filas" caiga en un 500 en vez del
+  404 que exige R18) para cubrir tanto "avance inexistente" como "avance
+  de otro proyecto" con la misma respuesta honesta. Reutiliza carácter por
+  carácter la validación de `weekOf` parseable que se corrigió en la
+  feature anterior — no reintrodujo ese bug. `npm run verify` pasa
+  completo (13 tests, sin tests nuevos porque no hay lógica pura nueva en
+  `lib/`).
+- **Una sola vuelta de revisión, aprobada sin rechazos** — primera vez en
+  esta serie de features. `reviewer` verificó con especial cuidado los dos
+  puntos que habían causado rechazos en features anteriores (validación de
+  fecha no reintroducida, y el caso cross-project de R18 con `maybeSingle()`
+  en vez de `single()`) y confirmó ambos por lectura de código, no por el
+  reporte de `implementer`. También confirmó cero regresiones sobre
+  `project-crud`/`weekly-update-entry` (POST de creación fuera del diff,
+  `ProjectDrawer` solo monta `ProjectTimeline` en modo vista, cambios
+  puramente aditivos) — ver `progress/review_weekly-update-edit-delete.md`.
+  Encontró una inconsistencia menor en `design.md` (nombres de prop
+  `onEditUpdate`/`onDeleteUpdate` vs. `onEdit`/`onDelete` reales) corregida
+  como seguimiento no bloqueante, sin tocar código.
+- **Pendiente de QA humana end-to-end antes de uso real en dev**: editar
+  un avance (200), eliminar un avance (200), y en particular el caso R18 —
+  pedir un `updateId` que pertenece a otro proyecto debe dar 404, no
+  500/200. Mismo blocker de entorno que las tres features anteriores (sin
+  `.env.local`/PIN); 401/400 sí verificados por `curl` real.
+- Merged to dev: commit 703c684 · Promoted to main: pending
