@@ -28,6 +28,28 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
+// Mismo lenguaje visual que MemberSelect (app/components/TemplateEditor.tsx):
+// se apaga la flecha nativa del navegador y se dibuja una propia (▾) para que
+// el <select> deje de verse con el estilo default del sistema.
+const selectStyle: React.CSSProperties = {
+  ...inputStyle,
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  paddingRight: 30,
+  cursor: "pointer",
+};
+
+const selectArrowStyle: React.CSSProperties = {
+  position: "absolute",
+  right: 12,
+  top: "50%",
+  transform: "translateY(-50%)",
+  fontSize: 9,
+  color: "#6B7280",
+  pointerEvents: "none",
+};
+
 function focusHandlers(): {
   onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
   onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
@@ -120,18 +142,21 @@ export default function ProjectForm({
         />
       </Field>
       <Field label="Estado">
-        <select
-          value={values.status}
-          onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as ProjectStatus }))}
-          style={inputStyle}
-          {...focusHandlers()}
-        >
-          {PROJECT_STATUS_OPTIONS.map(([status, label]) => (
-            <option key={status} value={status}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <div style={{ position: "relative" }}>
+          <select
+            value={values.status}
+            onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as ProjectStatus }))}
+            style={selectStyle}
+            {...focusHandlers()}
+          >
+            {PROJECT_STATUS_OPTIONS.map(([status, label]) => (
+              <option key={status} value={status}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <span style={selectArrowStyle}>▾</span>
+        </div>
       </Field>
       <Field label="Resumen">
         <textarea
