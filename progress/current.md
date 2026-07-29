@@ -1,12 +1,13 @@
 # Current session state
 
 - **Feature:** project-status-field
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-07-29
-- **Role active:** none — waiting on human approval of the spec
-- **Next step:** Human reviews `specs/project-status-field/requirements.md`,
-  `design.md`, and `tasks.md` (especially the migration SQL sequencing
-  against real Supabase data, and the list of retired/modified requirements
-  across `project-status-tracking`, `project-crud`, `weekly-update-entry`,
-  `weekly-update-edit-delete`) and gives explicit go-ahead. Once approved,
-  leader sets status to `in_progress` and invokes `implementer`.
+- **Role active:** implementer
+- **Next step:** `implementer` ejecuta `specs/project-status-field/tasks.md`
+  (T1-T10) de punto a punto, dejando `progress/impl_project-status-field.md`
+  con trazabilidad requirement → verificación. La migración SQL (T1) queda
+  lista como archivo, pero **ningún agente la aplica** contra Supabase —
+  eso lo hace el humano manualmente en el SQL Editor cuando decida. Al
+  terminar el resto de tareas: `npm run verify`, luego el feature pasa a
+  `in_review` para `reviewer`.
