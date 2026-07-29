@@ -375,7 +375,6 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDeleteModal(false)}
           deleting={deleting}
-          error={null}
         />
       )}
     </>

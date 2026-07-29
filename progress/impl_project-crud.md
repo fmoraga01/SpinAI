@@ -281,6 +281,76 @@ se pudieron verificar de punta a punta contra un servidor local real:
   **No verificado en el dashboard de Supabase** (sin acceso al proyecto
   real, mismo bloqueo que R17 de `project-status-tracking`).
 
+## Fix post-rechazo (2026-07-29) — restaurar empty state (R5 de `project-status-tracking`)
+
+`reviewer` rechazó la primera entrega: en la versión anterior,
+`app/proyectos/page.tsx` reemplazaba el bloque de empty state
+("Sin proyectos cargados" + ícono + subtítulo, mostrado cuando
+`projects.length === 0`) por la grilla incondicional con `CreateProjectCard`
+como único ítem. Eso violaba R5 de `specs/project-status-tracking/requirements.md`
+("WHEN la lista de proyectos está vacía THEN el sistema SHALL mostrar un
+empty state... no una lista en blanco"), requirement que
+`specs/project-crud/requirements.md` deja explícitamente vigente sin
+cambios (R1-R17 de esa spec).
+
+**Cambio aplicado en `app/proyectos/page.tsx`** (Opción A del review, la
+que pedía el reviewer explícitamente): se separó la rama
+`!loading && !error` en dos ramas condicionadas por `projects.length`:
+
+- `projects.length === 0`: se restauró el bloque original de empty state
+  (mismo ícono SVG, mismo título "Sin proyectos cargados", mismo layout
+  centrado), y **dentro** de ese mismo bloque, debajo del subtítulo, se
+  agregó `<CreateProjectCard onClick={handleOpenCreate} />` envuelto en un
+  contenedor `maxWidth: 280` para que no ocupe todo el ancho del bloque
+  centrado. El copy del subtítulo pasó de pasivo ("Todavía no hay
+  proyectos registrados. Vuelve a revisar más tarde.") a accionable
+  ("Crea el primero para empezar a hacer seguimiento."), siguiendo la
+  sugerencia del reviewer de que ese ajuste de texto está dentro del
+  espíritu de R5 (sigue siendo "un empty state consistente con el resto
+  de la app", solo que ahora refleja que el usuario puede actuar).
+- `projects.length > 0`: se mantiene el comportamiento de la entrega
+  anterior — grid con `CreateProjectCard` como primer ítem seguido del
+  `.map()` de `ProjectCard` (R1).
+
+Con esto, R5 de `project-status-tracking` queda satisfecho (hay empty
+state real, no una lista en blanco cuando `projects.length === 0`) y R1 de
+`project-crud` sigue cumplido en ambos casos (la card "Crear proyecto"
+siempre está visible, tanto vacío como con proyectos). No se creó ningún
+componente nuevo — se reutilizó `CreateProjectCard` tal cual ya existía.
+
+**Limpieza no bloqueante también aplicada** (nota de `reviewer`): se quitó
+el prop `error: string | null` muerto de `DeleteProjectModal` (nunca
+recibía otra cosa que `null` desde `ProjectDrawer`, ya que R15 exige que el
+error de `DELETE` se muestre en el drawer, no en el modal) — se eliminó el
+prop de la interfaz, su bloque de render condicional, y el `error={null}`
+que le pasaba `ProjectDrawer.tsx`. Sin cambio de comportamiento observable.
+
+**Verificación de R5 (`project-status-tracking`)**: manual QA por lectura
+de código — con `projects.length === 0`, `page.tsx` renderiza el bloque de
+empty state (ícono + título + subtítulo + `CreateProjectCard`) en vez del
+grid; con `projects.length > 0` renderiza el grid normal. No se pudo
+verificar visualmente en navegador (mismo bloqueo de PIN/Supabase
+documentado en el resto de este reporte — no hay entorno de browser en
+esta sesión), pero el flujo de renderizado condicional es directo y
+symmetric con el código previo a la primera entrega (mismo bloque de empty
+state, solo con el `CreateProjectCard` agregado adentro).
+
+**Verificación de R1 tras el fix**: sigue cumplido igual que antes en
+ambas ramas — `CreateProjectCard` es "primer elemento del grid" cuando hay
+proyectos, y único elemento accionable del empty state cuando no los hay.
+
+### `npm run verify` tras el fix
+
+```
+npm run lint             → sin errores
+npm run build             → compila, TS check ok, /api/proyectos y
+                             /api/proyectos/[id] siguen como rutas dinámicas (ƒ)
+npm run test               → 9 tests pasan (sin cambios, no se tocó lib/)
+npm run check-sdd-state    → ok, "single active feature: project-crud (in_progress)"
+```
+
+Exit code 0 end-to-end.
+
 ## Bloqueado — pasos pendientes del humano
 
 1. Los mismos dos pasos ya pendientes de `project-status-tracking`
