@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { WeeklyUpdate } from "@/lib/types";
-import HealthBadge from "./HealthBadge";
 
 function weekLabel(weekOf: string): string {
   return new Date(weekOf + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
@@ -82,7 +81,6 @@ export default function ProjectTimeline({ updates }: { updates: WeeklyUpdate[] }
                 padding: "10px 14px",
               }}
             >
-              <HealthBadge status={group.update.status} />
               <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px" }}>
                 {group.update.note}
               </p>

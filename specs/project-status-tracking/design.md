@@ -237,12 +237,18 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
   deja la estructura de `Group` por si en el futuro hay más de una
   actualización por semana).
 - Cada fila muestra la fecha formateada (`toLocaleDateString("es-CL", ...)`,
-  igual que el resto de la app), el `HealthBadge` correspondiente, y el
-  texto de la actualización. No es un link externo (a diferencia de
-  `Timeline.tsx` que linkea a `artificialanalysis.ai`) — es texto estático,
-  así que la fila no es un `<a>`, es un `<div>`.
+  igual que el resto de la app) y el texto de la actualización. No es un
+  link externo (a diferencia de `Timeline.tsx` que linkea a
+  `artificialanalysis.ai`) — es texto estático, así que la fila no es un
+  `<a>`, es un `<div>`.
 - Orden descendente (más reciente primero) vía `.sort()` sobre `weekOf`,
   igual criterio que `Timeline.tsx` usa para `releaseDate`.
+- **[2026-07-29] `HealthBadge` retirado de cada fila** — a pedido
+  explícito del usuario, ya no se repite el chip de estado por semana
+  (era redundante: el estado de salud del proyecto ya se muestra una
+  vez, en el header del drawer). `ProjectTimeline.tsx` deja de importar
+  `HealthBadge`. `healthFromTimeline()` y el modelo `WeeklyUpdate.status`
+  no cambian — el dato sigue ahí, solo no se renderiza por fila.
 
 ## Listado (`page.tsx` + `ProjectCard.tsx`)
 

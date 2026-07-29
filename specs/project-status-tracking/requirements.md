@@ -47,10 +47,15 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   estado vacío explícito~~ — ya no aplica: la sección de KPIs no se
   renderiza en absoluto (ver R6), independiente de si el proyecto tiene
   KPIs o no.
-- **R9**: WHEN el timeline de avances semanales de un proyecto tiene una o
-  más entradas THEN el sistema SHALL agruparlas por semana, en orden
-  cronológico descendente (la más reciente primero), mostrando para cada
-  entrada: fecha de la semana, estado/semáforo, y texto de la actualización.
+- **R9** *(actualizado 2026-07-29)*: WHEN el timeline de avances semanales
+  de un proyecto tiene una o más entradas THEN el sistema SHALL
+  agruparlas por semana, en orden cronológico descendente (la más
+  reciente primero), mostrando para cada entrada: fecha de la semana y
+  texto de la actualización. ~~estado/semáforo por fila~~ — retirado a
+  pedido explícito del usuario (el chip de estado seguía siendo redundante
+  fila por fila; el estado de salud del proyecto se sigue mostrando una
+  sola vez, en el header del drawer, derivado igual que antes de la
+  entrada más reciente vía `healthFromTimeline()`, sin cambios en R2/R3).
 - **R10**: WHEN un proyecto no tiene ninguna entrada de avance semanal
   THEN el sistema SHALL mostrar un estado vacío para esa sección en vez de
   un timeline en blanco sin explicación.
