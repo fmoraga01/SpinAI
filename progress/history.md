@@ -340,3 +340,55 @@ Entry format:
   hacer QA end-to-end de crear/editar proyecto y de agregar/editar
   avance.
 - Merged to dev: commits 3b22702, a38925c · Promoted to main: pending
+
+## project-status-values-rename — done 2026-07-29
+
+- Requirements: R1–R16, see specs/project-status-values-rename/requirements.md
+- Summary: cambio semántico del campo `status` de `projects` (recién
+  movido ahí en `project-status-field`) — deja de representar
+  salud/riesgo (`on_track`/`at_risk`/`delayed`, verde/ámbar/rojo) y pasa a
+  representar **etapa de ciclo de vida del proyecto**: `desarrollo` /
+  `piloto` / `produccion`. Migración nueva (no aplicada por ningún agente,
+  paso manual pendiente del humano): `drop constraint
+  projects_status_check` → 3 `update` por `id` exacto sobre los proyectos
+  reales existentes, según el mapeo que dio el usuario (Asistente de
+  ventas Easy 2.0 → `desarrollo`, Probador Virtual → `piloto`, Asesor de
+  proyectos → `desarrollo`) → `add constraint` nueva con los 3 valores.
+  `HealthStatus` → `ProjectStatus`, `HealthBadge.tsx` → `StatusBadge.tsx`
+  (7 archivos, rename mecánico verificado por grep en ambas rondas de
+  review). Nueva paleta gris (`desarrollo`, etapa inicial) → azul (color
+  primario ya existente de la app, `piloto`) → verde (`producción`, ahora
+  significa "en vivo", no "todo bien") — se descartó el esquema
+  verde/ámbar/rojo porque ya no comunica riesgo. Las 4 rutas API de
+  `/proyectos` no necesitaron cambio de código: ya delegaban en
+  `VALID_STATUSES` (`lib/projects.ts`), que sí cambió sus 3 valores.
+  `specs/project-status-field/` quedó anotada in situ (R1, R14, R27) para
+  reflejar que esta feature reemplazó los valores que esa spec había
+  definido.
+- **Ciclo de revisión con un cuelgue en el medio, no un rechazo**: el
+  primer intento de `reviewer` quedó sin responder (transcripción dejó de
+  crecer, sin notificación) — se relanzó desde cero por pedido explícito
+  del usuario, sin asumir nada del intento anterior. El relanzamiento hizo
+  la auditoría completa de forma independiente: confirmó la secuencia
+  exacta de la migración (nombre de constraint verificado carácter por
+  carácter contra la migración previa, sin `if exists` a propósito para
+  fallar ruidoso si algo no calza), los 3 ids/mapeos exactos, un barrido
+  de grep reproducido a mano (sin residuos de `HealthStatus`/`HealthBadge`/
+  valores viejos fuera de bitácora/specs históricos), y verificó las 4
+  rutas API con un dev server real + PIN de prueba + cookie JWT real (no
+  un JWT firmado a mano como en features anteriores) — confirmando 400
+  con los valores viejos y que los valores nuevos atraviesan la validación
+  (mueren en `getSupabaseAdmin()` por falta de credenciales, como se
+  espera en este sandbox). Aprobó — ver
+  `progress/review_project-status-values-rename.md`. Encontró y se
+  corrigió de paso un comentario con cita imprecisa en `ProjectDrawer.tsx`
+  (decía "R4 de la migración", el mapeo real es R2 de esta spec).
+- **ACCIÓN REQUERIDA del humano antes de usar `/proyectos` en dev — no es
+  QA opcional**: aplicar
+  `supabase/migrations/20260729180000_cambiar_valores_status_projects.sql`
+  en el SQL Editor de Supabase. Hasta entonces el código y los datos
+  quedan desincronizados: crear/editar un proyecto es rechazado por el
+  `check` viejo de la base, y el badge de los 3 proyectos existentes (hoy
+  `on_track`) no renderiza bien porque `StatusBadge` ya no tiene esa clave
+  en su config.
+- Merged to dev: commit 4410de7 · Promoted to main: pending

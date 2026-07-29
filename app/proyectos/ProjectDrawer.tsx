@@ -358,7 +358,7 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                 country: project?.country ?? "",
                 businessUnit: project?.businessUnit ?? "",
                 summary: project?.summary ?? "",
-                status: project?.status ?? "desarrollo", // modo creación: "desarrollo" como default del <select> (mismo criterio que R4 de la migración)
+                status: project?.status ?? "desarrollo", // modo creación: "desarrollo" como default del <select> (mapeo R2 de project-status-values-rename)
               }}
               submitLabel={project === null ? "Crear proyecto" : "Guardar cambios"}
               onSubmit={handleFormSubmit}

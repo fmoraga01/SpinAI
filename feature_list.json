@@ -70,9 +70,10 @@
     {
       "id": "project-status-values-rename",
       "title": "Cambiar los valores de projects.status de salud/riesgo (on_track/at_risk/delayed) a etapa de ciclo de vida (desarrollo/piloto/produccion)",
-      "status": "in_review",
+      "status": "done",
       "created": "2026-07-29",
-      "spec_dir": "specs/project-status-values-rename/"
+      "spec_dir": "specs/project-status-values-rename/",
+      "note": "ACCIÓN REQUERIDA antes de usar /proyectos en dev: aplicar supabase/migrations/20260729180000_cambiar_valores_status_projects.sql manualmente en el SQL Editor de Supabase. Mientras no se aplique, el código y los datos quedan desincronizados: crear/editar un proyecto será rechazado por la base (el check constraint todavía solo acepta on_track/at_risk/delayed) y el badge de los 3 proyectos existentes (todos en on_track) no va a renderizar bien (StatusBadge ya no tiene esa clave en su config). Migración: drop constraint -> 3 update por id exacto (Asistente de ventas Easy 2.0 -> desarrollo, Probador Virtual -> piloto, Asesor de proyectos -> desarrollo) -> add constraint nueva. Después de aplicarla: QA visual de los 3 badges y confirmar que crear/editar con los nuevos valores funciona end-to-end."
     }
   ]
 }
