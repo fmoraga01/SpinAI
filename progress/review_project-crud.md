@@ -245,3 +245,136 @@ entrada para `project-crud`. Es tarea de `leader` al pasar a `done`
 
 No hace falta rehacer nada más: el resto del diff quedó bien y no necesita
 otra pasada.
+
+---
+
+# Segunda vuelta — 2026-07-29 (post-fix `b61b0bd`)
+
+**Verdict: APPROVED**
+
+El único motivo bloqueante de la primera vuelta está **resuelto**. La
+feature `project-crud` queda aprobada para pasar a `done`, con las
+condiciones no bloqueantes de la primera vuelta intactas (ver más abajo:
+la nota de QA humana end-to-end sigue siendo obligatoria al cerrar).
+
+Revisión hecha por una sesión que no escribió este código, leyendo el
+código real y corriendo `npm run verify` de forma independiente.
+
+## 1. Motivo del rechazo anterior — RESUELTO
+
+`implementer` aplicó la **Opción A** del review anterior. Verificado en
+`app/proyectos/page.tsx` (leído completo, no solo el resumen):
+
+- `page.tsx:95-117` — rama `!loading && !error && projects.length === 0`:
+  el bloque de empty state está restaurado literalmente (mismo contenedor
+  centrado, mismo ícono SVG de documento con `#2C40FF0f` / `#2C40FF22`,
+  mismo título "Sin proyectos cargados"). Confirmado con
+  `git diff 3afa68b HEAD -- app/proyectos/page.tsx`: respecto de la versión
+  pre-feature los únicos cambios en ese bloque son el `padding`
+  (`"56px 24px"` → `"56px 24px 24px"`), el copy del subtítulo y el
+  `CreateProjectCard` agregado. **R5 de `project-status-tracking` cumplido**
+  — hay un empty state real, no una lista en blanco.
+- `page.tsx:113-115` — dentro de ese mismo bloque,
+  `<CreateProjectCard onClick={handleOpenCreate} />` envuelto en
+  `maxWidth: 280`. **R1 de `project-crud` cumplido también con 0 proyectos**:
+  la card "Crear proyecto" es visible y accionable. `CreateProjectCard`
+  usa `width: "100%"` + `minHeight: 120`, así que se adapta al contenedor
+  angosto sin romperse.
+- `page.tsx:119-124` — rama `projects.length > 0` sin cambios respecto de
+  la primera entrega: grid con `CreateProjectCard` como **primer** elemento
+  seguido del `.map()` de `ProjectCard` (R1 al pie de la letra).
+
+Las dos condiciones se satisfacen **simultáneamente**, que era exactamente
+lo que pedía el review anterior. El cambio de copy ("Vuelve a revisar más
+tarde" → "Crea el primero para empezar a hacer seguimiento") es el ajuste
+menor que la Opción A autorizaba: R5 solo exige "un empty state consistente
+con el resto de la app", y el bloque lo sigue siendo.
+
+Transición verificada por lectura: al crear el primer proyecto desde el
+empty state, `handleCreated` (`page.tsx:60-62`) hace
+`setProjects((prev) => [...prev, project])`, `projects.length` pasa a 1 y la
+página cambia sola a la rama del grid, con el drawer abierto en modo vista
+(R3). No queda ningún estado intermedio inconsistente.
+
+## 2. Limpieza del prop `error` — no rompió nada
+
+`git diff e59d793 HEAD -- app/proyectos/DeleteProjectModal.tsx
+app/proyectos/ProjectDrawer.tsx` muestra exactamente 3 borrados y ninguna
+adición: la línea `error: string | null` de la interfaz `Props`, el
+parámetro desestructurado, el bloque `{error && (<p .../>)}` y el
+`error={null}` del call site. Nada más.
+
+**R15 de `project-crud` sigue cumplido.** Verificado en el código, no en el
+reporte:
+- `ProjectDrawer.tsx:141-145` (`catch` de `handleDeleteConfirm`):
+  `setShowDeleteModal(false)` + `setDeleteError(...)`, y **no** llama a
+  `onDeleted` → el proyecto no se quita del listado.
+- `ProjectDrawer.tsx:346-348`: el `deleteError` se pinta dentro del cuerpo
+  del drawer. Ese render vive en la rama
+  `formMode === "view" && !loading && !error && project !== null`, que es
+  precisamente el estado en que queda el drawer tras un `DELETE` fallido
+  (`project` sigue seteado, `formMode` nunca cambió, `loading`/`error` de
+  carga siguen en `false`) — o sea, el mensaje **sí** es alcanzable.
+- El estado `deleteError` y su setter siguen intactos; lo eliminado era el
+  camino paralelo muerto dentro del modal, no este.
+
+Confirmado además que no quedaron referencias huérfanas: las únicas
+menciones de `DeleteProjectModal`/`deleteError` en `app/` son las 6 líneas
+esperadas (import, estado, render del error, call site, definición).
+
+R14 (Escape anidado) tampoco se vio afectado: `ProjectDrawer.tsx:94` mantiene
+el `if (showDeleteModal) return;` y `DeleteProjectModal.tsx:13-19` su propio
+listener.
+
+## 3. `npm run verify` — corrido por mí, exit 0
+
+No confié en el reporte de `implementer`. Corrido de forma independiente
+sobre el árbol actual (working tree limpio, `git status --short` vacío):
+
+```
+npm run lint            → PASS
+npm run build           → PASS; /api/proyectos y /api/proyectos/[id]
+                          siguen listadas como rutas dinámicas (ƒ)
+npm run test            → PASS, 2 archivos / 9 tests
+npm run check-sdd-state → PASS, "single active feature: project-crud (in_review)"
+EXIT=0
+```
+
+## 4. Checkpoints (`CHECKPOINTS.md` → "Before `in_review`") — re-verificados
+
+| # | Checkpoint | Resultado |
+|---|---|---|
+| 1 | Todas las tareas de `tasks.md` marcadas `[x]` | **PASS** — T1-T8 todas `[x]` |
+| 2 | `npm run verify` pasa | **PASS** — corrido por mí, exit 0 |
+| 3 | Cambios en `lib/` tienen test Vitest real | **PASS con reserva** — sin cambios desde la vuelta 1; ver Nota 1 de arriba (sigue vigente, y `lib/projects.ts` no se tocó en el fix) |
+| 4 | `progress/impl_<feature>.md` con verificación por `R<n>` | **PASS** — R1-R26 sin huecos, más la sección "Fix post-rechazo (2026-07-29)" que agrega la verificación explícita de R5 de `project-status-tracking` y re-confirma R1. La primera parte del reporte quedó intacta, como corresponde |
+| 5 | `design-check` si cambió `app/components/*.tsx` | **PASS (no aplica)** — `git diff --name-only 3afa68b HEAD` confirma que ningún archivo de `app/components/` fue tocado en toda la feature; ver Nota 2 de la vuelta 1 |
+| 6 | `feature_list.json` con una sola feature activa | **PASS** — solo `project-crud` en `in_review` |
+| — | **Fidelidad al spec aprobado** | **PASS** — era el único FAIL de la vuelta 1; resuelto (§1) |
+
+## 5. Observaciones de la vuelta 1 — estado
+
+- **Bloqueos de entorno (sin Supabase, sin PIN):** ya evaluados y aceptados
+  en la primera vuelta. **La condición sigue en pie y viaja a `done`:** al
+  cerrar, `leader` debe dejar en `progress/history.md` y en la entrada de
+  `feature_list.json` la nota de **"pendiente de QA humana end-to-end antes
+  de uso real en dev"** (crear 201, editar 200, borrar 200 + confirmar la
+  cascada de `project_kpis`/`project_weekly_updates` en Supabase, y
+  `PATCH`/`DELETE` con id inexistente → 404). A esa lista se suma ahora un
+  ítem visual menor: **ver el empty state con 0 proyectos** (el fix no se
+  pudo verificar en navegador, solo por lectura de código).
+- **Las 5 desviaciones de `design.md`:** ya evaluadas en la vuelta 1. La #2
+  (empty state) queda resuelta; la #4 (prop `error` muerto) queda cerrada
+  con la limpieza de esta vuelta. Las otras tres se mantienen tal cual,
+  aceptadas.
+- **Notas 1, 4 y 5** de la vuelta 1 siguen vigentes como tales (fricción de
+  redacción en `docs/specs.md:113` para `leader`/`spec-author`; la feature
+  necesitó commits sucesivos en `dev`; falta la entrada de
+  `progress/history.md`, tarea de `leader` al cerrar). Ninguna es
+  bloqueante.
+
+## Veredicto final
+
+**APPROVED.** No queda ningún ítem bloqueante. `leader` puede mover
+`project-crud` a `done`, arrastrando la nota de QA humana pendiente descrita
+arriba.

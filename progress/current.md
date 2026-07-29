@@ -1,15 +1,17 @@
 # Current session state
 
-- **Feature:** project-crud
-- **Status:** in_review (segunda vuelta)
-- **Started:** 2026-07-29
-- **Role active:** reviewer
-- **Next step:** `implementer` corrigió el único motivo de rechazo de la
-  primera vuelta (empty state de `/proyectos` restaurado con
-  `CreateProjectCard` dentro, cumple R5 de `project-status-tracking` y R1
-  de `project-crud` a la vez) y limpió el prop `error` muerto de
-  `DeleteProjectModal`. Commit `b61b0bd`. `reviewer` debe auditar
-  puntualmente este fix (no repetir la revisión completa) y dar veredicto
-  final. Si aprueba: `done`, resumen en `progress/history.md`, limpiar
-  este archivo. Si rechaza de nuevo: reportar al humano antes de otro
-  ciclo.
+When `leader` starts a feature, this file gets replaced with:
+
+```markdown
+# Current session state
+
+- **Feature:** <feature-id>
+- **Status:** in_progress | in_review
+- **Started:** YYYY-MM-DD
+- **Role active:** spec-author | implementer | reviewer
+- **Next step:** <what happens next and who does it>
+```
+
+This file always reflects the *single* active feature (see the one-feature-
+at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
+is cleared from here and summarized in `progress/history.md`.

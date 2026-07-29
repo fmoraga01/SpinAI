@@ -144,3 +144,48 @@ Entry format:
   del cliente (mitad de R17) se verificaron igual, sin depender de esos
   pasos.
 - Merged to dev: commits 28512f2, 5fb30e4 · Promoted to main: pending
+
+## project-crud — done 2026-07-29
+
+- Requirements: R1–R26, see specs/project-crud/requirements.md (R1-R17 de
+  project-status-tracking siguen vigentes sin cambios, ninguno retirado
+  salvo R8 ya retirado antes de esta feature)
+- Summary: CRUD completo (crear, editar, eliminar) para `/proyectos`, que
+  hasta ahora era solo lectura. Card "Crear proyecto" como primer elemento
+  del grid (`CreateProjectCard.tsx`), reutilizando `ProjectDrawer.tsx`
+  existente en tres modos (vista/creación/edición) en vez de un modal
+  nuevo, con `ProjectForm.tsx` compartido entre crear y editar (4 campos:
+  nombre, país, unidad de negocio, resumen) y `DeleteProjectModal.tsx` con
+  confirmación explícita que nombra el proyecto. Rutas nuevas `POST
+  /api/proyectos` y `PATCH`/`DELETE /api/proyectos/[id]`, mismo patrón
+  `isAuthenticated()` + `getSupabaseAdmin()` que las rutas `GET`
+  existentes — sin cambios de RLS (el schema ya dejaba `project_kpis`/
+  `project_weekly_updates` con `on delete cascade`, así que el borrado no
+  requiere lógica manual). KPIs quedan explícitamente fuera del formulario
+  en esta versión (siguen gestionándose vía SQL Editor); `PATCH` elegido
+  sobre `PUT` por claridad de API, no por comportamiento — ambas
+  decisiones aprobadas por el humano antes de implementar. `npm run
+  verify` pasa completo.
+- **Ciclo de revisión (2 rondas)**: la primera entrega (commit `e59d793`)
+  fue rechazada por `reviewer` independiente — había reemplazado el empty
+  state de `/proyectos` (0 proyectos) por la grilla mostrando solo la card
+  de crear, violando R5 de `project-status-tracking` (vigente, nunca
+  retirado). El resto de la implementación pasó sin objeciones, incluidas
+  dos desviaciones de `design.md` evaluadas y aceptadas como mejoras
+  (`ProjectDrawer` decide POST-vs-PATCH con `project === null` en vez del
+  prop `projectId`, evitando un doble POST al editar sin cerrar el drawer
+  tras crear). Fix (commit `b61b0bd`): empty state restaurado con
+  `CreateProjectCard` dentro, cumpliendo R5 y R1 a la vez; de paso se
+  limpió un prop `error` muerto en `DeleteProjectModal`. Segunda vuelta de
+  `reviewer` verificó el fix contra el código real (no el resumen) y
+  aprobó — ver `progress/review_project-crud.md` (ambas rondas).
+- **Pendiente de QA humana end-to-end antes de uso real en dev**: crear
+  (201), editar (200), borrar (200 + confirmar la cascada de
+  `project_kpis`/`project_weekly_updates` en el Table Editor de Supabase),
+  `PATCH`/`DELETE` con id inexistente (404), y ver el empty state con 0
+  proyectos en navegador. No se pudo ejercitar en este sandbox por falta
+  de credenciales Supabase (no hay `.env.local`) y de PIN configurado —
+  mismo blocker ya aceptado en `project-status-tracking`. Los 401/400 sí
+  se verificaron por `curl` real contra rutas API con un JWT firmado a
+  mano.
+- Merged to dev: commits e59d793, b61b0bd · Promoted to main: pending
