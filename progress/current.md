@@ -1,21 +1,16 @@
 # Current session state
 
 - **Feature:** project-status-field
-- **Status:** in_progress (reviewer rechazó la primera vuelta)
+- **Status:** in_review (segunda vuelta)
 - **Started:** 2026-07-29
-- **Role active:** implementer
-- **Next step:** `reviewer` rechazó en `progress/review_project-status-field.md`
-  por un único gap acotado: cambios de lógica en `lib/projects.ts`
-  (`rowToProject()` ahora mapea `status`, `rowToUpdate()` dejó de
-  mapearlo, `VALID_STATUSES` centralizado del que dependen las 4 rutas
-  API) sin ningún test de Vitest — `docs/specs.md` exige test real para
-  lógica en `lib/`, "verificado por lectura de código" no cuenta. La
-  migración SQL quedó auditada línea por línea y está correcta (backfill
-  antes de NOT NULL, sin hardcodear el proyecto real, DROP COLUMN al
-  final) — no tocar eso. Fix: agregar tests de `rowToProject()` /
-  `rowToUpdate()` / `VALID_STATUSES` en `lib/projects.test.ts`. De paso,
-  dos detalles menores: comentario obsoleto en `HealthBadge.tsx:9-10`
-  (menciona un `<select>` de `WeeklyUpdateFields` que ya no existe), y un
-  conteo invertido en `progress/impl_project-status-field.md` ("5
-  mondayOf + 4 otros" debería ser al revés). Una vez corregido: `npm run
-  verify` de nuevo, volver a `in_review` para que `reviewer` re-audite.
+- **Role active:** reviewer
+- **Next step:** `implementer` corrigió el único motivo de rechazo (3
+  tests de Vitest nuevos para `rowToProject()`/`rowToUpdate()`/
+  `VALID_STATUSES` en `lib/projects.test.ts`) más dos detalles menores
+  (comentario obsoleto en `HealthBadge.tsx`, conteo corregido en el
+  impl doc). Commit `a38925c`. `reviewer` debe auditar puntualmente
+  este fix (no repetir la revisión completa — la migración SQL y el
+  resto ya quedaron aprobados en la primera vuelta) y dar veredicto
+  final. Si aprueba: `done`, resumen en `progress/history.md`, limpiar
+  este archivo. Si rechaza de nuevo: reportar al humano antes de otro
+  ciclo.

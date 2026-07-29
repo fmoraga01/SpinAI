@@ -62,7 +62,7 @@
     {
       "id": "project-status-field",
       "title": "Mover el campo de estado (on_track/at_risk/delayed) de los avances semanales al proyecto",
-      "status": "in_progress",
+      "status": "in_review",
       "created": "2026-07-29",
       "spec_dir": "specs/project-status-field/"
     }
