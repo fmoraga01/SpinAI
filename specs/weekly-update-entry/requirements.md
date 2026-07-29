@@ -16,26 +16,35 @@ Editor de Supabase.
 
 ## Primer avance al crear un proyecto
 
-- **R1**: WHEN un usuario tiene el formulario de creación de proyecto
-  abierto (`ProjectForm.tsx`, `mode="create"`) THEN el sistema SHALL
-  mostrar una sección opcional "Primer avance semanal (opcional)" con tres
-  campos: fecha (semana), estado, y nota — además de los 4 campos ya
-  existentes de `project-crud` (nombre, país, unidad de negocio, resumen).
-- **R2**: WHILE los tres campos de la sección de avance del formulario de
+- **R1** *(modificado 2026-07-29 por `project-status-field`)*: WHEN un
+  usuario tiene el formulario de creación de proyecto abierto
+  (`ProjectForm.tsx`, `mode="create"`) THEN el sistema SHALL mostrar una
+  sección opcional "Primer avance semanal (opcional)" con ~~tres~~ **dos**
+  campos: fecha (semana) y nota (~~estado~~ retirado de esta sección, ahora
+  vive como campo propio del proyecto) — además de los ~~4~~ **5** campos
+  ya existentes de `project-crud`/`project-status-field` (nombre, país,
+  unidad de negocio, resumen, estado). Ver
+  `specs/project-status-field/requirements.md` R18.
+- **R2** *(modificado 2026-07-29 por `project-status-field`)*: WHILE los
+  ~~tres~~ **dos** campos de la sección de avance del formulario de
   creación están todos vacíos THEN el sistema SHALL tratar el avance como
   no incluido — no bloquea el submit del proyecto (la sección es
   enteramente opcional, R4/R8 de `project-crud` sobre habilitación del
   botón no cambian).
-- **R3**: IF el usuario completa **parcialmente** la sección de avance
-  (algún campo no vacío pero no los tres) THEN el sistema SHALL deshabilitar
+- **R3** *(modificado 2026-07-29 por `project-status-field`)*: IF el
+  usuario completa **parcialmente** la sección de avance (algún campo no
+  vacío pero no los ~~tres~~ **dos**) THEN el sistema SHALL deshabilitar
   el submit del formulario completo y SHALL mostrar un mensaje indicando
   que faltan campos del avance — evita crear un avance a medias o
-  silenciosamente ignorarlo.
-- **R4**: WHEN el usuario confirma la creación del proyecto (botón "Crear
-  proyecto") con la sección de avance completa (los tres campos no vacíos)
-  THEN el sistema SHALL primero crear el proyecto vía `POST /api/proyectos`
-  (comportamiento sin cambios de `project-crud`) y, si la respuesta es
-  `2xx`, SHALL a continuación crear el avance vía `POST
+  silenciosamente ignorarlo. Ver
+  `specs/project-status-field/requirements.md` R19.
+- **R4** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario confirma la creación del proyecto (botón "Crear proyecto") con la
+  sección de avance completa (los ~~tres~~ **dos** campos no vacíos) THEN
+  el sistema SHALL primero crear el proyecto vía `POST /api/proyectos`
+  (comportamiento sin cambios de `project-crud`, salvo que ahora también
+  envía `status`) y, si la respuesta es `2xx`, SHALL a continuación crear
+  el avance (ya sin `status`, ver R18) vía `POST
   /api/proyectos/<id>/avances` usando el `id` del proyecto recién creado.
 - **R5**: IF `POST /api/proyectos` (creación del proyecto) falla THEN el
   sistema SHALL mostrar el error existente de `project-crud` (R5) y SHALL
@@ -59,13 +68,18 @@ Editor de Supabase.
   avances ya registrados ni salir del modo vista del drawer (a diferencia
   del formulario de editar/eliminar proyecto de `project-crud`, que sí
   reemplaza el contenido del drawer).
-- **R9**: WHILE el formulario de "Agregar avance" tiene el campo de fecha,
-  estado o nota vacío THEN el sistema SHALL deshabilitar su botón de
-  confirmar — mismo patrón de habilitación que `ProjectForm.tsx` (R4 de
-  `project-crud`).
-- **R10**: WHEN el usuario confirma el formulario de "Agregar avance" con
-  los tres campos completos THEN el sistema SHALL enviar `POST
-  /api/proyectos/<id>/avances` con el payload, y si la respuesta es `2xx`
+- **R9** *(modificado 2026-07-29 por `project-status-field`)*: WHILE el
+  formulario de "Agregar avance" tiene el campo de fecha o nota vacío
+  (~~o estado~~, campo retirado) THEN el sistema SHALL deshabilitar su
+  botón de confirmar — mismo patrón de habilitación que `ProjectForm.tsx`
+  (R4 de `project-crud`). Ver
+  `specs/project-status-field/requirements.md` R21.
+- **R10** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario confirma el formulario de "Agregar avance" con los ~~tres~~
+  **dos** campos completos THEN el sistema SHALL enviar `POST
+  /api/proyectos/<id>/avances` con el payload (ya sin `status`, ver
+  `specs/project-status-field/requirements.md` R23/R31), y si la respuesta
+  es `2xx`
   SHALL agregar el avance devuelto a `project.updates` en memoria (sin
   refetch completo del proyecto), SHALL refrescar el `HealthBadge` del
   header del drawer en consecuencia (ya se deriva de `updates` vía
@@ -100,22 +114,27 @@ Editor de Supabase.
 - **R15**: WHEN `POST /api/proyectos/<id>/avances` recibe una request sin
   cookie `spinai_token` válida THEN el sistema SHALL responder `401` sin
   crear ningún registro.
-- **R16**: WHEN `POST /api/proyectos/<id>/avances` recibe un body con
-  `weekOf` ausente/no parseable como fecha, `status` ausente o fuera de
-  `["on_track", "at_risk", "delayed"]`, o `note` vacía (tras `trim()`) THEN
-  el sistema SHALL responder `400` sin crear el registro, con un mensaje
-  indicando qué campo falta o es inválido.
+- **R16** *(modificado 2026-07-29 por `project-status-field`)*: WHEN `POST
+  /api/proyectos/<id>/avances` recibe un body con `weekOf` ausente/no
+  parseable como fecha, o `note` vacía (tras `trim()`) THEN el sistema
+  SHALL responder `400` sin crear el registro, con un mensaje indicando qué
+  campo falta o es inválido. ~~`status` ausente o fuera de `["on_track",
+  "at_risk", "delayed"]`~~ — ya no se valida ni se acepta este campo en
+  esta ruta. Ver `specs/project-status-field/requirements.md` R30.
 - **R17**: IF `POST /api/proyectos/<id>/avances` se invoca con un `id` de
   proyecto que no corresponde a ningún proyecto existente THEN el sistema
   SHALL responder `404` sin crear el registro (mismo criterio de
   "verificar existencia antes de escribir" que usa `PATCH`/`DELETE
   /api/proyectos/<id>` de `project-crud`).
-- **R18**: WHEN `POST /api/proyectos/<id>/avances` recibe un body válido
-  para un `id` de proyecto existente y la sesión es válida THEN el sistema
-  SHALL insertar una fila en `project_weekly_updates` vía
-  `getSupabaseAdmin()` con `project_id` igual al `id` de la ruta, y SHALL
-  responder `201` con el `WeeklyUpdate` creado (mapeado con `rowToUpdate()`
-  ya existente en `lib/projects.ts`).
+- **R18** *(modificado 2026-07-29 por `project-status-field`)*: WHEN `POST
+  /api/proyectos/<id>/avances` recibe un body válido para un `id` de
+  proyecto existente y la sesión es válida THEN el sistema SHALL insertar
+  una fila en `project_weekly_updates` vía `getSupabaseAdmin()` con
+  `project_id` igual al `id` de la ruta (ya sin columna `status`, eliminada
+  de la tabla), y SHALL responder `201` con el `WeeklyUpdate` creado
+  (mapeado con `rowToUpdate()` ya existente en `lib/projects.ts`, ya sin
+  campo `status`). Ver `specs/project-status-field/requirements.md`
+  R5/R31.
 
 ## Confidencialidad y control de acceso (heredado, reafirmado)
 

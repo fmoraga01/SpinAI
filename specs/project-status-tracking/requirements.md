@@ -8,13 +8,18 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   SHALL mostrar una lista de tarjetas, una por proyecto, con: nombre del
   proyecto, país, negocio, badge de estado de salud, y fecha de última
   actualización.
-- **R2**: WHEN se calcula el estado de salud de un proyecto para su tarjeta
-  THEN el sistema SHALL derivarlo del semáforo (`on_track` / `at_risk` /
-  `delayed`) de la entrada más reciente del timeline semanal de ese
-  proyecto.
-- **R3**: IF un proyecto no tiene ninguna entrada de avance semanal THEN el
-  sistema SHALL mostrar un estado neutro ("sin datos") en vez de asumir
-  `on_track` u otro estado.
+- **R2** *(modificado 2026-07-29 por `project-status-field`)*: ~~derivarlo
+  del semáforo... de la entrada más reciente del timeline semanal~~ — ya no
+  aplica: el estado de salud de la tarjeta ahora se lee directo de
+  `project.status` (campo propio del proyecto, no derivado de sus avances).
+  El resto de R2 (mostrar un badge de estado en la tarjeta) sigue vigente.
+  Ver `specs/project-status-field/requirements.md` R24.
+- **R3** *(retirado 2026-07-29 por `project-status-field`)*: ~~si un
+  proyecto no tiene ninguna entrada de avance semanal, mostrar un estado
+  neutro ("sin datos")~~ — ya no aplica: con `projects.status not null`, un
+  proyecto siempre tiene un estado propio, independiente de si tiene
+  avances semanales o no. El caso "sin datos" del badge se retira. Ver
+  `specs/project-status-field/requirements.md` R26.
 - **R4** *(reescrito 2026-07-29)*: WHEN un usuario hace click en una
   tarjeta de proyecto THEN el sistema SHALL abrir el detalle en un
   **drawer** deslizante desde la derecha (`ProjectDrawer.tsx`), sin
@@ -28,15 +33,18 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 
 ## Detalle de proyecto (drawer)
 
-- **R6** *(reescrito 2026-07-29)*: WHEN el drawer de detalle está abierto
-  para un proyecto THEN el sistema SHALL mostrar en su header el nombre
-  del proyecto, y en su contenido: badge de estado de salud, país,
-  negocio, resumen de la iniciativa, y el timeline de avances semanales.
-  ~~Ruta `/proyectos/<id>`~~ — **eliminada** (2026-07-29, decisión
-  explícita del usuario): el detalle ya no tiene URL propia, igual que
-  "Equipo"/"Calendario" no la tienen. La sección de KPIs clave-valor
-  tampoco se muestra — ver nota en "Fuera de alcance" (retirada antes,
-  2026-07-29, por un pedido separado).
+- **R6** *(reescrito 2026-07-29; badge modificado 2026-07-29 por
+  `project-status-field`)*: WHEN el drawer de detalle está abierto para un
+  proyecto THEN el sistema SHALL mostrar en su header el nombre del
+  proyecto, y en su contenido: badge de estado de salud, país, negocio,
+  resumen de la iniciativa, y el timeline de avances semanales. ~~Ruta
+  `/proyectos/<id>`~~ — **eliminada** (2026-07-29, decisión explícita del
+  usuario): el detalle ya no tiene URL propia, igual que "Equipo"/
+  "Calendario" no la tienen. La sección de KPIs clave-valor tampoco se
+  muestra — ver nota en "Fuera de alcance" (retirada antes, 2026-07-29, por
+  un pedido separado). El badge de estado del header ahora se lee de
+  `project.status` en vez de derivarse del timeline — ver
+  `specs/project-status-field/requirements.md` R25.
 - **R7** *(reescrito 2026-07-29)*: WHEN se abre el drawer con un `id` que
   no corresponde a ningún proyecto existente (o la request a
   `/api/proyectos/<id>` falla) THEN el sistema SHALL mostrar, dentro del

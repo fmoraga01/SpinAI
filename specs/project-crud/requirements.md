@@ -13,18 +13,24 @@ siguen vigentes sin cambios).
   antes de las `ProjectCard` existentes, con ícono `+` centrado y label
   debajo, estilo fill tenue del color primario (ver `design.md` para los
   valores exactos).
-- **R2**: WHEN un usuario hace click en la card "Crear proyecto" THEN el
-  sistema SHALL abrir `ProjectDrawer` en **modo creación**, con un
-  formulario vacío (nombre, país, unidad de negocio, resumen) — mismo
-  drawer reutilizado, no un modal nuevo ni una página nueva.
-- **R3**: WHEN el usuario completa el formulario de creación con todos los
-  campos requeridos no vacíos y confirma (botón "Crear proyecto") THEN el
-  sistema SHALL enviar `POST /api/proyectos` con el payload, y si la
+- **R2** *(modificado 2026-07-29 por `project-status-field`)*: WHEN un
+  usuario hace click en la card "Crear proyecto" THEN el sistema SHALL
+  abrir `ProjectDrawer` en **modo creación**, con un formulario vacío
+  (nombre, país, unidad de negocio, resumen, ~~y~~ **más** estado — quinto
+  campo obligatorio agregado por `project-status-field`) — mismo drawer
+  reutilizado, no un modal nuevo ni una página nueva. Ver
+  `specs/project-status-field/requirements.md` R15.
+- **R3** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario completa el formulario de creación con todos los campos
+  requeridos no vacíos y confirma (botón "Crear proyecto") THEN el sistema
+  SHALL enviar `POST /api/proyectos` con el payload (ahora incluyendo
+  `status`, ver `specs/project-status-field/requirements.md` R16), y si la
   respuesta es `2xx` SHALL agregar el proyecto devuelto al listado en
   memoria (sin recargar la página) y dejar el drawer abierto mostrando ese
   proyecto en modo vista.
-- **R4**: WHILE el formulario de creación tiene al menos un campo
-  requerido vacío THEN el sistema SHALL deshabilitar el botón de
+- **R4** *(modificado 2026-07-29 por `project-status-field`)*: WHILE el
+  formulario de creación tiene al menos un campo requerido vacío (ahora 5
+  campos, no 4 — ver R2) THEN el sistema SHALL deshabilitar el botón de
   confirmar — mismo patrón que el botón "Agregar" de `MembersPanel.tsx`
   (`disabled={!name.trim()}`).
 - **R5**: IF `POST /api/proyectos` responde con error (`4xx`/`5xx`) THEN el
@@ -37,17 +43,20 @@ siguen vigentes sin cambios).
 - **R6**: WHEN el drawer está en modo vista de un proyecto existente THEN
   el sistema SHALL mostrar un botón "Editar" en el header del drawer,
   junto al badge de estado de salud existente.
-- **R7**: WHEN el usuario hace click en "Editar" THEN el sistema SHALL
-  mostrar el mismo formulario completo de R2, prellenado con los valores
-  actuales del proyecto (nombre, país, unidad de negocio, resumen) — no
-  edición inline campo por campo (decisión explícita del usuario, distinto
-  al patrón de `MembersPanel.tsx`).
-- **R8**: WHEN el usuario confirma cambios válidos en modo edición (mismo
-  criterio de campos no vacíos que R4) THEN el sistema SHALL enviar
-  `PATCH /api/proyectos/<id>` con los 4 campos editables, y si la
-  respuesta es `2xx` SHALL reemplazar el proyecto correspondiente en el
-  listado en memoria con los datos devueltos y SHALL volver el drawer a
-  modo vista.
+- **R7** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario hace click en "Editar" THEN el sistema SHALL mostrar el mismo
+  formulario completo de R2, prellenado con los valores actuales del
+  proyecto (nombre, país, unidad de negocio, resumen, **y estado** — ver
+  `specs/project-status-field/requirements.md` R17) — no edición inline
+  campo por campo (decisión explícita del usuario, distinto al patrón de
+  `MembersPanel.tsx`).
+- **R8** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario confirma cambios válidos en modo edición (mismo criterio de
+  campos no vacíos que R4) THEN el sistema SHALL enviar `PATCH
+  /api/proyectos/<id>` con los ~~4~~ **5** campos editables (agrega
+  `status`), y si la respuesta es `2xx` SHALL reemplazar el proyecto
+  correspondiente en el listado en memoria con los datos devueltos y SHALL
+  volver el drawer a modo vista.
 - **R9**: WHEN el usuario cancela la edición (botón "Cancelar") THEN el
   sistema SHALL descartar los cambios no guardados en el formulario y
   SHALL volver el drawer a modo vista con los datos originales del
@@ -84,12 +93,15 @@ siguen vigentes sin cambios).
 - **R16**: WHEN `POST /api/proyectos` recibe una request sin cookie
   `spinai_token` válida THEN el sistema SHALL responder `401` sin crear
   ningún registro.
-- **R17**: WHEN `POST /api/proyectos` recibe un body con `name`,
-  `country`, `businessUnit` o `summary` vacío(s) (tras `trim()`) o
+- **R17** *(modificado 2026-07-29 por `project-status-field`)*: WHEN `POST
+  /api/proyectos` recibe un body con `name`, `country`, `businessUnit`,
+  `summary` **o `status`** vacío(s)/inválido(s) (tras `trim()`) o
   ausente(s) THEN el sistema SHALL responder `400` sin crear el registro,
-  con un mensaje indicando qué campo falta.
-- **R18**: WHEN `POST /api/proyectos` recibe un body válido y la sesión es
-  válida THEN el sistema SHALL insertar una fila en `projects` vía
+  con un mensaje indicando qué campo falta. Ver
+  `specs/project-status-field/requirements.md` R27.
+- **R18** *(modificado 2026-07-29 por `project-status-field`)*: WHEN `POST
+  /api/proyectos` recibe un body válido (incluyendo `status`) y la sesión
+  es válida THEN el sistema SHALL insertar una fila en `projects` vía
   `getSupabaseAdmin()` y responder `201` con el `Project` creado
   (`kpis: []`, `updates: []`, dado que no se crean filas relacionadas
   automáticamente al crear un proyecto).
@@ -98,14 +110,17 @@ siguen vigentes sin cambios).
 
 - **R19**: WHEN `PATCH /api/proyectos/<id>` recibe una request sin cookie
   válida THEN el sistema SHALL responder `401` sin modificar nada.
-- **R20**: WHEN `PATCH /api/proyectos/<id>` recibe un body con alguno de
-  los 4 campos editables vacío o ausente THEN el sistema SHALL responder
+- **R20** *(modificado 2026-07-29 por `project-status-field`)*: WHEN
+  `PATCH /api/proyectos/<id>` recibe un body con alguno de los ~~4~~ **5**
+  campos editables vacío/inválido o ausente THEN el sistema SHALL responder
   `400` sin modificar el registro (misma validación que R17 — el
-  formulario siempre envía los 4 campos juntos, ver `design.md`).
-- **R21**: WHEN `PATCH /api/proyectos/<id>` recibe un body válido para un
-  `id` existente y la sesión es válida THEN el sistema SHALL actualizar la
-  fila en `projects` y responder `200` con el `Project` actualizado,
-  incluyendo sus `kpis`/`updates` existentes sin modificarlos.
+  formulario siempre envía los 5 campos juntos, ver `design.md`). Ver
+  `specs/project-status-field/requirements.md` R27.
+- **R21** *(modificado 2026-07-29 por `project-status-field`)*: WHEN
+  `PATCH /api/proyectos/<id>` recibe un body válido (incluyendo `status`)
+  para un `id` existente y la sesión es válida THEN el sistema SHALL
+  actualizar la fila en `projects` y responder `200` con el `Project`
+  actualizado, incluyendo sus `kpis`/`updates` existentes sin modificarlos.
 - **R22**: IF `PATCH /api/proyectos/<id>` se invoca con un `id` que no
   corresponde a ningún proyecto existente THEN el sistema SHALL responder
   `404` sin modificar nada.

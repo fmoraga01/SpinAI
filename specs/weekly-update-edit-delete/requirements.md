@@ -24,30 +24,38 @@ timeline y se edita/borra desde ahí como cualquier otra.
   usa `.proyecto-timeline-row:hover` para resaltar la fila) — no un botón
   permanentemente visible, para no saturar visualmente un timeline con
   muchas semanas.
-- **R2**: WHEN el usuario hace click en "Editar" de una fila THEN el sistema
-  SHALL reemplazar el contenido de esa fila (y solo esa fila) por un
-  formulario con los mismos tres campos que `WeeklyUpdateFields.tsx`
-  (fecha/estado/nota), pre-cargados con los valores actuales del avance
-  (`weekOf`, `status`, `note`) — el resto de las filas del timeline
-  permanece de solo lectura mientras tanto.
+- **R2** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario hace click en "Editar" de una fila THEN el sistema SHALL
+  reemplazar el contenido de esa fila (y solo esa fila) por un formulario
+  con los mismos ~~tres~~ **dos** campos que `WeeklyUpdateFields.tsx`
+  (fecha/nota, ~~estado~~ retirado de este componente), pre-cargados con
+  los valores actuales del avance (`weekOf`, `note`) — el resto de las
+  filas del timeline permanece de solo lectura mientras tanto. Ver
+  `specs/project-status-field/requirements.md` R20.
 - **R3**: WHILE una fila está en modo edición THEN el sistema SHALL
   deshabilitar el control "Editar" de las demás filas — solo una fila puede
   estar en edición a la vez (evita conflictos de estado y de scroll con
   múltiples formularios abiertos).
-- **R4**: WHILE el formulario de edición de una fila tiene el campo de
-  fecha, estado o nota vacío THEN el sistema SHALL deshabilitar su botón de
-  confirmar — mismo patrón de habilitación que `AddUpdateForm.tsx` (R9 de
-  `weekly-update-entry`).
-- **R5**: WHEN el usuario confirma el formulario de edición de una fila con
-  los tres campos completos THEN el sistema SHALL enviar `PATCH
+- **R4** *(modificado 2026-07-29 por `project-status-field`)*: WHILE el
+  formulario de edición de una fila tiene el campo de fecha o nota vacío
+  (~~o estado~~, campo retirado) THEN el sistema SHALL deshabilitar su
+  botón de confirmar — mismo patrón de habilitación que `AddUpdateForm.tsx`
+  (R9 de `weekly-update-entry`). Ver
+  `specs/project-status-field/requirements.md` R22.
+- **R5** *(modificado 2026-07-29 por `project-status-field`)*: WHEN el
+  usuario confirma el formulario de edición de una fila con los ~~tres~~
+  **dos** campos completos THEN el sistema SHALL enviar `PATCH
   /api/proyectos/<projectId>/avances/<updateId>` con el payload (`weekOf`
-  recalculado como el lunes de la fecha elegida, igual que en creación), y
-  si la respuesta es `2xx` SHALL reemplazar ese avance en `project.updates`
-  en memoria con el `WeeklyUpdate` devuelto (sin refetch completo del
-  proyecto), SHALL refrescar el `HealthBadge` del header en consecuencia
-  (deriva de `updates` vía `healthFromTimeline`, sin lógica adicional), y
-  SHALL cerrar el formulario de edición volviendo la fila a modo lectura con
-  los valores actualizados.
+  recalculado como el lunes de la fecha elegida, igual que en creación; ya
+  sin `status`), y si la respuesta es `2xx` SHALL reemplazar ese avance en
+  `project.updates` en memoria con el `WeeklyUpdate` devuelto (sin refetch
+  completo del proyecto), y SHALL cerrar el formulario de edición volviendo
+  la fila a modo lectura con los valores actualizados. ~~SHALL refrescar el
+  `HealthBadge` del header en consecuencia (deriva de `updates` vía
+  `healthFromTimeline`)~~ — **ya no aplica**: el badge ahora se lee de
+  `project.status`, independiente de `project.updates`; editar un avance ya
+  no afecta el badge (ver `specs/project-status-field/design.md`, sección
+  "Consecuencia de UX a documentar").
 - **R6**: WHEN el usuario cancela el formulario de edición de una fila
   (botón "Cancelar") THEN el sistema SHALL descartar los valores editados,
   SHALL NOT llamar a la API, y SHALL devolver la fila a modo lectura
@@ -103,14 +111,17 @@ timeline y se edita/borra desde ahí como cualquier otra.
   /api/proyectos/<id>/avances/<updateId>` recibe una request sin cookie
   `spinai_token` válida THEN el sistema SHALL responder `401` sin modificar
   ni borrar ningún registro.
-- **R16**: WHEN `PATCH /api/proyectos/<id>/avances/<updateId>` recibe un
-  body con `weekOf` ausente/no parseable como fecha, `status` ausente o
-  fuera de `["on_track", "at_risk", "delayed"]`, o `note` vacía (tras
-  `trim()`) THEN el sistema SHALL responder `400` sin modificar el registro,
-  con un mensaje indicando qué campo falta o es inválido — mismas reglas de
+- **R16** *(modificado 2026-07-29 por `project-status-field`)*: WHEN
+  `PATCH /api/proyectos/<id>/avances/<updateId>` recibe un body con
+  `weekOf` ausente/no parseable como fecha, o `note` vacía (tras `trim()`)
+  THEN el sistema SHALL responder `400` sin modificar el registro, con un
+  mensaje indicando qué campo falta o es inválido — mismas reglas de
   validación que `POST /api/proyectos/<id>/avances` (R16 de
-  `weekly-update-entry`), incluyendo la validación de fecha parseable que
-  esa feature ya corrigió.
+  `weekly-update-entry`, ya modificado), incluyendo la validación de fecha
+  parseable que esa feature ya corrigió. ~~`status` ausente o fuera de
+  `["on_track", "at_risk", "delayed"]`~~ — ya no se valida ni se acepta
+  este campo en esta ruta. Ver
+  `specs/project-status-field/requirements.md` R30.
 - **R17**: IF `PATCH` o `DELETE /api/proyectos/<id>/avances/<updateId>` se
   invoca con un `id` de proyecto que no corresponde a ningún proyecto
   existente THEN el sistema SHALL responder `404` sin modificar ni borrar
@@ -124,11 +135,14 @@ timeline y se edita/borra desde ahí como cualquier otra.
   `404` sin modificar ni borrar ningún registro — un avance de otro
   proyecto se trata igual que uno inexistente, nunca se edita/borra cruzado
   entre proyectos aunque el `updateId` sea válido en otra fila.
-- **R19**: WHEN `PATCH /api/proyectos/<id>/avances/<updateId>` recibe un
-  body válido para un `id`/`updateId` existentes y coherentes (R18) y la
-  sesión es válida THEN el sistema SHALL actualizar la fila correspondiente
-  en `project_weekly_updates` vía `getSupabaseAdmin()` y SHALL responder
-  `200` con el `WeeklyUpdate` actualizado (mapeado con `rowToUpdate()`).
+- **R19** *(modificado 2026-07-29 por `project-status-field`)*: WHEN
+  `PATCH /api/proyectos/<id>/avances/<updateId>` recibe un body válido
+  para un `id`/`updateId` existentes y coherentes (R18) y la sesión es
+  válida THEN el sistema SHALL actualizar la fila correspondiente en
+  `project_weekly_updates` (ya solo `week_of`/`note`, sin columna `status`)
+  vía `getSupabaseAdmin()` y SHALL responder `200` con el `WeeklyUpdate`
+  actualizado (mapeado con `rowToUpdate()`, ya sin campo `status`). Ver
+  `specs/project-status-field/requirements.md` R5/R32.
 - **R20**: WHEN `DELETE /api/proyectos/<id>/avances/<updateId>` se invoca
   con un `id`/`updateId` existentes y coherentes (R18) y la sesión es válida
   THEN el sistema SHALL borrar esa fila de `project_weekly_updates` vía
