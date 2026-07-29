@@ -13,7 +13,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const body = await req.json();
   const { weekOf, status, note } = body ?? {};
   const missing = [
-    !weekOf && "weekOf",
+    (!weekOf || Number.isNaN(new Date(weekOf).getTime())) && "weekOf",
     !VALID_STATUSES.includes(status) && "status",
     !note?.trim() && "note",
   ].filter(Boolean);

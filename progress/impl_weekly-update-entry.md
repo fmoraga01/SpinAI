@@ -244,9 +244,33 @@ se pudo verificar de punta a punta contra un servidor local real:
   {"error":"No autorizado"}`.
 - **R16** (`weekOf` ausente/no parseable, `status` inválido, o `note` vacía
   tras `trim()` → `400` con mensaje de qué falta): **verificado por
-  ejecución real** — los 3 casos (body vacío, `status` inválido, `note`
-  solo whitespace) devuelven `400` con el campo correspondiente en el
-  mensaje.
+  ejecución real** — los 4 casos (body vacío, `weekOf: "banana"` no
+  parseable, `status` inválido, `note` solo whitespace) devuelven `400` con
+  el campo correspondiente en el mensaje.
+  El caso `weekOf` no parseable fue el gap que `reviewer` encontró en la
+  primera vuelta (`progress/review_weekly-update-entry.md`): la validación
+  original solo chequeaba `!weekOf` (ausencia), no parseabilidad, así que
+  `{"weekOf":"banana",...}` atravesaba la validación y llegaba hasta
+  `getSupabaseAdmin()` (mismo `500` que un body válido). Fix aplicado en
+  `app/api/proyectos/[id]/avances/route.ts`: el chequeo de `weekOf` ahora es
+  `!weekOf || Number.isNaN(new Date(weekOf).getTime())` (no hay un patrón
+  existente en el repo para validar parseabilidad de fecha como
+  precondición de un `400`; los usos existentes de `new Date(x).getTime()`
+  en `lib/stateOfAi.ts`/`app/state-of-ai/*`/`app/components/ChangeLog.tsx`
+  son para cálculos de antigüedad/orden, no validación de input, así que se
+  usó el criterio que propuso `reviewer`). Re-verificado por `curl` real
+  contra `npm run dev` local con el mismo JWT firmado con el secreto de
+  fallback de `lib/auth.ts`:
+  - `{"weekOf":"banana","status":"on_track","note":"x"}` → `400
+    {"error":"Campos requeridos faltantes o inválidos: weekOf"}` (antes del
+    fix devolvía `500`).
+  - `{"weekOf":"2026-07-06","status":"on_track","note":"x"}` (fecha válida,
+    regresión) → sigue llegando hasta `getSupabaseAdmin()` y devolviendo
+    `500` genérico por falta de credenciales (mismo comportamiento que
+    antes del fix, confirma que no se rompió el caso válido).
+  - `{"weekOf":"","status":"on_track","note":"x"}` (string vacío, regresión
+    del caso `!weekOf` original) → sigue devolviendo `400` con `weekOf` en
+    el mensaje.
 - **R17** (`id` de proyecto inexistente → `404`, sin crear registro):
   manual QA por lectura de código — mismo patrón `select("id")
   .maybeSingle()` + chequeo `!project` que usa `PATCH`/`DELETE
