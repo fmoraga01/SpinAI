@@ -1,20 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadProject, healthFromTimeline } from "@/lib/projects";
+import { loadProject, healthFromTimeline, createProject, updateProject, deleteProject, ProjectFormValues } from "@/lib/projects";
 import { Project } from "@/lib/types";
 import HealthBadge from "./HealthBadge";
 import ProjectTimeline from "./ProjectTimeline";
+import ProjectForm from "./ProjectForm";
+import DeleteProjectModal from "./DeleteProjectModal";
 
-export default function ProjectDrawer({ projectId, onClose }: { projectId: string | null; onClose: () => void }) {
+interface Props {
+  projectId: string | null;
+  mode: "view" | "create";
+  onClose: () => void;
+  onCreated: (project: Project) => void;
+  onUpdated: (project: Project) => void;
+  onDeleted: (id: string) => void;
+}
+
+export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onUpdated, onDeleted }: Props) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
+  const [formMode, setFormMode] = useState<"view" | "form">("view");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const isOpen = projectId !== null || mode === "create";
+
+  // Abre/cierra el panel (animación) según haya un proyecto seleccionado o
+  // se esté creando uno nuevo.
   useEffect(() => {
-    if (projectId) {
+    if (isOpen) {
       const raf = requestAnimationFrame(() => {
         setMounted(true);
         requestAnimationFrame(() => setVisible(true));
@@ -26,16 +47,35 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
       setMounted(false);
       setProject(null);
       setError(false);
+      setFormMode("view");
+      setFormError(null);
+      setDeleteError(null);
+      setShowDeleteModal(false);
     }, 320);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(t);
     };
-  }, [projectId]);
+  }, [isOpen]);
 
+  // Carga el proyecto existente (modo vista/edición) o arranca el formulario
+  // vacío (modo creación) — nunca hace fetch cuando `projectId` es null.
   useEffect(() => {
-    if (!projectId) return;
-    requestAnimationFrame(() => {
+    if (!projectId) {
+      if (mode !== "create") return;
+      const raf = requestAnimationFrame(() => {
+        setProject(null);
+        setFormMode("form");
+        setFormError(null);
+        setDeleteError(null);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+
+    const raf = requestAnimationFrame(() => {
+      setFormMode("view");
+      setFormError(null);
+      setDeleteError(null);
       setLoading(true);
       setError(false);
     });
@@ -43,19 +83,74 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
       .then(setProject)
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [projectId]);
+    return () => cancelAnimationFrame(raf);
+  }, [projectId, mode]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      // Mientras el modal de borrado está abierto, Escape lo cierra a él
+      // primero, no al drawer de fondo (un nivel de overlay a la vez).
+      if (showDeleteModal) return;
+      onClose();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, showDeleteModal]);
 
   if (!mounted) return null;
 
-  const headerTitle = loading ? "Cargando…" : project?.name ?? "Proyecto";
+  async function handleFormSubmit(values: ProjectFormValues) {
+    setFormError(null);
+    try {
+      if (project === null) {
+        const created = await createProject(values);
+        setProject(created);
+        onCreated(created);
+        setFormMode("view");
+      } else {
+        const updated = await updateProject(project.id, values);
+        setProject(updated);
+        onUpdated(updated);
+        setFormMode("view");
+      }
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : "Ocurrió un error inesperado");
+    }
+  }
+
+  function handleFormCancel() {
+    setFormError(null);
+    // Nada guardado todavía (recién abierto en modo creación): cierra el
+    // drawer entero, no hay un "modo vista" al que volver (R9).
+    if (project === null) {
+      onClose();
+    } else {
+      setFormMode("view");
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!project) return;
+    setDeleting(true);
+    try {
+      await deleteProject(project.id);
+      onDeleted(project.id);
+      setShowDeleteModal(false);
+      onClose();
+    } catch (e) {
+      // R15: cerrar el modal, mostrar el error dentro del drawer, mantener
+      // el proyecto en el listado (no se llama a onDeleted).
+      setShowDeleteModal(false);
+      setDeleteError(e instanceof Error ? e.message : "Ocurrió un error inesperado");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const headerTitle = loading
+    ? "Cargando…"
+    : project?.name ?? (mode === "create" ? "Crear proyecto" : "Proyecto");
 
   return (
     <>
@@ -115,39 +210,104 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
               <HealthBadge status={healthFromTimeline(project.updates)} />
             )}
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--color-border)",
-              background: "transparent",
-              color: "var(--color-text-secondary)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-              flexShrink: 0,
-              transition: "border-color 150ms, color 150ms",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-primary)";
-              e.currentTarget.style.color = "var(--color-primary)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--color-border)";
-              e.currentTarget.style.color = "var(--color-text-secondary)";
-            }}
-          >
-            ✕
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {!loading && !error && project !== null && formMode === "view" && (
+              <>
+                <button
+                  onClick={() => { setFormError(null); setFormMode("form"); }}
+                  style={{
+                    height: 32,
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid var(--color-border)",
+                    background: "transparent",
+                    color: "var(--color-text-secondary)",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    padding: "0 12px",
+                    transition: "border-color 150ms, color 150ms",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--color-primary)";
+                    e.currentTarget.style.color = "var(--color-primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--color-border)";
+                    e.currentTarget.style.color = "var(--color-text-secondary)";
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => { setDeleteError(null); setShowDeleteModal(true); }}
+                  style={{
+                    height: 32,
+                    borderRadius: "var(--radius-md)",
+                    border: "1px solid #F87171",
+                    background: "transparent",
+                    color: "#F87171",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    padding: "0 12px",
+                    transition: "border-color 150ms, background 150ms",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "#F8717122"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
+                  Eliminar
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "var(--radius-md)",
+                border: "1px solid var(--color-border)",
+                background: "transparent",
+                color: "var(--color-text-secondary)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 16,
+                flexShrink: 0,
+                transition: "border-color 150ms, color 150ms",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-primary)";
+                e.currentTarget.style.color = "var(--color-primary)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--color-border)";
+                e.currentTarget.style.color = "var(--color-text-secondary)";
+              }}
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "24px" }}>
-          {loading && (
+          {formMode === "form" && (
+            <ProjectForm
+              initialValues={{
+                name: project?.name ?? "",
+                country: project?.country ?? "",
+                businessUnit: project?.businessUnit ?? "",
+                summary: project?.summary ?? "",
+              }}
+              submitLabel={project === null ? "Crear proyecto" : "Guardar cambios"}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormCancel}
+              error={formError}
+            />
+          )}
+
+          {formMode === "view" && loading && (
             <div className="flex items-center justify-center py-16">
               <div
                 style={{
@@ -162,7 +322,7 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
             </div>
           )}
 
-          {!loading && (error || project === null) && (
+          {formMode === "view" && !loading && (error || project === null) && (
             <div
               style={{
                 background: "var(--color-surface-elevated)",
@@ -181,8 +341,11 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
             </div>
           )}
 
-          {!loading && !error && project !== null && (
+          {formMode === "view" && !loading && !error && project !== null && (
             <>
+              {deleteError && (
+                <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px" }}>{deleteError}</p>
+              )}
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px" }}>
                 Resumen de la iniciativa
               </p>
@@ -205,6 +368,16 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
           )}
         </div>
       </div>
+
+      {showDeleteModal && project !== null && (
+        <DeleteProjectModal
+          projectName={project.name}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDeleteModal(false)}
+          deleting={deleting}
+          error={null}
+        />
+      )}
     </>
   );
 }

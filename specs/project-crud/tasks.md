@@ -4,7 +4,7 @@ Orden sugerido: rutas API primero (testeable/curl-eable de forma aislada),
 luego `lib/projects.ts`, luego componentes de formulario/modal, luego
 integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
 
-- [ ] **T1 — `POST /api/proyectos`** (`R16`, `R17`, `R18`)
+- [x] **T1 — `POST /api/proyectos`** (`R16`, `R17`, `R18`)
   - Agregar `export async function POST(req: NextRequest)` a
     `app/api/proyectos/route.ts` (junto al `GET` existente, sin tocarlo):
     `isAuthenticated(req)` → `401` si falla; validar `name`/`summary`/
@@ -16,7 +16,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     completo/incompleto — confirmar `401`/`400`/`201` según corresponda y
     que el `201` trae `kpis: []`, `updates: []`.
 
-- [ ] **T2 — `PATCH` y `DELETE` en `/api/proyectos/[id]`** (`R19`-`R25`)
+- [x] **T2 — `PATCH` y `DELETE` en `/api/proyectos/[id]`** (`R19`-`R25`)
   - Agregar `export async function PATCH(...)` a
     `app/api/proyectos/[id]/route.ts`: misma validación de auth/campos que
     T1, `update().eq("id", id)` vía `getSupabaseAdmin()`, `maybeSingle()`
@@ -34,7 +34,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     definida en la migración de `project-status-tracking`, no requiere
     migración nueva acá).
 
-- [ ] **T3 — `lib/projects.ts`: `createProject`/`updateProject`/`deleteProject`** (`R3`, `R8`, `R13`)
+- [x] **T3 — `lib/projects.ts`: `createProject`/`updateProject`/`deleteProject`** (`R3`, `R8`, `R13`)
   - Agregar `ProjectFormValues`, `createProject(values)`,
     `updateProject(id, values)`, `deleteProject(id)` según `design.md` —
     `fetch()` a las rutas de T1/T2, propagando el mensaje de error del
@@ -46,7 +46,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     functions — no requieren Vitest, se verifican manualmente vía T1/T2 +
     T6 (QA end-to-end).
 
-- [ ] **T4 — `ProjectForm.tsx`** (`R2`, `R4`, `R7`, `R8`, `R9`, `R5`, `R10`)
+- [x] **T4 — `ProjectForm.tsx`** (`R2`, `R4`, `R7`, `R8`, `R9`, `R5`, `R10`)
   - Nuevo componente en `app/proyectos/ProjectForm.tsx` según el shape de
     props descrito en `design.md`: 4 campos controlados, botón submit
     disabled mientras falte algún campo (R4), estado `submitting` para
@@ -56,7 +56,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     `app/components/*.tsx`/`app/proyectos/*.tsx` con estilos nuevos) y
     anotar el resultado en `progress/impl_project-crud.md`.
 
-- [ ] **T5 — `CreateProjectCard.tsx` y `DeleteProjectModal.tsx`** (`R1`, `R12`, `R14`)
+- [x] **T5 — `CreateProjectCard.tsx` y `DeleteProjectModal.tsx`** (`R1`, `R12`, `R14`)
   - `app/proyectos/CreateProjectCard.tsx`: card con ícono `+` y label,
     estilo fill tenue del color primario descrito en `design.md`.
   - `app/proyectos/DeleteProjectModal.tsx`: modal centrado con nombre del
@@ -66,7 +66,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
   - Correr `design-check` sobre estos dos componentes también (mismo
     criterio que T4) y anotar el resultado.
 
-- [ ] **T6 — Integrar modos en `ProjectDrawer.tsx`** (`R2`, `R6`, `R7`, `R9`, `R11`, `R12`, `R14`)
+- [x] **T6 — Integrar modos en `ProjectDrawer.tsx`** (`R2`, `R6`, `R7`, `R9`, `R11`, `R12`, `R14`)
   - Agregar el estado interno `formMode: "view" | "form"` y el prop
     `mode: "view" | "create"` descritos en `design.md`. Renderizar
     `ProjectForm` en `formMode === "form"` (vacío si viene de "create",
@@ -81,7 +81,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     listener de `keydown` de `ProjectDrawer` si hace falta para que no
     dispare mientras el modal está montado.
 
-- [ ] **T7 — Integrar en `page.tsx`** (`R1`, `R3`, `R8`, `R13`, `R15`)
+- [x] **T7 — Integrar en `page.tsx`** (`R1`, `R3`, `R8`, `R13`, `R15`)
   - Agregar estado `creating: boolean` junto al `selectedId` existente;
     renderizar `CreateProjectCard` como primer ítem del grid (antes del
     `.map()` de `ProjectCard`); pasar `mode`/callbacks `onCreated`/
@@ -97,7 +97,7 @@ integración en `page.tsx`/`ProjectDrawer.tsx`, luego verificación.
     confirmar que R5/R10/R15 se cumplen (mensaje de error visible, datos
     no se pierden / proyecto no desaparece prematuramente).
 
-- [ ] **T8 — Verificación y traceability**
+- [x] **T8 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state).
   - Verificación manual específica de seguridad (R16, R19, R23):
     `curl` a `POST`/`PATCH`/`DELETE` sin cookie `spinai_token` → confirmar

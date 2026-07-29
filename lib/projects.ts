@@ -68,3 +68,35 @@ export async function loadProject(id: string): Promise<Project | null> {
   if (!res.ok) throw new Error(`No se pudo cargar el proyecto (${res.status})`);
   return res.json();
 }
+
+export interface ProjectFormValues {
+  name: string;
+  country: string;
+  businessUnit: string;
+  summary: string;
+}
+
+export async function createProject(values: ProjectFormValues): Promise<Project> {
+  const res = await fetch("/api/proyectos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo crear el proyecto (${res.status})`);
+  return res.json();
+}
+
+export async function updateProject(id: string, values: ProjectFormValues): Promise<Project> {
+  const res = await fetch(`/api/proyectos/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo actualizar el proyecto (${res.status})`);
+  return res.json();
+}
+
+export async function deleteProject(id: string): Promise<void> {
+  const res = await fetch(`/api/proyectos/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo eliminar el proyecto (${res.status})`);
+}
