@@ -42,6 +42,13 @@
       "created": "2026-07-29",
       "spec_dir": "specs/project-crud/",
       "note": "Pendiente de QA humana end-to-end antes de uso real en dev: crear (201), editar (200), borrar (200 + confirmar cascada de project_kpis/project_weekly_updates en Supabase), PATCH/DELETE con id inexistente (404), y ver el empty state con 0 proyectos en navegador. No se pudo ejercitar en este sandbox por falta de credenciales Supabase y PIN."
+    },
+    {
+      "id": "weekly-update-entry",
+      "title": "Agregar avances semanales (project_weekly_updates) desde /proyectos: formulario de creación + drawer de detalle",
+      "status": "spec_ready",
+      "created": "2026-07-29",
+      "spec_dir": "specs/weekly-update-entry/"
     }
   ]
 }
