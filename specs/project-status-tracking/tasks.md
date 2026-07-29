@@ -101,11 +101,26 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `HealthBadge` + texto). Si `updates.length === 0`, mostrar estado
     vacío explícito.
 
-- [x] **T7 — Detalle `/proyectos/[id]`** (`R6`, `R7`)
+- [x] **T7 — Detalle `/proyectos/[id]`** (`R6`, `R7`) — **[reemplazado por drawer 2026-07-29]**
   - `app/proyectos/[id]/page.tsx`: `Nav` + fetch de `loadProject(id)` +
     loading skeleton + estado "no encontrado" si `null` + header
     (nombre/país/negocio/badge) + resumen + ~~`KpiList`~~ + `ProjectTimeline`.
     `KpiList` retirado 2026-07-29 (ver T5).
+  - **T7b — Drawer de detalle** (`R4`, `R6`, `R7`) — a pedido explícito del
+    usuario, se elimina `app/proyectos/[id]/page.tsx` por completo (la
+    ruta ya no existe) y se reemplaza por `app/proyectos/ProjectDrawer.tsx`,
+    replicando el patrón de `app/components/Drawer.tsx` (ver `design.md`,
+    sección "Detalle (drawer)"). `ProjectTimeline.tsx` se mueve de `[id]/`
+    a `app/proyectos/`. `ProjectCard.tsx` cambia de `<Link>` a
+    `<button onClick={() => onSelect(id)}>`; `page.tsx` (listado) agrega
+    estado `selectedId` y renderiza `<ProjectDrawer projectId={selectedId}
+    onClose={...} />`. La ruta API `/api/proyectos/[id]/route.ts` no se
+    tocó — el drawer la consume igual que antes la página. Verificado:
+    `npm run lint`/`build`/`test` pasan, route map de `next build` ya no
+    lista `/proyectos/[id]` como página (solo la API), `design-check` no
+    aplica (no se tocó `app/components/*.tsx` esta vez) — revisado a mano
+    que `ProjectDrawer.tsx` reutiliza los mismos tokens/valores que
+    `Drawer.tsx` (mismo backdrop, mismo `boxShadow`, sin colores nuevos).
 
 - [x] **T8 — Navegación** (`R14`)
   - Editar `app/components/Nav.tsx`: agregar `proyectosActive` y el

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Project } from "@/lib/types";
 import { healthFromTimeline } from "@/lib/projects";
 import HealthBadge from "./HealthBadge";
@@ -10,14 +9,15 @@ function latestUpdateDate(project: Project): string | null {
   return [...project.updates].sort((a, b) => b.weekOf.localeCompare(a.weekOf))[0].weekOf;
 }
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({ project, onSelect }: { project: Project; onSelect: (id: string) => void }) {
   const status = healthFromTimeline(project.updates);
   const lastUpdate = latestUpdateDate(project);
 
   return (
-    <Link
-      href={`/proyectos/${project.id}`}
-      style={{ textDecoration: "none", display: "block" }}
+    <button
+      type="button"
+      onClick={() => onSelect(project.id)}
+      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer" }}
     >
       <div
         style={{
@@ -30,6 +30,7 @@ export default function ProjectCard({ project }: { project: Project }) {
           borderRadius: "var(--radius-md)",
           transition: "border-color 150ms ease",
           height: "100%",
+          boxSizing: "border-box",
         }}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2C40FF44"; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
@@ -51,6 +52,6 @@ export default function ProjectCard({ project }: { project: Project }) {
             : "Sin actualizaciones registradas"}
         </p>
       </div>
-    </Link>
+    </button>
   );
 }

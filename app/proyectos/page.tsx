@@ -5,6 +5,7 @@ import Nav from "../components/Nav";
 import { loadProjects } from "@/lib/projects";
 import { Project } from "@/lib/types";
 import ProjectCard from "./ProjectCard";
+import ProjectDrawer from "./ProjectDrawer";
 
 function ProjectCardSkeleton() {
   return (
@@ -30,6 +31,7 @@ export default function ProyectosPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjects()
@@ -84,10 +86,12 @@ export default function ProyectosPage() {
 
         {!loading && !error && projects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {projects.map((p) => <ProjectCard key={p.id} project={p} />)}
+            {projects.map((p) => <ProjectCard key={p.id} project={p} onSelect={setSelectedId} />)}
           </div>
         )}
       </div>
+
+      <ProjectDrawer projectId={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }

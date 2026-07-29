@@ -16,23 +16,27 @@ Nueva sección de rutas Next.js App Router:
 
 ```
 app/proyectos/
-  page.tsx              # listado: fetch de /api/proyectos + grid de ProjectCard
-  ProjectCard.tsx        # tarjeta individual del listado (progressive disclosure)
-  HealthBadge.tsx         # badge de estado (on_track / at_risk / delayed / sin datos), compartido entre listado y detalle
-  [id]/
-    page.tsx              # detalle de proyecto
-    ProjectTimeline.tsx    # timeline vertical semanal, adaptado de state-of-ai/Timeline.tsx
-    KpiList.tsx             # [eliminado 2026-07-29] lista clave-valor de KPIs — sección retirada de la UI, ver nota abajo
+  page.tsx              # listado: fetch de /api/proyectos + grid de ProjectCard + estado del drawer
+  ProjectCard.tsx        # tarjeta individual del listado (progressive disclosure); onSelect en vez de <Link>
+  ProjectDrawer.tsx       # [nuevo 2026-07-29] detalle en drawer deslizante, reemplaza la ruta [id]/
+  ProjectTimeline.tsx     # [movido 2026-07-29, antes en [id]/] timeline vertical semanal
+  HealthBadge.tsx         # badge de estado (on_track / at_risk / delayed / sin datos), compartido entre card/drawer
 
 app/api/proyectos/
   route.ts               # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project[]
-  [id]/route.ts           # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project | 404
+  [id]/route.ts           # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project | 404 — SIGUE
+                          # existiendo (el drawer la consume); solo la página [id]/ se eliminó
 
 lib/
   projects.ts             # tipos + loadProjects()/loadProject(id) (fetch a /api/proyectos) + healthFromTimeline()
   supabaseAdmin.ts         # getSupabaseAdmin() — cliente server-only con service role key
   auth.ts                  # isAuthenticated(req) — verificación de spinai_token, compartida con /api/auth/check
 ```
+
+**[2026-07-29] `app/proyectos/[id]/page.tsx` y `KpiList.tsx` ya no
+existen** — ver "Detalle (drawer)" más abajo para la arquitectura
+vigente. `app/api/proyectos/[id]/route.ts` (la API, no la página) **no**
+se tocó.
 
 Sigue exactamente el patrón de `app/noticias/` (una sola carpeta de ruta,
 componentes hijos co-ubicados, un módulo en `lib/`) y de `app/state-of-ai/`
@@ -247,36 +251,63 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
   stat tiles) en vez de una lista vertical como `noticias/` — las tarjetas
   de proyecto tienen más "peso" visual (badge + 4 campos) que una fila de
   noticia, y un grid de 2 columnas es más legible con solo 4 proyectos.
-- Cada `ProjectCard` es un `<Link href={`/proyectos/${p.id}`}>` estilizado
-  como `var(--color-surface-elevated)` + `var(--color-border)`, mismo
-  lenguaje visual que `NewsCard`.
+- Cada `ProjectCard` estilizado como `var(--color-surface-elevated)` +
+  `var(--color-border)`, mismo lenguaje visual que `NewsCard`.
+  **[2026-07-29]** Ya no es un `<Link>` — es un `<button onClick={() =>
+  onSelect(project.id)}>` (con `style={{ all: "unset" }}` para no heredar
+  estilos nativos de `<button>`) que abre `ProjectDrawer` en vez de
+  navegar. `page.tsx` guarda `selectedId` en estado local y se lo pasa a
+  `ProjectDrawer`.
 - Loading state: skeleton igual criterio que `NewsCardSkeleton`.
 - Empty state (R5): reutiliza el mismo patrón de icono + texto de
   `noticias/page.tsx` (SVG inline, título + subtítulo), no un componente
   nuevo de empty state genérico — no se justifica extraer uno para un solo
   caso de uso adicional.
 
-## Detalle (`[id]/page.tsx`)
+## Detalle (drawer) — reescrito 2026-07-29
 
-- `useEffect` con `loadProject(id)` desde `useParams()`, mismo patrón que
-  `noticias/page.tsx` usa `useEffect` + `loadNews()`.
-- Layout: header con nombre + país + negocio + `HealthBadge`, luego resumen
-  (párrafo), luego `ProjectTimeline`.
-- **[Retirado 2026-07-29]** El layout original incluía `KpiList` (grid de
-  pares clave-valor) entre el resumen y el timeline. Se removió a pedido
-  explícito del usuario — decisión de alcance "solo UI": se borró
-  `KpiList.tsx` y su import/uso en `page.tsx`, pero **no** se tocó
-  `lib/projects.ts` (`ProjectKpi`, `rowToKpi`), ni la tabla
-  `project_kpis`, ni el `select` anidado de `/api/proyectos/<id>`
-  (`design.md`, sección "Modelo de datos") — el objeto `Project` que llega
-  al cliente sigue trayendo `kpis`, simplemente no se renderiza. Revertir
-  es trivial: reimportar `KpiList` (recuperable de git) y volver a
-  agregar la sección.
-- `R7` (id inválido): si `loadProject` devuelve `null`, renderiza el mismo
-  tipo de bloque "no encontrado" que usa `state-of-ai/page.tsx` para su
-  estado de error (`tileStyle` + texto centrado), no una redirect ni un
-  `notFound()` de Next — mantiene consistencia visual con el resto de la
-  app y evita una página 404 genérica sin `Nav`.
+**Decisión previa (ya no vigente)**: el detalle vivía en
+`app/proyectos/[id]/page.tsx`, una ruta propia con `useParams()`. A
+pedido explícito del usuario, se reemplazó por un **drawer** deslizante
+desde la derecha (`ProjectDrawer.tsx`), replicando exactamente el patrón
+visual/de interacción de `app/components/Drawer.tsx` (el drawer global
+que ya usan "Equipo", "Ruleta", "Calendario de asignados" y "Log de
+cambios" desde la home): backdrop `rgba(0,0,0,0.6)` + `blur(4px)`, panel
+`width: min(520px, 100vw)` con `border-left`, `transform: translateX`
+animado en 320ms `cubic-bezier(0.4, 0, 0.2, 1)`, header con título +
+botón "✕", cierre con click en el backdrop, el botón, o tecla `Escape`.
+
+`ProjectDrawer` **no** se integra al `DrawerContext`/`Drawer.tsx`
+globales (esos están acoplados a `AppData` — miembros/asignaciones de
+`lib/storage.ts`, un dominio de datos distinto). Es un componente
+autocontenido en `app/proyectos/`, con su propio estado local:
+
+- Props: `{ projectId: string | null; onClose: () => void }`.
+- `page.tsx` (listado) mantiene `selectedId` en `useState`; cada
+  `ProjectCard` llama `onSelect(project.id)` en vez de navegar.
+- Al recibir un `projectId` no nulo, el drawer hace `loadProject(id)`
+  (mismo `lib/projects.ts` de siempre — sin cambios ahí) y maneja
+  loading/error/no-encontrado igual que antes lo hacía la página.
+- Layout interno: header del drawer = nombre del proyecto (o "Cargando…"
+  / "Proyecto"); contenido = `HealthBadge` + país/negocio + resumen +
+  `ProjectTimeline`. La sección de KPIs sigue sin mostrarse (retirada
+  antes, mismo día, por un pedido separado — ver R6/R8 y la nota en
+  "Fuera de alcance" de `requirements.md`).
+- `R7` (id inválido / fetch falla): el drawer muestra el bloque "no
+  encontrado" / "no se pudo cargar" **dentro del panel**, no en una
+  página aparte — mismo texto que usaba `[id]/page.tsx`.
+- Animación de entrada/salida: mismo patrón de `mounted`/`visible` con
+  `requestAnimationFrame` + `setTimeout(320ms)` para desmontar que usa
+  `app/components/Drawer.tsx` — no se inventó una animación nueva.
+- `ProjectTimeline.tsx` se movió de `[id]/` a `app/proyectos/` (ya no hay
+  carpeta `[id]/` para componentes de página) — mismo archivo, mismo
+  contenido, solo el import de `HealthBadge` cambia de `../HealthBadge` a
+  `./HealthBadge`.
+
+**La ruta API `/api/proyectos/[id]/route.ts` no cambió** — sigue siendo
+el mismo endpoint `GET` con `isAuthenticated()` + `getSupabaseAdmin()`
+(R16/R17 intactos); solo dejó de tener una página que la consuma desde
+una URL propia, ahora la consume el drawer.
 
 ## Navegación (`Nav.tsx`)
 
@@ -327,6 +358,22 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
   sus estados de error; un bloque de error inline dentro del mismo
   `page.tsx` es consistente con cómo `state-of-ai/page.tsx` maneja su
   propio estado de error.
+- **[2026-07-29] Mantener `/proyectos/<id>` como ruta y además agregar el
+  drawer** (las dos formas de ver el detalle a la vez) — descartado
+  explícitamente por el usuario cuando se le preguntó: eligió que el
+  drawer reemplace del todo la ruta, no que convivan, igual que
+  "Equipo"/"Calendario" no tienen URL propia. Pierde deep-linking a un
+  proyecto específico, a cambio de consistencia total con el patrón de
+  interacción ya establecido en el resto de la app.
+- **Integrar el detalle al `DrawerContext`/`Drawer.tsx` globales** (agregar
+  un nuevo `DrawerView` tipo `"proyecto"`) — descartado: ese drawer global
+  está acoplado al dominio de datos de la home (`AppData` vía
+  `lib/storage.ts` — miembros y asignaciones), no a proyectos/Supabase.
+  Forzar ese acople habría significado que el `Drawer.tsx` global cargue
+  datos de dos dominios completamente distintos. Un componente
+  `ProjectDrawer.tsx` autocontenido, que copia el mismo patrón visual pero
+  no la misma instancia de contexto, es más simple y no toca código ya
+  probado de la home.
 
 ## Supabase / auth / cron
 

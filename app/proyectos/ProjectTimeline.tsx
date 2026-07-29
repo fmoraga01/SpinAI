@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { WeeklyUpdate } from "@/lib/types";
-import HealthBadge from "../HealthBadge";
+import HealthBadge from "./HealthBadge";
 
 function weekLabel(weekOf: string): string {
   return new Date(weekOf + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });

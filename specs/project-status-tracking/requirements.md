@@ -15,24 +15,33 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 - **R3**: IF un proyecto no tiene ninguna entrada de avance semanal THEN el
   sistema SHALL mostrar un estado neutro ("sin datos") en vez de asumir
   `on_track` u otro estado.
-- **R4**: WHEN un usuario hace click en una tarjeta de proyecto THEN el
-  sistema SHALL navegar al detalle de ese proyecto (`/proyectos/<id>`).
+- **R4** *(reescrito 2026-07-29)*: WHEN un usuario hace click en una
+  tarjeta de proyecto THEN el sistema SHALL abrir el detalle en un
+  **drawer** deslizante desde la derecha (`ProjectDrawer.tsx`), sin
+  navegar a una URL nueva — mismo patrón de interacción que los drawers
+  de "Equipo" y "Calendario de asignados" (`app/components/Drawer.tsx`):
+  backdrop con blur, cierre con click en el backdrop, botón "✕", o tecla
+  Escape. ~~Navegar a `/proyectos/<id>`~~ — esa ruta ya no existe (ver R6).
 - **R5**: WHEN la lista de proyectos está vacía (0 proyectos) THEN el
   sistema SHALL mostrar un empty state consistente con el resto de la app
   (ver `noticias/page.tsx` como precedente), no una lista en blanco.
 
-## Detalle de proyecto (`/proyectos/<id>`)
+## Detalle de proyecto (drawer)
 
-- **R6**: WHEN un usuario navega a `/proyectos/<id>` con un `id` de
-  proyecto válido THEN el sistema SHALL mostrar: nombre del proyecto,
-  resumen de la iniciativa, país, negocio, y el timeline de avances
-  semanales. **(Revisado 2026-07-29)**: la sección de KPIs clave-valor se
-  removió de esta vista a pedido explícito del usuario — ver nota en
-  "Fuera de alcance".
-- **R7**: WHEN un usuario navega a `/proyectos/<id>` con un `id` que no
-  corresponde a ningún proyecto existente THEN el sistema SHALL mostrar un
-  estado "proyecto no encontrado" en vez de un error sin manejar (crash o
-  página en blanco).
+- **R6** *(reescrito 2026-07-29)*: WHEN el drawer de detalle está abierto
+  para un proyecto THEN el sistema SHALL mostrar en su header el nombre
+  del proyecto, y en su contenido: badge de estado de salud, país,
+  negocio, resumen de la iniciativa, y el timeline de avances semanales.
+  ~~Ruta `/proyectos/<id>`~~ — **eliminada** (2026-07-29, decisión
+  explícita del usuario): el detalle ya no tiene URL propia, igual que
+  "Equipo"/"Calendario" no la tienen. La sección de KPIs clave-valor
+  tampoco se muestra — ver nota en "Fuera de alcance" (retirada antes,
+  2026-07-29, por un pedido separado).
+- **R7** *(reescrito 2026-07-29)*: WHEN se abre el drawer con un `id` que
+  no corresponde a ningún proyecto existente (o la request a
+  `/api/proyectos/<id>` falla) THEN el sistema SHALL mostrar, dentro del
+  drawer, un estado "proyecto no encontrado" (o "no se pudo cargar")
+  consistente con el resto de la app, en vez de un error sin manejar.
 - **R8** *(retirado 2026-07-29)*: ~~WHEN un proyecto no define ningún KPI
   THEN el sistema SHALL omitir la sección de métricas clave o mostrar un
   estado vacío explícito~~ — ya no aplica: la sección de KPIs no se
@@ -64,11 +73,13 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   KPIs. **(Vigente, aunque no se renderiza)**: la tabla y los datos siguen
   existiendo — solo se removió la UI que los mostraba (R6/R8), no el
   modelo de datos ni la ruta API, que sigue devolviéndolos.
-- **R15**: WHEN `app/proyectos/page.tsx` o `/proyectos/<id>` necesitan
-  datos de proyectos THEN el sistema SHALL obtenerlos a través de una ruta
-  API propia del servidor (`/api/proyectos`, `/api/proyectos/<id>`) — el
-  navegador NUNCA consulta las tablas `projects`/`project_kpis`/
-  `project_weekly_updates` directamente contra Supabase con la anon key.
+- **R15** *(actualizado 2026-07-29)*: WHEN `app/proyectos/page.tsx` o
+  `ProjectDrawer.tsx` necesitan datos de proyectos THEN el sistema SHALL
+  obtenerlos a través de una ruta API propia del servidor
+  (`/api/proyectos`, `/api/proyectos/<id>`) — el navegador NUNCA consulta
+  las tablas `projects`/`project_kpis`/`project_weekly_updates`
+  directamente contra Supabase con la anon key. (Antes decía
+  `/proyectos/<id>`, que ya no existe como página — ver R4/R6.)
 
 ## Confidencialidad y control de acceso
 
@@ -99,8 +110,16 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   es vía la migración con seed (R11), no un formulario.
 - **(2026-07-29)** La sección de KPIs se removió del detalle a pedido
   explícito del usuario — decisión de alcance: solo UI (`KpiList.tsx`
-  eliminado, ya no se importa en `[id]/page.tsx`). La tabla `project_kpis`,
-  su modelo de datos (`ProjectKpi`, R13) y su presencia en la respuesta de
-  `/api/proyectos/<id>` **no** se tocaron — queda ahí para un eventual
-  regreso de la sección sin necesitar una migración nueva. Ver
-  `design.md` para el detalle.
+  eliminado). La tabla `project_kpis`, su modelo de datos (`ProjectKpi`,
+  R13) y su presencia en la respuesta de `/api/proyectos/<id>` **no** se
+  tocaron — queda ahí para un eventual regreso de la sección sin
+  necesitar una migración nueva. Ver `design.md` para el detalle.
+- **(2026-07-29, más tarde el mismo día)** La ruta `/proyectos/<id>` se
+  eliminó por completo — el detalle pasó a ser un drawer
+  (`ProjectDrawer.tsx`), a pedido explícito del usuario, replicando el
+  patrón de "Equipo"/"Calendario" (`app/components/Drawer.tsx`) en vez de
+  una página propia. No hay forma de compartir un link directo a un
+  proyecto específico — decisión consciente del usuario, no un
+  descuido (ver R4/R6/R7 reescritos). La ruta API `/api/proyectos/<id>`
+  sigue existiendo — el drawer la consume igual que antes lo hacía la
+  página.
