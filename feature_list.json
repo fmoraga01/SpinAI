@@ -34,6 +34,13 @@
       "status": "done",
       "created": "2026-07-28",
       "spec_dir": "specs/project-status-tracking/"
+    },
+    {
+      "id": "project-crud",
+      "title": "CRUD completo (crear, editar, eliminar) en /proyectos",
+      "status": "spec_ready",
+      "created": "2026-07-29",
+      "spec_dir": "specs/project-crud/"
     }
   ]
 }
