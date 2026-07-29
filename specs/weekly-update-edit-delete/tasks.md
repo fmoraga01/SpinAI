@@ -4,7 +4,7 @@ Orden sugerido: rutas API primero (testeables vía curl, sin depender de la
 UI), luego `lib/projects.ts`, luego `ProjectTimeline.tsx` (el cambio más
 grande), luego cablear `ProjectDrawer.tsx`, luego verificación end-to-end.
 
-- [ ] **T1 — `PATCH`/`DELETE /api/proyectos/<id>/avances/<updateId>`** (`R15`-`R20`)
+- [x] **T1 — `PATCH`/`DELETE /api/proyectos/<id>/avances/<updateId>`** (`R15`-`R20`)
   - Crear `app/api/proyectos/[id]/avances/[updateId]/route.ts` con
     `export async function PATCH(...)` y `export async function
     DELETE(...)` según `design.md`: `isAuthenticated(req)` → `401` si
@@ -29,13 +29,13 @@ grande), luego cablear `ProjectDrawer.tsx`, luego verificación end-to-end.
     confirmar `401`/`400`/`404`/`200` según corresponda, y que el `200` de
     `PATCH` trae el shape de `WeeklyUpdate` actualizado.
 
-- [ ] **T2 — `updateWeeklyUpdate()`/`deleteWeeklyUpdate()` en `lib/projects.ts`** (`R5`, `R11`)
+- [x] **T2 — `updateWeeklyUpdate()`/`deleteWeeklyUpdate()` en `lib/projects.ts`** (`R5`, `R11`)
   - Agregar ambas funciones según `design.md` — mismo patrón `fetch()` que
     `createWeeklyUpdate()`, reutilizando `WeeklyUpdateFormValues` ya
     existente. No requieren test de Vitest (no son lógica pura); se
     verifican end-to-end vía T4/T5.
 
-- [ ] **T3 — `ProjectTimeline.tsx`: controles de editar/borrar por fila** (`R1`-`R4`, `R6`, `R8`-`R10`, `R12`, `R14`)
+- [x] **T3 — `ProjectTimeline.tsx`: controles de editar/borrar por fila** (`R1`-`R4`, `R6`, `R8`-`R10`, `R12`, `R14`)
   - Agregar los props `onEdit: (id, values) => Promise<void>` y `onDelete:
     (id) => Promise<void>`.
   - Agregar el estado local descrito en `design.md`:
@@ -61,7 +61,7 @@ grande), luego cablear `ProjectDrawer.tsx`, luego verificación end-to-end.
     inline por fila) y anotar el resultado en
     `progress/impl_weekly-update-edit-delete.md`.
 
-- [ ] **T4 — Cablear `ProjectDrawer.tsx`** (`R5`, `R11`, `R7`, `R13`)
+- [x] **T4 — Cablear `ProjectDrawer.tsx`** (`R5`, `R11`, `R7`, `R13`)
   - Implementar `handleEditUpdate`/`handleDeleteUpdate` según `design.md`
     (no atrapan el error — lo dejan propagar para que `ProjectTimeline` lo
     maneje por fila) y pasarlos como `onEditUpdate`/`onDeleteUpdate` (o los
@@ -78,7 +78,7 @@ grande), luego cablear `ProjectDrawer.tsx`, luego verificación end-to-end.
     confirmar que efectivamente se refresca en ambos casos, incluido borrar
     el avance que era el más reciente).
 
-- [ ] **T5 — QA manual end-to-end**
+- [x] **T5 — QA manual end-to-end** (parcial — ver `progress/impl_weekly-update-edit-delete.md`: bloqueado por falta de credenciales Supabase/PIN en este sandbox, mismo criterio que `project-crud`/`weekly-update-entry`)
   - Editar un avance cambiando los tres campos (fecha/estado/nota) →
     confirmar que la fila se actualiza sin recargar (R5), que el `weekOf`
     guardado es el lunes de la nueva fecha elegida, y que el `HealthBadge`
@@ -113,7 +113,7 @@ grande), luego cablear `ProjectDrawer.tsx`, luego verificación end-to-end.
     no `200` ni `500` (R18) — este es el caso más fácil de pasar por alto,
     verificarlo explícitamente con dos proyectos reales en Supabase.
 
-- [ ] **T6 — Verificación y traceability**
+- [x] **T6 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state).
   - Confirmar en el dashboard de Supabase (Table Editor → Policies) que
     `project_weekly_updates` sigue sin ninguna policy para

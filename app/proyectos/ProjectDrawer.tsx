@@ -8,6 +8,8 @@ import {
   updateProject,
   deleteProject,
   createWeeklyUpdate,
+  updateWeeklyUpdate,
+  deleteWeeklyUpdate,
   ProjectFormValues,
   WeeklyUpdateFormValues,
 } from "@/lib/projects";
@@ -159,6 +161,22 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
     } catch (e) {
       setAddUpdateError(e instanceof Error ? e.message : "No se pudo guardar el avance"); // R12
     }
+  }
+
+  async function handleEditUpdate(updateId: string, values: WeeklyUpdateFormValues) {
+    if (!project) throw new Error("Proyecto no cargado");
+    const updated = await updateWeeklyUpdate(project.id, updateId, values); // deja que el error se propague a ProjectTimeline (R7)
+    const withUpdate = { ...project, updates: project.updates.map((u) => (u.id === updateId ? updated : u)) };
+    setProject(withUpdate);
+    onUpdated(withUpdate);
+  }
+
+  async function handleDeleteUpdate(updateId: string) {
+    if (!project) throw new Error("Proyecto no cargado");
+    await deleteWeeklyUpdate(project.id, updateId); // deja que el error se propague a ProjectTimeline (R13)
+    const withoutUpdate = { ...project, updates: project.updates.filter((u) => u.id !== updateId) };
+    setProject(withoutUpdate);
+    onUpdated(withoutUpdate);
   }
 
   function handleFormCancel() {
@@ -444,7 +462,7 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                     error={addUpdateError}
                   />
                 )}
-                <ProjectTimeline updates={project.updates} />
+                <ProjectTimeline updates={project.updates} onEdit={handleEditUpdate} onDelete={handleDeleteUpdate} />
               </section>
             </>
           )}

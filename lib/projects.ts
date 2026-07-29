@@ -135,3 +135,18 @@ export async function createWeeklyUpdate(projectId: string, values: WeeklyUpdate
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo guardar el avance (${res.status})`);
   return res.json();
 }
+
+export async function updateWeeklyUpdate(projectId: string, updateId: string, values: WeeklyUpdateFormValues): Promise<WeeklyUpdate> {
+  const res = await fetch(`/api/proyectos/${projectId}/avances/${updateId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo actualizar el avance (${res.status})`);
+  return res.json();
+}
+
+export async function deleteWeeklyUpdate(projectId: string, updateId: string): Promise<void> {
+  const res = await fetch(`/api/proyectos/${projectId}/avances/${updateId}`, { method: "DELETE" });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo eliminar el avance (${res.status})`);
+}
