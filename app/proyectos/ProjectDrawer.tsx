@@ -104,12 +104,17 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
             flexShrink: 0,
           }}
         >
-          <h2
-            className="text-sm font-semibold"
-            style={{ color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-          >
-            {headerTitle}
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <h2
+              className="text-sm font-semibold"
+              style={{ color: "var(--color-text-secondary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {headerTitle}
+            </h2>
+            {!loading && !error && project !== null && (
+              <HealthBadge status={healthFromTimeline(project.updates)} />
+            )}
+          </div>
           <button
             onClick={onClose}
             style={{
@@ -178,17 +183,17 @@ export default function ProjectDrawer({ projectId, onClose }: { projectId: strin
 
           {!loading && !error && project !== null && (
             <>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
-                <HealthBadge status={healthFromTimeline(project.updates)} />
-              </div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
-                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>{project.country}</span>
-                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>·</span>
-                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>{project.businessUnit}</span>
-              </div>
-              <p style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 32px" }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px" }}>
+                Resumen de la iniciativa
+              </p>
+              <p style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px" }}>
                 {project.summary}
               </p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32 }}>
+                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>País: {project.country}</span>
+                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>·</span>
+                <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>Negocio: {project.businessUnit}</span>
+              </div>
 
               <section>
                 <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 16px" }}>
