@@ -46,6 +46,25 @@ export function rowToProject(row: ProjectRow): Project {
 }
 
 /**
+ * Dado un string de fecha "YYYY-MM-DD", devuelve el lunes de esa semana
+ * (también "YYYY-MM-DD"). Usa mediodía local (`T12:00:00`) para construir
+ * el `Date`, mismo truco que ya usa `weekLabel()` en `ProjectTimeline.tsx`
+ * para evitar que la conversión UTC corra la fecha un día — y arma el
+ * string de salida con getFullYear/getMonth/getDate (hora local), nunca
+ * con `toISOString()`, por la misma razón.
+ */
+export function mondayOf(dateStr: string): string {
+  const d = new Date(dateStr + "T12:00:00");
+  const day = d.getDay(); // 0 = domingo ... 6 = sábado
+  const diff = day === 0 ? -6 : 1 - day; // días a restar para llegar al lunes
+  d.setDate(d.getDate() + diff);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+/**
  * Deriva el estado de salud de un proyecto a partir de la entrada más
  * reciente (por weekOf) de su timeline de avances semanales. Devuelve
  * `null` si no hay ninguna entrada (R3) — no asume `on_track` por defecto.
@@ -99,4 +118,20 @@ export async function updateProject(id: string, values: ProjectFormValues): Prom
 export async function deleteProject(id: string): Promise<void> {
   const res = await fetch(`/api/proyectos/${id}`, { method: "DELETE" });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo eliminar el proyecto (${res.status})`);
+}
+
+export interface WeeklyUpdateFormValues {
+  weekOf: string; // "YYYY-MM-DD", ya calculado como lunes por mondayOf()
+  status: HealthStatus;
+  note: string;
+}
+
+export async function createWeeklyUpdate(projectId: string, values: WeeklyUpdateFormValues): Promise<WeeklyUpdate> {
+  const res = await fetch(`/api/proyectos/${projectId}/avances`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `No se pudo guardar el avance (${res.status})`);
+  return res.json();
 }

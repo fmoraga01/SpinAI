@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { WeeklyUpdate } from "@/lib/types";
 
-function weekLabel(weekOf: string): string {
+export function weekLabel(weekOf: string): string {
   return new Date(weekOf + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
 }
 

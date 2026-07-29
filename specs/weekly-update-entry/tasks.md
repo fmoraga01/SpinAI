@@ -5,7 +5,7 @@ aislada), luego la ruta API (testeable vía curl), luego los componentes
 compartidos/nuevos, luego integración en `ProjectForm.tsx`/
 `ProjectDrawer.tsx`, luego verificación end-to-end.
 
-- [ ] **T1 — `mondayOf()` en `lib/projects.ts` + test** (`R13`)
+- [x] **T1 — `mondayOf()` en `lib/projects.ts` + test** (`R13`)
   - Agregar `export function mondayOf(dateStr: string): string` según
     `design.md` (mediodía local para evitar corrimiento de timezone,
     formateo con `getFullYear`/`getMonth`/`getDate`, nunca
@@ -16,7 +16,7 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
     fin de mes (ej. `2026-08-01` sábado → lunes de julio) para confirmar
     que el cálculo de fecha no se rompe en el borde del mes.
 
-- [ ] **T2 — `POST /api/proyectos/<id>/avances`** (`R15`-`R18`)
+- [x] **T2 — `POST /api/proyectos/<id>/avances`** (`R15`-`R18`)
   - Crear `app/api/proyectos/[id]/avances/route.ts` con `export async
     function POST(...)` según `design.md`: `isAuthenticated(req)` → `401`
     si falla; validar `weekOf`/`status` (uno de `on_track`/`at_risk`/
@@ -32,14 +32,14 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
     que el `201` trae el shape de `WeeklyUpdate` (`id`, `weekOf`, `status`,
     `note`).
 
-- [ ] **T3 — `createWeeklyUpdate()` en `lib/projects.ts`** (`R4`, `R10`)
+- [x] **T3 — `createWeeklyUpdate()` en `lib/projects.ts`** (`R4`, `R10`)
   - Agregar `WeeklyUpdateFormValues` y `createWeeklyUpdate(projectId,
     values)` según `design.md` — `fetch()` a la ruta de T2, propagando el
     mensaje de error del body de la respuesta cuando `!res.ok`. No
     requiere test de Vitest (no es lógica pura, es fetch); se verifica
     end-to-end vía T5/T6.
 
-- [ ] **T4 — `WeeklyUpdateFields.tsx` (componente compartido)** (`R13`, `R14`)
+- [x] **T4 — `WeeklyUpdateFields.tsx` (componente compartido)** (`R13`, `R14`)
   - Nuevo componente en `app/proyectos/WeeklyUpdateFields.tsx` según
     `design.md`: `<input type="date">`, `<select>` de estado (usando
     `HEALTH_STATUS_LABELS` exportado desde `HealthBadge.tsx` — agregar
@@ -50,7 +50,7 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
     `app/proyectos/*.tsx` con estilos nuevos) y anotar el resultado en
     `progress/impl_weekly-update-entry.md`.
 
-- [ ] **T5 — Sección opcional en `ProjectForm.tsx` (primer avance al crear)** (`R1`-`R6`)
+- [x] **T5 — Sección opcional en `ProjectForm.tsx` (primer avance al crear)** (`R1`-`R6`)
   - Agregar prop `showFirstUpdateSection: boolean` y el estado interno
     `update: WeeklyUpdateValues` descrito en `design.md`; renderizar
     `WeeklyUpdateFields` dentro de una sección "Primer avance semanal
@@ -71,7 +71,7 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
   - Correr `design-check` sobre `ProjectForm.tsx` de nuevo (cambios de
     estilo por la sección nueva) y anotar el resultado.
 
-- [ ] **T6 — `AddUpdateForm.tsx` + botón "Agregar avance" en `ProjectDrawer.tsx`** (`R7`-`R12`)
+- [x] **T6 — `AddUpdateForm.tsx` + botón "Agregar avance" en `ProjectDrawer.tsx`** (`R7`-`R12`)
   - Nuevo componente `app/proyectos/AddUpdateForm.tsx`: envuelve
     `WeeklyUpdateFields` con botones "Cancelar"/"Agregar" (mismo lenguaje
     visual que `ProjectForm.tsx`), disabled mientras falte algún campo
@@ -91,7 +91,7 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
   - Correr `design-check` sobre `AddUpdateForm.tsx`/`ProjectDrawer.tsx` y
     anotar el resultado.
 
-- [ ] **T7 — QA manual end-to-end**
+- [x] **T7 — QA manual end-to-end**
   - Crear un proyecto **sin** avance (sección vacía) → confirmar que se
     crea normal, sin llamar a la ruta de avances (R2).
   - Crear un proyecto completando **parcialmente** la sección de avance
@@ -120,7 +120,7 @@ compartidos/nuevos, luego integración en `ProjectForm.tsx`/
     /api/proyectos/<id>/avances` responde `401` en los 3 flujos de
     entrada (R15/R19).
 
-- [ ] **T8 — Verificación y traceability**
+- [x] **T8 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state) —
     debe incluir los tests nuevos de `mondayOf()` de T1.
   - Confirmar en el dashboard de Supabase (Table Editor → Policies) que

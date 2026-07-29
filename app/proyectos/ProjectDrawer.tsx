@@ -1,12 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { loadProject, healthFromTimeline, createProject, updateProject, deleteProject, ProjectFormValues } from "@/lib/projects";
+import {
+  loadProject,
+  healthFromTimeline,
+  createProject,
+  updateProject,
+  deleteProject,
+  createWeeklyUpdate,
+  ProjectFormValues,
+  WeeklyUpdateFormValues,
+} from "@/lib/projects";
 import { Project } from "@/lib/types";
 import HealthBadge from "./HealthBadge";
 import ProjectTimeline from "./ProjectTimeline";
 import ProjectForm from "./ProjectForm";
 import DeleteProjectModal from "./DeleteProjectModal";
+import AddUpdateForm from "./AddUpdateForm";
 
 interface Props {
   projectId: string | null;
@@ -26,9 +36,12 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
 
   const [formMode, setFormMode] = useState<"view" | "form">("view");
   const [formError, setFormError] = useState<string | null>(null);
+  const [firstUpdateError, setFirstUpdateError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [addingUpdate, setAddingUpdate] = useState(false);
+  const [addUpdateError, setAddUpdateError] = useState<string | null>(null);
 
   const isOpen = projectId !== null || mode === "create";
 
@@ -49,8 +62,11 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
       setError(false);
       setFormMode("view");
       setFormError(null);
+      setFirstUpdateError(null);
       setDeleteError(null);
       setShowDeleteModal(false);
+      setAddingUpdate(false);
+      setAddUpdateError(null);
     }, 320);
     return () => {
       cancelAnimationFrame(raf);
@@ -100,14 +116,26 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
 
   if (!mounted) return null;
 
-  async function handleFormSubmit(values: ProjectFormValues) {
+  async function handleFormSubmit(values: ProjectFormValues, firstUpdate: WeeklyUpdateFormValues | null) {
     setFormError(null);
+    setFirstUpdateError(null);
     try {
       if (project === null) {
-        const created = await createProject(values);
+        const created = await createProject(values); // R5: si esto falla, el catch de abajo maneja todo, firstUpdate ni se intenta
         setProject(created);
         onCreated(created);
         setFormMode("view");
+        if (firstUpdate) {
+          try {
+            const update = await createWeeklyUpdate(created.id, firstUpdate);
+            const withUpdate = { ...created, updates: [...created.updates, update] };
+            setProject(withUpdate);
+            onUpdated(withUpdate);
+          } catch (e) {
+            // R6: el proyecto ya se creó y se queda — solo se informa que el avance no se guardó.
+            setFirstUpdateError(e instanceof Error ? e.message : "El proyecto se creó, pero no se pudo guardar el primer avance");
+          }
+        }
       } else {
         const updated = await updateProject(project.id, values);
         setProject(updated);
@@ -116,6 +144,20 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
       }
     } catch (e) {
       setFormError(e instanceof Error ? e.message : "Ocurrió un error inesperado");
+    }
+  }
+
+  async function handleAddUpdate(values: WeeklyUpdateFormValues) {
+    if (!project) return;
+    setAddUpdateError(null);
+    try {
+      const update = await createWeeklyUpdate(project.id, values);
+      const withUpdate = { ...project, updates: [...project.updates, update] };
+      setProject(withUpdate);
+      onUpdated(withUpdate);
+      setAddingUpdate(false);
+    } catch (e) {
+      setAddUpdateError(e instanceof Error ? e.message : "No se pudo guardar el avance"); // R12
     }
   }
 
@@ -304,6 +346,7 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               onSubmit={handleFormSubmit}
               onCancel={handleFormCancel}
               error={formError}
+              showFirstUpdateSection={project === null}
             />
           )}
 
@@ -346,6 +389,9 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               {deleteError && (
                 <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px" }}>{deleteError}</p>
               )}
+              {firstUpdateError && (
+                <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px" }}>{firstUpdateError}</p>
+              )}
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px" }}>
                 Resumen de la iniciativa
               </p>
@@ -359,9 +405,45 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               </div>
 
               <section>
-                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 16px" }}>
-                  Avance semanal
-                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: 0 }}>
+                    Avance semanal
+                  </p>
+                  {!addingUpdate && (
+                    <button
+                      onClick={() => { setAddUpdateError(null); setAddingUpdate(true); }}
+                      style={{
+                        height: 28,
+                        borderRadius: "var(--radius-md)",
+                        border: "1px solid var(--color-border)",
+                        background: "transparent",
+                        color: "var(--color-text-secondary)",
+                        cursor: "pointer",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        padding: "0 10px",
+                        transition: "border-color 150ms, color 150ms",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-primary)";
+                        e.currentTarget.style.color = "var(--color-primary)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "var(--color-border)";
+                        e.currentTarget.style.color = "var(--color-text-secondary)";
+                      }}
+                    >
+                      Agregar avance
+                    </button>
+                  )}
+                </div>
+                {addingUpdate && (
+                  <AddUpdateForm
+                    onSubmit={handleAddUpdate}
+                    onCancel={() => { setAddingUpdate(false); setAddUpdateError(null); }}
+                    error={addUpdateError}
+                  />
+                )}
                 <ProjectTimeline updates={project.updates} />
               </section>
             </>

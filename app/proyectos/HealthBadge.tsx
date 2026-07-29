@@ -6,6 +6,14 @@ const CONFIG: Record<HealthStatus, { label: string; color: string; bg: string; b
   delayed: { label: "Atrasado", color: "#EF4444", bg: "#EF444415", border: "#EF444433" },
 };
 
+// Reutilizado por WeeklyUpdateFields.tsx (<select> de estado del avance) para
+// no inventar un vocabulario distinto al que ya ve el usuario en el badge.
+export const HEALTH_STATUS_LABELS: Record<HealthStatus, string> = {
+  on_track: CONFIG.on_track.label,
+  at_risk: CONFIG.at_risk.label,
+  delayed: CONFIG.delayed.label,
+};
+
 export default function HealthBadge({ status }: { status: HealthStatus | null }) {
   if (status === null) {
     return (

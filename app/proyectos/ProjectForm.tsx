@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ProjectFormValues } from "@/lib/projects";
+import { mondayOf, ProjectFormValues, WeeklyUpdateFormValues } from "@/lib/projects";
+import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
 
 interface Props {
   initialValues: ProjectFormValues;
   submitLabel: string;
-  onSubmit: (values: ProjectFormValues) => Promise<void>;
+  onSubmit: (values: ProjectFormValues, firstUpdate: WeeklyUpdateFormValues | null) => Promise<void>;
   onCancel: () => void;
   error: string | null;
+  showFirstUpdateSection: boolean; // true solo en modo creación (project === null en ProjectDrawer)
 }
 
 const inputStyle: React.CSSProperties = {
@@ -45,19 +47,35 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export default function ProjectForm({ initialValues, submitLabel, onSubmit, onCancel, error }: Props) {
+export default function ProjectForm({
+  initialValues,
+  submitLabel,
+  onSubmit,
+  onCancel,
+  error,
+  showFirstUpdateSection,
+}: Props) {
   const [values, setValues] = useState<ProjectFormValues>(initialValues);
+  const [update, setUpdate] = useState<WeeklyUpdateValues>({ date: "", status: "", note: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const isValid =
     values.name.trim() && values.country.trim() && values.businessUnit.trim() && values.summary.trim();
 
+  const updateFieldsFilled = [update.date, update.status, update.note].filter((v) => v !== "").length;
+  const updateIsPartial = updateFieldsFilled > 0 && updateFieldsFilled < 3;
+  const canSubmit = isValid && !updateIsPartial;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!isValid || submitting) return;
+    if (!canSubmit || submitting) return;
     setSubmitting(true);
+    const firstUpdate: WeeklyUpdateFormValues | null =
+      updateFieldsFilled === 3
+        ? { weekOf: mondayOf(update.date), status: update.status as WeeklyUpdateFormValues["status"], note: update.note.trim() }
+        : null;
     try {
-      await onSubmit(values);
+      await onSubmit(values, firstUpdate);
     } catch {
       // El mensaje de error lo controla ProjectDrawer vía el prop `error` (R5/R10).
     } finally {
@@ -108,6 +126,20 @@ export default function ProjectForm({ initialValues, submitLabel, onSubmit, onCa
         />
       </Field>
 
+      {showFirstUpdateSection && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, paddingTop: 4, borderTop: "1px solid var(--color-border)" }}>
+          <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "12px 0 0" }}>
+            Primer avance semanal (opcional)
+          </p>
+          <WeeklyUpdateFields values={update} onChange={(patch) => setUpdate((v) => ({ ...v, ...patch }))} />
+          {updateIsPartial && (
+            <p style={{ fontSize: 12, color: "var(--color-tertiary)", margin: 0 }}>
+              Completa fecha, estado y nota para agregar el primer avance, o deja los tres vacíos.
+            </p>
+          )}
+        </div>
+      )}
+
       {error && (
         <p style={{ fontSize: 13, color: "#F87171", margin: 0 }}>{error}</p>
       )}
@@ -132,18 +164,18 @@ export default function ProjectForm({ initialValues, submitLabel, onSubmit, onCa
         </button>
         <button
           type="submit"
-          disabled={!isValid || submitting}
+          disabled={!canSubmit || submitting}
           style={{
             flex: 1,
-            background: isValid && !submitting ? "var(--color-primary)" : "#1a2035",
+            background: canSubmit && !submitting ? "var(--color-primary)" : "#1a2035",
             color: "var(--color-text-primary)",
-            border: "1px solid " + (isValid && !submitting ? "var(--color-primary)" : "var(--color-border)"),
+            border: "1px solid " + (canSubmit && !submitting ? "var(--color-primary)" : "var(--color-border)"),
             borderRadius: "var(--radius-md)",
             padding: "9px 16px",
             fontSize: 13,
             fontWeight: 500,
-            cursor: isValid && !submitting ? "pointer" : "not-allowed",
-            boxShadow: isValid && !submitting ? "var(--shadow-glow-sm)" : "none",
+            cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
+            boxShadow: canSubmit && !submitting ? "var(--shadow-glow-sm)" : "none",
           }}
         >
           {submitting ? "Guardando…" : submitLabel}
