@@ -1,5 +1,46 @@
 import { describe, expect, it } from "vitest";
-import { mondayOf } from "./projects";
+import { mondayOf, rowToProject, rowToUpdate, VALID_STATUSES } from "./projects";
+
+describe("rowToProject", () => {
+  it("maps status from the row (R9), along with the other existing fields", () => {
+    const project = rowToProject({
+      id: "p1",
+      name: "Proyecto X",
+      summary: "Resumen",
+      country: "Chile",
+      business_unit: "Unidad A",
+      status: "at_risk",
+      project_kpis: [
+        { label: "KPI B", value: "2", position: 1 },
+        { label: "KPI A", value: "1", position: 0 },
+      ],
+      project_weekly_updates: [{ id: "u1", week_of: "2026-07-06", note: "Avance" }],
+    });
+
+    expect(project.status).toBe("at_risk");
+    expect(project.businessUnit).toBe("Unidad A");
+    expect(project.kpis).toEqual([
+      { label: "KPI A", value: "1" },
+      { label: "KPI B", value: "2" },
+    ]);
+    expect(project.updates).toEqual([{ id: "u1", weekOf: "2026-07-06", note: "Avance" }]);
+  });
+});
+
+describe("rowToUpdate", () => {
+  it("maps a row to a WeeklyUpdate without a status property (R10)", () => {
+    const update = rowToUpdate({ id: "u1", week_of: "2026-07-06", note: "Avance" });
+
+    expect(update).toEqual({ id: "u1", weekOf: "2026-07-06", note: "Avance" });
+    expect(update).not.toHaveProperty("status");
+  });
+});
+
+describe("VALID_STATUSES", () => {
+  it("contains exactly the 3 expected statuses (R14)", () => {
+    expect(VALID_STATUSES).toEqual(["on_track", "at_risk", "delayed"]);
+  });
+});
 
 describe("mondayOf", () => {
   it("maps a Monday to itself", () => {

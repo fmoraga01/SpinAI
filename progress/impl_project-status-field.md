@@ -1,5 +1,41 @@
 # Implementación — project-status-field
 
+## Fix de rechazo (reviewer, motivo único: falta de tests Vitest en `lib/`)
+
+`reviewer` rechazó la primera entrega por un único motivo bloqueante:
+`rowToProject()`, `rowToUpdate()` y `VALID_STATUSES` cambiaron/nacieron en
+`lib/projects.ts` sin ningún test Vitest, con R9/R10/R12/R13/R14
+verificados "por lectura de código" en vez de un test real, algo que
+`docs/specs.md` ya no acepta como suficiente para lógica de `lib/`. La
+migración SQL quedó aprobada tal cual y no se tocó en este fix.
+
+Se agregaron 3 tests nuevos a `lib/projects.test.ts` (mismo estilo que los
+`describe`/`it` ya existentes para `mondayOf()`):
+
+1. `describe("rowToProject")` → `it("maps status from the row (R9), along
+   with the other existing fields")`: una fila con `status: "at_risk"`
+   produce un `Project` con `status: "at_risk"`, y de paso cubre
+   `business_unit → businessUnit`, orden de `kpis` por `position` y el
+   mapeo de `updates`.
+2. `describe("rowToUpdate")` → `it("maps a row to a WeeklyUpdate without a
+   status property (R10)")`: la fila `{id, week_of, note}` produce
+   exactamente `{id, weekOf, note}` y `expect(update).not.toHaveProperty
+   ("status")`.
+3. `describe("VALID_STATUSES")` → `it("contains exactly the 3 expected
+   statuses (R14)")`: `expect(VALID_STATUSES).toEqual(["on_track",
+   "at_risk", "delayed"])`.
+
+También se corrigieron los dos detalles menores señalados por `reviewer`:
+- `app/proyectos/HealthBadge.tsx:9-10` — el comentario que mencionaba el
+  `<select>` de `WeeklyUpdateFields.tsx` (ya eliminado por esta misma
+  feature) ahora apunta al consumidor real, `ProjectForm.tsx`.
+- El conteo de tests de este mismo archivo (más abajo, sección
+  "Verificación automatizada") estaba invertido; corregido, y ahora
+  además refleja los 3 tests nuevos (12 en total).
+
+No se tocó ningún otro archivo de implementación — la implementación
+funcional sigue siendo la del commit original (`3b22702`).
+
 ## Resumen
 
 Implementado `specs/project-status-field/` T1-T10 en orden: migración SQL
@@ -174,11 +210,18 @@ npm run build              → compila, TS check ok; confirma que no queda
                               update.status / WeeklyUpdate.status en todo
                               el árbol de app/ ni lib/ (build falla en
                               tiempo de tipos si quedara alguna)
-npm run test                → 9 tests pasan (5 mondayOf() + 4 tests
-                              preexistentes de otros módulos del repo no
-                              tocados por esta feature; los 4 tests de
+npm run test                → 12 tests pasan (4 mondayOf() + 3 nuevos de
+                              este fix — rowToProject, rowToUpdate,
+                              VALID_STATUSES, ver sección "Fix de
+                              rechazo" abajo — + 5 tests preexistentes de
+                              lib/sizes.test.ts, otro módulo del repo no
+                              tocado por esta feature; los 4 tests de
                               healthFromTimeline fueron ELIMINADOS, no
-                              "no aplican" — la función ya no existe)
+                              "no aplican" — la función ya no existe.
+                              Nota: el reporte original de esta feature
+                              tenía el conteo de mondayOf/otros invertido
+                              — corregido acá tras el rechazo de
+                              reviewer)
 npm run check-sdd-state    → ok, "single active feature: project-status-field (in_progress)"
 npm run verify              → exit 0 end-to-end (los 4 comandos anteriores en secuencia)
 ```
@@ -265,26 +308,44 @@ de código de esta feature.
 - **R8**: verificado por `npm run build` — `WeeklyUpdate` en
   `lib/types.ts` ya no declara `status`; cualquier acceso residual a
   `update.status` habría fallado el `tsc` del build.
-- **R9**: verificado por lectura de `rowToProject()` en `lib/projects.ts` —
-  incluye `status: row.status` en el objeto devuelto.
-- **R10**: verificado por lectura de `rowToUpdate()` — ya no lee ni
-  incluye `status`; `UpdateRow` (interfaz interna) tampoco lo declara.
+- **R9**: **verificado por test de Vitest real** —
+  `lib/projects.test.ts`, `describe("rowToProject")`, test "maps status
+  from the row (R9), along with the other existing fields": una fila con
+  `status: "at_risk"` produce un `Project` con `status: "at_risk"`, y de
+  paso cubre que `business_unit → businessUnit`, los `kpis` quedan
+  ordenados por `position` y `updates` se mapea correctamente.
+- **R10**: **verificado por test de Vitest real** — `lib/projects.test.ts`,
+  `describe("rowToUpdate")`, test "maps a row to a WeeklyUpdate without a
+  status property (R10)": la fila `{id, week_of, note}` produce
+  exactamente `{id, weekOf, note}` (`toEqual`) y además
+  `expect(update).not.toHaveProperty("status")`.
 - **R11**: **eliminada** (no "no aplica") — `healthFromTimeline()` ya no
   existe en `lib/projects.ts`; su bloque de 4 tests
   (`describe("healthFromTimeline", ...)`) fue eliminado de
-  `lib/projects.test.ts`, confirmado por `npm run test` (9 tests, antes 13
-  — 4 menos, exactamente los eliminados) y por grep (0 ocurrencias de
-  `healthFromTimeline` en `app/`/`lib/`).
+  `lib/projects.test.ts`, confirmado por `npm run test` (12 tests, antes
+  13 con `healthFromTimeline` y sin los 3 tests nuevos de este fix —
+  neto: -4 `healthFromTimeline` +3 nuevos de `rowToProject`/`rowToUpdate`/
+  `VALID_STATUSES`) y por grep (0 ocurrencias de `healthFromTimeline` en
+  `app/`/`lib/`).
 - **R12**: verificado por lectura — `ProjectFormValues` en
-  `lib/projects.ts` incluye `status: HealthStatus`.
+  `lib/projects.ts` incluye `status: HealthStatus`. (Cubierto
+  indirectamente por el test de `rowToProject()` de R9, que ejercita el
+  mismo tipo `HealthStatus`; no tiene un test dedicado propio porque es
+  una interfaz de tipos, no una función con lógica.)
 - **R13**: verificado por lectura — `WeeklyUpdateFormValues` queda
-  `{ weekOf: string; note: string }`, sin `status`.
-- **R14**: verificado por lectura + grep — `export const VALID_STATUSES:
-  HealthStatus[] = ["on_track", "at_risk", "delayed"];` vive únicamente en
-  `lib/projects.ts`; las rutas `POST`/`PATCH /api/proyectos*` lo importan
-  desde ahí (`grep VALID_STATUSES app/` confirma 0 copias locales
-  restantes; las dos rutas de avances ya no lo usan ni lo importan, sin
-  duplicarlo).
+  `{ weekOf: string; note: string }`, sin `status`. (Mismo criterio que
+  R12: es una interfaz de tipos sin lógica propia; el test de
+  `rowToUpdate()` de R10 confirma en runtime que un `WeeklyUpdate` real
+  nunca lleva `status`.)
+- **R14**: **verificado por test de Vitest real** —
+  `lib/projects.test.ts`, `describe("VALID_STATUSES")`, test "contains
+  exactly the 3 expected statuses (R14)":
+  `expect(VALID_STATUSES).toEqual(["on_track", "at_risk", "delayed"])`.
+  Complementado con grep: `export const VALID_STATUSES` vive únicamente
+  en `lib/projects.ts`; las rutas `POST`/`PATCH /api/proyectos*` lo
+  importan desde ahí (`grep VALID_STATUSES app/` confirma 0 copias
+  locales restantes; las dos rutas de avances ya no lo usan ni lo
+  importan, sin duplicarlo).
 
 ### `ProjectForm.tsx` (R15-R19)
 
