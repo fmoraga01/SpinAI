@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { HealthStatus } from "@/lib/types";
 import { mondayOf, ProjectFormValues, WeeklyUpdateFormValues } from "@/lib/projects";
+import { HEALTH_STATUS_LABELS } from "./HealthBadge";
 import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
 
 interface Props {
@@ -27,8 +29,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 function focusHandlers(): {
-  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 } {
   return {
     onFocus: (e) => (e.currentTarget.style.borderColor = "#2C40FF"),
@@ -47,6 +49,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+const HEALTH_STATUS_OPTIONS = Object.entries(HEALTH_STATUS_LABELS) as [HealthStatus, string][];
+
 export default function ProjectForm({
   initialValues,
   submitLabel,
@@ -56,14 +60,14 @@ export default function ProjectForm({
   showFirstUpdateSection,
 }: Props) {
   const [values, setValues] = useState<ProjectFormValues>(initialValues);
-  const [update, setUpdate] = useState<WeeklyUpdateValues>({ date: "", status: "", note: "" });
+  const [update, setUpdate] = useState<WeeklyUpdateValues>({ date: "", note: "" });
   const [submitting, setSubmitting] = useState(false);
 
   const isValid =
-    values.name.trim() && values.country.trim() && values.businessUnit.trim() && values.summary.trim();
+    values.name.trim() && values.country.trim() && values.businessUnit.trim() && values.summary.trim() && values.status;
 
-  const updateFieldsFilled = [update.date, update.status, update.note].filter((v) => v !== "").length;
-  const updateIsPartial = updateFieldsFilled > 0 && updateFieldsFilled < 3;
+  const updateFieldsFilled = [update.date, update.note].filter((v) => v !== "").length;
+  const updateIsPartial = updateFieldsFilled > 0 && updateFieldsFilled < 2;
   const canSubmit = isValid && !updateIsPartial;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -71,8 +75,8 @@ export default function ProjectForm({
     if (!canSubmit || submitting) return;
     setSubmitting(true);
     const firstUpdate: WeeklyUpdateFormValues | null =
-      updateFieldsFilled === 3
-        ? { weekOf: mondayOf(update.date), status: update.status as WeeklyUpdateFormValues["status"], note: update.note.trim() }
+      updateFieldsFilled === 2
+        ? { weekOf: mondayOf(update.date), note: update.note.trim() }
         : null;
     try {
       await onSubmit(values, firstUpdate);
@@ -115,6 +119,20 @@ export default function ProjectForm({
           {...focusHandlers()}
         />
       </Field>
+      <Field label="Estado">
+        <select
+          value={values.status}
+          onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as HealthStatus }))}
+          style={inputStyle}
+          {...focusHandlers()}
+        >
+          {HEALTH_STATUS_OPTIONS.map(([status, label]) => (
+            <option key={status} value={status}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field label="Resumen">
         <textarea
           value={values.summary}
@@ -134,7 +152,7 @@ export default function ProjectForm({
           <WeeklyUpdateFields values={update} onChange={(patch) => setUpdate((v) => ({ ...v, ...patch }))} />
           {updateIsPartial && (
             <p style={{ fontSize: 12, color: "var(--color-tertiary)", margin: 0 }}>
-              Completa fecha, estado y nota para agregar el primer avance, o deja los tres vacíos.
+              Completa fecha y nota para agregar el primer avance, o deja ambos vacíos.
             </p>
           )}
         </div>

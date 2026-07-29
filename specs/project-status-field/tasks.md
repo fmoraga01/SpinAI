@@ -6,7 +6,7 @@ criterio que las cuatro specs anteriores), luego tipos/`lib/`, luego rutas
 API (testeables vía curl), luego componentes de formulario, luego
 badge/tarjetas, luego verificación end-to-end.
 
-- [ ] **T1 — Migración SQL** (`R1`-`R6`)
+- [x] **T1 — Migración SQL** (`R1`-`R6`)
   - Crear `supabase/migrations/20260729120000_mover_status_a_projects.sql`
     (ajustar el timestamp del nombre a la hora real de creación del
     archivo si difiere) con el contenido exacto de `design.md` sección
@@ -22,7 +22,7 @@ badge/tarjetas, luego verificación end-to-end.
     `20260728140000_reemplazar_seed_projects.sql` — ambas ya aplicadas,
     quedan tal cual.
 
-- [ ] **T2 — Tipos y `lib/projects.ts`** (`R7`-`R14`)
+- [x] **T2 — Tipos y `lib/projects.ts`** (`R7`-`R14`)
   - `lib/types.ts`: `Project` gana `status: HealthStatus`; `WeeklyUpdate`
     pierde `status`.
   - `lib/projects.ts`: `rowToProject()` incluye `status: row.status`;
@@ -42,7 +42,7 @@ badge/tarjetas, luego verificación end-to-end.
     que aún no se hayan actualizado en T3-T5 (si build falla acá por eso,
     es esperado hasta completar esas tasks — no es un bug de T2).
 
-- [ ] **T3 — Rutas API `/api/proyectos`** (`R27`-`R29`)
+- [x] **T3 — Rutas API `/api/proyectos`** (`R27`-`R29`)
   - `app/api/proyectos/route.ts` (`POST`): agregar `status` a la
     desestructuración del body, a la validación (`VALID_STATUSES` de
     `lib/projects.ts`) y al `insert`.
@@ -53,7 +53,7 @@ badge/tarjetas, luego verificación end-to-end.
     `status` válido (esperar `201`/`200` con el `Project` reflejando el
     valor enviado) — para ambas rutas.
 
-- [ ] **T4 — Rutas API `/api/proyectos/<id>/avances`** (`R30`-`R32`)
+- [x] **T4 — Rutas API `/api/proyectos/<id>/avances`** (`R30`-`R32`)
   - `app/api/proyectos/[id]/avances/route.ts` (`POST`): quitar `status` de
     la desestructuración/validación/`insert`; eliminar el `VALID_STATUSES`
     local duplicado (usar el de `lib/projects.ts` si sigue haciendo falta
@@ -66,7 +66,7 @@ badge/tarjetas, luego verificación end-to-end.
     `status` extra en el body (esperar que se ignore, sin `400`, y que la
     fila insertada/actualizada no tenga ese campo en la respuesta).
 
-- [ ] **T5 — `WeeklyUpdateFields.tsx`** (`R20`)
+- [x] **T5 — `WeeklyUpdateFields.tsx`** (`R20`)
   - Eliminar el `<Field label="Estado">` y su `<select>`; eliminar el
     campo `status` de la interfaz `WeeklyUpdateValues`; eliminar imports
     que ya no se usan (`HealthStatus`, `HEALTH_STATUS_LABELS` si dejan de
@@ -75,7 +75,7 @@ badge/tarjetas, luego verificación end-to-end.
     `app/proyectos/*.tsx` con cambios de layout) y anotar el resultado en
     `progress/impl_project-status-field.md`.
 
-- [ ] **T6 — `AddUpdateForm.tsx` y `ProjectTimeline.tsx`** (`R21`-`R23`)
+- [x] **T6 — `AddUpdateForm.tsx` y `ProjectTimeline.tsx`** (`R21`-`R23`)
   - `AddUpdateForm.tsx`: `isValid` pasa a `values.date !== "" &&
     values.note.trim() !== ""`; el payload enviado a `onSubmit` deja de
     incluir `status`.
@@ -85,7 +85,7 @@ badge/tarjetas, luego verificación end-to-end.
   - Verificación manual: agregar un avance sin selector de estado visible;
     editar una fila del timeline sin selector de estado visible.
 
-- [ ] **T7 — `ProjectForm.tsx`** (`R15`-`R19`)
+- [x] **T7 — `ProjectForm.tsx`** (`R15`-`R19`)
   - Agregar el campo "Estado" (`<select>` con `HEALTH_STATUS_LABELS`) como
     quinto campo del formulario, con el mismo estilo/`focusHandlers()` que
     los campos existentes; incluir en `isValid` (5 condiciones);
@@ -106,7 +106,7 @@ badge/tarjetas, luego verificación end-to-end.
     editar un proyecto existente y confirmar que el `<select>` de Estado
     aparece prellenado con el valor actual.
 
-- [ ] **T8 — Badge y tarjetas** (`R24`-`R26`)
+- [x] **T8 — Badge y tarjetas** (`R24`-`R26`)
   - `HealthBadge.tsx`: cambiar la prop a `status: HealthStatus` (sin `|
     null`), eliminar la rama `if (status === null)`.
   - `ProjectCard.tsx`: reemplazar `const status =
@@ -118,7 +118,7 @@ badge/tarjetas, luego verificación end-to-end.
   - Verificación: `npm run build` sin errores de tipos (confirma que no
     queda ningún caller pasando `null`/`undefined` a `HealthBadge`).
 
-- [ ] **T9 — QA manual end-to-end** (parcial — documentar en
+- [x] **T9 — QA manual end-to-end** (parcial — documentar en
   `progress/impl_project-status-field.md` qué se pudo verificar en este
   sandbox sin credenciales de Supabase/PIN, mismo criterio que las cuatro
   specs anteriores; el resto queda pendiente de QA humana antes de dar por
@@ -139,7 +139,7 @@ badge/tarjetas, luego verificación end-to-end.
     `400` si falta `status` o es inválido, y que `POST`/`PATCH
     .../avances...` ya no lo piden.
 
-- [ ] **T10 — Verificación y traceability**
+- [x] **T10 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state).
   - Escribir `progress/impl_project-status-field.md` con, para cada
     `R1`-`R32`: el o los archivo(s) tocados y cómo se verificó (test de

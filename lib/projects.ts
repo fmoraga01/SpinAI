@@ -9,7 +9,6 @@ interface KpiRow {
 interface UpdateRow {
   id: string;
   week_of: string;
-  status: HealthStatus;
   note: string;
 }
 
@@ -19,16 +18,19 @@ interface ProjectRow {
   summary: string;
   country: string;
   business_unit: string;
+  status: HealthStatus;
   project_kpis?: KpiRow[] | null;
   project_weekly_updates?: UpdateRow[] | null;
 }
+
+export const VALID_STATUSES: HealthStatus[] = ["on_track", "at_risk", "delayed"];
 
 export function rowToKpi(row: KpiRow): ProjectKpi {
   return { label: row.label, value: row.value };
 }
 
 export function rowToUpdate(row: UpdateRow): WeeklyUpdate {
-  return { id: row.id, weekOf: row.week_of, status: row.status, note: row.note };
+  return { id: row.id, weekOf: row.week_of, note: row.note };
 }
 
 export function rowToProject(row: ProjectRow): Project {
@@ -40,6 +42,7 @@ export function rowToProject(row: ProjectRow): Project {
     summary: row.summary,
     country: row.country,
     businessUnit: row.business_unit,
+    status: row.status,
     kpis: kpis.map(rowToKpi),
     updates: updates.map(rowToUpdate),
   };
@@ -64,17 +67,6 @@ export function mondayOf(dateStr: string): string {
   return `${y}-${m}-${dd}`;
 }
 
-/**
- * Deriva el estado de salud de un proyecto a partir de la entrada más
- * reciente (por weekOf) de su timeline de avances semanales. Devuelve
- * `null` si no hay ninguna entrada (R3) — no asume `on_track` por defecto.
- */
-export function healthFromTimeline(updates: WeeklyUpdate[]): HealthStatus | null {
-  if (updates.length === 0) return null;
-  const latest = [...updates].sort((a, b) => b.weekOf.localeCompare(a.weekOf))[0];
-  return latest.status;
-}
-
 export async function loadProjects(): Promise<Project[]> {
   const res = await fetch("/api/proyectos");
   if (!res.ok) throw new Error(`No se pudieron cargar los proyectos (${res.status})`);
@@ -93,6 +85,7 @@ export interface ProjectFormValues {
   country: string;
   businessUnit: string;
   summary: string;
+  status: HealthStatus;
 }
 
 export async function createProject(values: ProjectFormValues): Promise<Project> {
@@ -122,7 +115,6 @@ export async function deleteProject(id: string): Promise<void> {
 
 export interface WeeklyUpdateFormValues {
   weekOf: string; // "YYYY-MM-DD", ya calculado como lunes por mondayOf()
-  status: HealthStatus;
   note: string;
 }
 

@@ -1,13 +1,10 @@
 "use client";
 
-import { HealthStatus } from "@/lib/types";
 import { mondayOf } from "@/lib/projects";
-import { HEALTH_STATUS_LABELS } from "./HealthBadge";
 import { weekLabel } from "./ProjectTimeline";
 
 export interface WeeklyUpdateValues {
   date: string; // valor crudo del <input type="date">, "" si vacío
-  status: HealthStatus | "";
   note: string;
 }
 
@@ -30,8 +27,8 @@ const inputStyle: React.CSSProperties = {
 };
 
 function focusHandlers(): {
-  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
-  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
 } {
   return {
     onFocus: (e) => (e.currentTarget.style.borderColor = "#2C40FF"),
@@ -50,8 +47,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const HEALTH_STATUS_OPTIONS = Object.entries(HEALTH_STATUS_LABELS) as [HealthStatus, string][];
-
 export default function WeeklyUpdateFields({ values, onChange }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -68,21 +63,6 @@ export default function WeeklyUpdateFields({ values, onChange }: Props) {
             Semana del {weekLabel(mondayOf(values.date))}
           </p>
         )}
-      </Field>
-      <Field label="Estado">
-        <select
-          value={values.status}
-          onChange={(e) => onChange({ status: e.target.value as HealthStatus })}
-          style={inputStyle}
-          {...focusHandlers()}
-        >
-          <option value="">Selecciona un estado</option>
-          {HEALTH_STATUS_OPTIONS.map(([status, label]) => (
-            <option key={status} value={status}>
-              {label}
-            </option>
-          ))}
-        </select>
       </Field>
       <Field label="Nota">
         <textarea

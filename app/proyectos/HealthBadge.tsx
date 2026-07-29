@@ -14,26 +14,7 @@ export const HEALTH_STATUS_LABELS: Record<HealthStatus, string> = {
   delayed: CONFIG.delayed.label,
 };
 
-export default function HealthBadge({ status }: { status: HealthStatus | null }) {
-  if (status === null) {
-    return (
-      <span
-        style={{
-          fontSize: 11,
-          fontWeight: 600,
-          color: "var(--color-tertiary)",
-          background: "var(--color-secondary)",
-          border: "1px solid var(--color-border)",
-          borderRadius: "var(--radius-md)",
-          padding: "2px 9px",
-          whiteSpace: "nowrap",
-        }}
-      >
-        Sin datos
-      </span>
-    );
-  }
-
+export default function HealthBadge({ status }: { status: HealthStatus }) {
   const { label, color, bg, border } = CONFIG[status];
   return (
     <span

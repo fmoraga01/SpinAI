@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { HealthStatus, WeeklyUpdate } from "@/lib/types";
+import { WeeklyUpdate } from "@/lib/types";
 import { mondayOf, WeeklyUpdateFormValues } from "@/lib/projects";
 import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
 
@@ -35,7 +35,7 @@ const actionButtonStyle: React.CSSProperties = {
 
 export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<WeeklyUpdateValues>({ date: "", status: "", note: "" });
+  const [editValues, setEditValues] = useState<WeeklyUpdateValues>({ date: "", note: "" });
   const [editError, setEditError] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
 
@@ -49,11 +49,11 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
       .map((update) => ({ key: update.id, update }));
   }, [updates]);
 
-  const isEditValid = editValues.date !== "" && editValues.status !== "" && editValues.note.trim() !== "";
+  const isEditValid = editValues.date !== "" && editValues.note.trim() !== "";
 
   function startEdit(update: WeeklyUpdate) {
     setEditingId(update.id);
-    setEditValues({ date: update.weekOf, status: update.status, note: update.note }); // R2: precarga con los valores actuales
+    setEditValues({ date: update.weekOf, note: update.note }); // R2: precarga con los valores actuales
     setEditError(null);
   }
 
@@ -68,7 +68,6 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
     try {
       await onEdit(editingId, {
         weekOf: mondayOf(editValues.date),
-        status: editValues.status as HealthStatus,
         note: editValues.note.trim(),
       });
       setEditingId(null);

@@ -3,18 +3,15 @@ import { isAuthenticated } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { rowToUpdate } from "@/lib/projects";
 
-const VALID_STATUSES = ["on_track", "at_risk", "delayed"];
-
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authed = await isAuthenticated(req);
   if (!authed) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();
-  const { weekOf, status, note } = body ?? {};
+  const { weekOf, note } = body ?? {};
   const missing = [
     (!weekOf || Number.isNaN(new Date(weekOf).getTime())) && "weekOf",
-    !VALID_STATUSES.includes(status) && "status",
     !note?.trim() && "note",
   ].filter(Boolean);
   if (missing.length > 0) {
@@ -32,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data, error } = await db
     .from("project_weekly_updates")
-    .insert({ project_id: id, week_of: weekOf, status, note: note.trim() })
+    .insert({ project_id: id, week_of: weekOf, note: note.trim() })
     .select()
     .single();
 

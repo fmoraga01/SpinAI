@@ -3,8 +3,6 @@ import { isAuthenticated } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { rowToUpdate } from "@/lib/projects";
 
-const VALID_STATUSES = ["on_track", "at_risk", "delayed"];
-
 async function findUpdate(db: ReturnType<typeof getSupabaseAdmin>, projectId: string, updateId: string) {
   // Filtra por project_id Y id a la vez (R18) — un updateId válido pero de
   // otro proyecto se trata igual que uno inexistente, nunca 500 ni éxito
@@ -23,10 +21,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id, updateId } = await params;
   const body = await req.json();
-  const { weekOf, status, note } = body ?? {};
+  const { weekOf, note } = body ?? {};
   const missing = [
     (!weekOf || Number.isNaN(new Date(weekOf).getTime())) && "weekOf",
-    !VALID_STATUSES.includes(status) && "status",
     !note?.trim() && "note",
   ].filter(Boolean);
   if (missing.length > 0) {
@@ -41,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data, error } = await db
     .from("project_weekly_updates")
-    .update({ week_of: weekOf, status, note: note.trim() })
+    .update({ week_of: weekOf, note: note.trim() })
     .eq("id", updateId)
     .select()
     .single();

@@ -1,7 +1,6 @@
 "use client";
 
 import { Project } from "@/lib/types";
-import { healthFromTimeline } from "@/lib/projects";
 import HealthBadge from "./HealthBadge";
 
 function latestUpdateDate(project: Project): string | null {
@@ -10,7 +9,7 @@ function latestUpdateDate(project: Project): string | null {
 }
 
 export default function ProjectCard({ project, onSelect }: { project: Project; onSelect: (id: string) => void }) {
-  const status = healthFromTimeline(project.updates);
+  const status = project.status;
   const lastUpdate = latestUpdateDate(project);
 
   return (

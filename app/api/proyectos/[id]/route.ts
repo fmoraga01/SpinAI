@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { rowToProject } from "@/lib/projects";
+import { rowToProject, VALID_STATUSES } from "@/lib/projects";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authed = await isAuthenticated(req);
@@ -32,12 +32,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { id } = await params;
   const body = await req.json();
-  const { name, summary, country, businessUnit } = body ?? {};
+  const { name, summary, country, businessUnit, status } = body ?? {};
   const missing = [
     !name?.trim() && "name",
     !summary?.trim() && "summary",
     !country?.trim() && "country",
     !businessUnit?.trim() && "businessUnit",
+    !VALID_STATUSES.includes(status) && "status",
   ].filter(Boolean);
   if (missing.length > 0) {
     return NextResponse.json({ error: `Campos requeridos faltantes: ${missing.join(", ")}` }, { status: 400 });
@@ -46,7 +47,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from("projects")
-    .update({ name: name.trim(), summary: summary.trim(), country: country.trim(), business_unit: businessUnit.trim() })
+    .update({ name: name.trim(), summary: summary.trim(), country: country.trim(), business_unit: businessUnit.trim(), status })
     .eq("id", id)
     .select("*, project_kpis(*), project_weekly_updates(*)")
     .maybeSingle();

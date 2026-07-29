@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { rowToProject } from "@/lib/projects";
+import { rowToProject, VALID_STATUSES } from "@/lib/projects";
 
 export async function GET(req: NextRequest) {
   const authed = await isAuthenticated(req);
@@ -24,12 +24,13 @@ export async function POST(req: NextRequest) {
   if (!authed) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json();
-  const { name, summary, country, businessUnit } = body ?? {};
+  const { name, summary, country, businessUnit, status } = body ?? {};
   const missing = [
     !name?.trim() && "name",
     !summary?.trim() && "summary",
     !country?.trim() && "country",
     !businessUnit?.trim() && "businessUnit",
+    !VALID_STATUSES.includes(status) && "status",
   ].filter(Boolean);
   if (missing.length > 0) {
     return NextResponse.json({ error: `Campos requeridos faltantes: ${missing.join(", ")}` }, { status: 400 });
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   const db = getSupabaseAdmin();
   const { data, error } = await db
     .from("projects")
-    .insert({ name: name.trim(), summary: summary.trim(), country: country.trim(), business_unit: businessUnit.trim() })
+    .insert({ name: name.trim(), summary: summary.trim(), country: country.trim(), business_unit: businessUnit.trim(), status })
     .select("*, project_kpis(*), project_weekly_updates(*)")
     .single();
 

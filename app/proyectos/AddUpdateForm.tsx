@@ -11,17 +11,17 @@ interface Props {
 }
 
 export default function AddUpdateForm({ onSubmit, onCancel, error }: Props) {
-  const [values, setValues] = useState<WeeklyUpdateValues>({ date: "", status: "", note: "" });
+  const [values, setValues] = useState<WeeklyUpdateValues>({ date: "", note: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  const isValid = values.date !== "" && values.status !== "" && values.note.trim() !== "";
+  const isValid = values.date !== "" && values.note.trim() !== "";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!isValid || submitting) return;
     setSubmitting(true);
     try {
-      await onSubmit({ weekOf: mondayOf(values.date), status: values.status as WeeklyUpdateFormValues["status"], note: values.note.trim() });
+      await onSubmit({ weekOf: mondayOf(values.date), note: values.note.trim() });
     } catch {
       // El mensaje de error lo controla ProjectDrawer vía el prop `error` (R12).
     } finally {

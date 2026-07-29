@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   loadProject,
-  healthFromTimeline,
   createProject,
   updateProject,
   deleteProject,
@@ -267,7 +266,7 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               {headerTitle}
             </h2>
             {!loading && !error && project !== null && (
-              <HealthBadge status={healthFromTimeline(project.updates)} />
+              <HealthBadge status={project.status} />
             )}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -359,6 +358,7 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                 country: project?.country ?? "",
                 businessUnit: project?.businessUnit ?? "",
                 summary: project?.summary ?? "",
+                status: project?.status ?? "on_track", // modo creación: "on_track" como default del <select> (mismo criterio que R4 de la migración)
               }}
               submitLabel={project === null ? "Crear proyecto" : "Guardar cambios"}
               onSubmit={handleFormSubmit}
