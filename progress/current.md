@@ -1,17 +1,11 @@
 # Current session state
 
-When `leader` starts a feature, this file gets replaced with:
-
-```markdown
-# Current session state
-
-- **Feature:** <feature-id>
-- **Status:** in_progress | in_review
-- **Started:** YYYY-MM-DD
-- **Role active:** spec-author | implementer | reviewer
-- **Next step:** <what happens next and who does it>
-```
-
-This file always reflects the *single* active feature (see the one-feature-
-at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
-is cleared from here and summarized in `progress/history.md`.
+- **Feature:** project-status-values-rename
+- **Status:** spec_ready
+- **Started:** 2026-07-29
+- **Role active:** spec-author (done) — waiting on human approval
+- **Next step:** Human reviews `specs/project-status-values-rename/{requirements,design,tasks}.md`,
+  in particular the exact SQL migration in `design.md` (3 `UPDATE`s by
+  project `id` against real Supabase dev data), and explicitly approves
+  before `leader` moves the feature to `in_progress` and hands it to
+  `implementer`. Do not proceed without that explicit approval.

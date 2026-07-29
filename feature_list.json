@@ -66,6 +66,13 @@
       "created": "2026-07-29",
       "spec_dir": "specs/project-status-field/",
       "note": "Migración supabase/migrations/20260729120000_mover_status_a_projects.sql aplicada por el usuario en Supabase dev (2026-07-29) — confirmado por consulta real: 3 proyectos (Asistente de ventas Easy 2.0, Probador Virtual, Asesor de proyectos), todos con status poblado y válido tras el backfill. Pendiente: QA end-to-end en el navegador de crear/editar proyecto (campo Estado obligatorio) y de agregar/editar avance (ya sin campo estado) contra estos datos reales — no se pudo ejercitar desde este sandbox por falta de PIN/browser tool."
+    },
+    {
+      "id": "project-status-values-rename",
+      "title": "Cambiar los valores de projects.status de salud/riesgo (on_track/at_risk/delayed) a etapa de ciclo de vida (desarrollo/piloto/produccion)",
+      "status": "spec_ready",
+      "created": "2026-07-29",
+      "spec_dir": "specs/project-status-values-rename/"
     }
   ]
 }
