@@ -1,10 +1,10 @@
 # Current session state
 
 - **Feature:** weekly-update-edit-delete
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-07-29
-- **Role active:** spec-author (done) — awaiting human approval
-- **Next step:** Human reviews `specs/weekly-update-edit-delete/{requirements,design,tasks}.md`
-  and gives explicit approval before `implementer` starts. Once approved,
-  `leader` sets status to `in_progress`, updates this file, and invokes
-  `implementer`.
+- **Role active:** implementer
+- **Next step:** `implementer` ejecuta `specs/weekly-update-edit-delete/tasks.md`
+  de punto a punto, dejando `progress/impl_weekly-update-edit-delete.md`
+  con trazabilidad requirement → verificación. Al terminar: `npm run
+  verify`, luego el feature pasa a `in_review` para `reviewer`.
