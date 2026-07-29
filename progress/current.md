@@ -1,17 +1,10 @@
 # Current session state
 
-When `leader` starts a feature, this file gets replaced with:
-
-```markdown
-# Current session state
-
-- **Feature:** <feature-id>
-- **Status:** in_progress | in_review
-- **Started:** YYYY-MM-DD
-- **Role active:** spec-author | implementer | reviewer
-- **Next step:** <what happens next and who does it>
-```
-
-This file always reflects the *single* active feature (see the one-feature-
-at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
-is cleared from here and summarized in `progress/history.md`.
+- **Feature:** weekly-update-edit-delete
+- **Status:** spec_ready
+- **Started:** 2026-07-29
+- **Role active:** spec-author (done) — awaiting human approval
+- **Next step:** Human reviews `specs/weekly-update-edit-delete/{requirements,design,tasks}.md`
+  and gives explicit approval before `implementer` starts. Once approved,
+  `leader` sets status to `in_progress`, updates this file, and invokes
+  `implementer`.
