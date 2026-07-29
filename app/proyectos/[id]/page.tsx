@@ -6,7 +6,6 @@ import Nav from "../../components/Nav";
 import { loadProject, healthFromTimeline } from "@/lib/projects";
 import { Project } from "@/lib/types";
 import HealthBadge from "../HealthBadge";
-import KpiList from "./KpiList";
 import ProjectTimeline from "./ProjectTimeline";
 
 const tileStyle: React.CSSProperties = {
@@ -70,13 +69,6 @@ export default function ProjectDetailPage() {
             <p style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 32px" }}>
               {project.summary}
             </p>
-
-            <section style={{ marginBottom: 32 }}>
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 12px" }}>
-                KPIs clave
-              </p>
-              <KpiList kpis={project.kpis} />
-            </section>
 
             <section>
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 16px" }}>

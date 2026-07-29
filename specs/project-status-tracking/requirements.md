@@ -25,15 +25,19 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 
 - **R6**: WHEN un usuario navega a `/proyectos/<id>` con un `id` de
   proyecto válido THEN el sistema SHALL mostrar: nombre del proyecto,
-  resumen de la iniciativa, país, negocio, la lista de KPIs clave-valor del
-  proyecto, y el timeline de avances semanales.
+  resumen de la iniciativa, país, negocio, y el timeline de avances
+  semanales. **(Revisado 2026-07-29)**: la sección de KPIs clave-valor se
+  removió de esta vista a pedido explícito del usuario — ver nota en
+  "Fuera de alcance".
 - **R7**: WHEN un usuario navega a `/proyectos/<id>` con un `id` que no
   corresponde a ningún proyecto existente THEN el sistema SHALL mostrar un
   estado "proyecto no encontrado" en vez de un error sin manejar (crash o
   página en blanco).
-- **R8**: WHEN un proyecto no define ningún KPI THEN el sistema SHALL
-  omitir la sección de métricas clave o mostrar un estado vacío explícito,
-  sin renderizar una lista vacía silenciosa que confunda al usuario.
+- **R8** *(retirado 2026-07-29)*: ~~WHEN un proyecto no define ningún KPI
+  THEN el sistema SHALL omitir la sección de métricas clave o mostrar un
+  estado vacío explícito~~ — ya no aplica: la sección de KPIs no se
+  renderiza en absoluto (ver R6), independiente de si el proyecto tiene
+  KPIs o no.
 - **R9**: WHEN el timeline de avances semanales de un proyecto tiene una o
   más entradas THEN el sistema SHALL agruparlas por semana, en orden
   cronológico descendente (la más reciente primero), mostrando para cada
@@ -57,7 +61,9 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
   SHALL representarlo como filas de una tabla relacionada
   (`project_kpis`, clave-valor por fila) en vez de columnas fijas en
   `projects`, permitiendo que cada proyecto tenga un número distinto de
-  KPIs.
+  KPIs. **(Vigente, aunque no se renderiza)**: la tabla y los datos siguen
+  existiendo — solo se removió la UI que los mostraba (R6/R8), no el
+  modelo de datos ni la ruta API, que sigue devolviéndolos.
 - **R15**: WHEN `app/proyectos/page.tsx` o `/proyectos/<id>` necesitan
   datos de proyectos THEN el sistema SHALL obtenerlos a través de una ruta
   API propia del servidor (`/api/proyectos`, `/api/proyectos/<id>`) — el
@@ -91,3 +97,10 @@ Feature id: `project-status-tracking`. EARS notation, numbered `R1`, `R2`, ...
 - No se implementa edición/creación de proyectos ni de entradas del
   timeline desde la UI — es una vista de solo lectura; la carga de datos
   es vía la migración con seed (R11), no un formulario.
+- **(2026-07-29)** La sección de KPIs se removió del detalle a pedido
+  explícito del usuario — decisión de alcance: solo UI (`KpiList.tsx`
+  eliminado, ya no se importa en `[id]/page.tsx`). La tabla `project_kpis`,
+  su modelo de datos (`ProjectKpi`, R13) y su presencia en la respuesta de
+  `/api/proyectos/<id>` **no** se tocaron — queda ahí para un eventual
+  regreso de la sección sin necesitar una migración nueva. Ver
+  `design.md` para el detalle.

@@ -84,10 +84,15 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
     `loadProjects()` + loading skeleton + empty state + grid de
     `ProjectCard`.
 
-- [x] **T5 — `KpiList.tsx`** (`R6`, `R8`)
+- [x] **T5 — `KpiList.tsx`** (`R6`, `R8`) — **[retirado 2026-07-29]**
   - `app/proyectos/[id]/KpiList.tsx`: grid de tarjetas clave-valor; si
     `kpis.length === 0`, omite la sección o muestra un estado vacío
     explícito (no una lista en blanco).
+  - Componente eliminado a pedido del usuario (ver `design.md`, sección
+    "Detalle" y `requirements.md` R6/R8) — no se muestra más en el
+    detalle. Se deja el checkbox marcado porque el trabajo se hizo y se
+    verificó en su momento; el retiro queda documentado como cambio
+    posterior, no como tarea nueva.
 
 - [x] **T6 — `ProjectTimeline.tsx`** (`R6`, `R9`, `R10`)
   - `app/proyectos/[id]/ProjectTimeline.tsx`, adaptado de
@@ -99,7 +104,8 @@ componentes compartidos, luego listado, luego detalle, luego navegación.
 - [x] **T7 — Detalle `/proyectos/[id]`** (`R6`, `R7`)
   - `app/proyectos/[id]/page.tsx`: `Nav` + fetch de `loadProject(id)` +
     loading skeleton + estado "no encontrado" si `null` + header
-    (nombre/país/negocio/badge) + resumen + `KpiList` + `ProjectTimeline`.
+    (nombre/país/negocio/badge) + resumen + ~~`KpiList`~~ + `ProjectTimeline`.
+    `KpiList` retirado 2026-07-29 (ver T5).
 
 - [x] **T8 — Navegación** (`R14`)
   - Editar `app/components/Nav.tsx`: agregar `proyectosActive` y el

@@ -22,7 +22,7 @@ app/proyectos/
   [id]/
     page.tsx              # detalle de proyecto
     ProjectTimeline.tsx    # timeline vertical semanal, adaptado de state-of-ai/Timeline.tsx
-    KpiList.tsx             # lista clave-valor de KPIs
+    KpiList.tsx             # [eliminado 2026-07-29] lista clave-valor de KPIs — sección retirada de la UI, ver nota abajo
 
 app/api/proyectos/
   route.ts               # GET: valida sesión (R16) + getSupabaseAdmin() + devuelve Project[]
@@ -261,9 +261,17 @@ Adaptado directamente de `app/state-of-ai/Timeline.tsx`:
 - `useEffect` con `loadProject(id)` desde `useParams()`, mismo patrón que
   `noticias/page.tsx` usa `useEffect` + `loadNews()`.
 - Layout: header con nombre + país + negocio + `HealthBadge`, luego resumen
-  (párrafo), luego `KpiList` (grid simple de pares clave-valor en tarjetas
-  pequeñas, mismo estilo `tileStyle` que `state-of-ai/page.tsx`), luego
-  `ProjectTimeline`.
+  (párrafo), luego `ProjectTimeline`.
+- **[Retirado 2026-07-29]** El layout original incluía `KpiList` (grid de
+  pares clave-valor) entre el resumen y el timeline. Se removió a pedido
+  explícito del usuario — decisión de alcance "solo UI": se borró
+  `KpiList.tsx` y su import/uso en `page.tsx`, pero **no** se tocó
+  `lib/projects.ts` (`ProjectKpi`, `rowToKpi`), ni la tabla
+  `project_kpis`, ni el `select` anidado de `/api/proyectos/<id>`
+  (`design.md`, sección "Modelo de datos") — el objeto `Project` que llega
+  al cliente sigue trayendo `kpis`, simplemente no se renderiza. Revertir
+  es trivial: reimportar `KpiList` (recuperable de git) y volver a
+  agregar la sección.
 - `R7` (id inválido): si `loadProject` devuelve `null`, renderiza el mismo
   tipo de bloque "no encontrado" que usa `state-of-ai/page.tsx` para su
   estado de error (`tileStyle` + texto centrado), no una redirect ni un
