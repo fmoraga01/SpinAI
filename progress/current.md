@@ -1,15 +1,14 @@
 # Current session state
 
 - **Feature:** supabase-rls-lockdown
-- **Status:** in_progress (implementación terminada, lista para pasar a `in_review`)
+- **Status:** in_review
 - **Started:** 2026-07-30
-- **Role active:** implementer (terminado)
+- **Role active:** reviewer
 - **Next step:** `implementer` ejecutó `specs/supabase-rls-lockdown/tasks.md`
   §1–§6 completo. `npm run verify` está en verde (lint + build + test
-  22/22 + check-sdd-state). Falta que `leader` mueva el status a
-  `in_review` y que `reviewer` revise el código y, sobre todo, confirme el
-  plan de QA humana pendiente (ver `progress/impl_supabase-rls-lockdown.md`)
-  antes de que el usuario aplique la migración SQL en Supabase.
+  22/22 + check-sdd-state). `reviewer` valida contra `CHECKPOINTS.md` y la
+  trazabilidad R1–R19 antes de que el usuario aplique la migración SQL en
+  Supabase.
 
 ## Qué se hizo
 
