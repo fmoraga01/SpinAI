@@ -109,8 +109,8 @@ export default function Nav() {
         {/* Nav links */}
         <nav className="flex items-center gap-1">
           <NavLink href="/" active={homeActive}>Home</NavLink>
-          <NavLink href="/noticias" active={noticiasActive}>Noticias de IA</NavLink>
           <NavLink href="/proyectos" active={proyectosActive}>Status de Proyectos</NavLink>
+          <NavLink href="/noticias" active={noticiasActive}>Noticias de IA</NavLink>
           <NavLink href="/state-of-ai" active={stateOfAiActive}>State of AI</NavLink>
           {visibleLinks.map(({ view, label }) => {
             const active = drawer === view;
