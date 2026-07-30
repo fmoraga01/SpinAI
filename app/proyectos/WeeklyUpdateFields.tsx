@@ -11,6 +11,7 @@ export interface WeeklyUpdateValues {
 interface Props {
   values: WeeklyUpdateValues;
   onChange: (patch: Partial<WeeklyUpdateValues>) => void;
+  noteRows?: number;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -47,7 +48,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-export default function WeeklyUpdateFields({ values, onChange }: Props) {
+export default function WeeklyUpdateFields({ values, onChange, noteRows = 7 }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <Field label="Fecha">
@@ -69,7 +70,7 @@ export default function WeeklyUpdateFields({ values, onChange }: Props) {
           value={values.note}
           onChange={(e) => onChange({ note: e.target.value })}
           placeholder="Qué pasó esta semana"
-          rows={7}
+          rows={noteRows}
           style={{ ...inputStyle, resize: "vertical", lineHeight: "20px" }}
           {...focusHandlers()}
         />

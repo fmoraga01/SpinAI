@@ -179,7 +179,11 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
               >
                 {isEditingRow ? (
                   <>
-                    <WeeklyUpdateFields values={editValues} onChange={(patch) => setEditValues((v) => ({ ...v, ...patch }))} />
+                    <WeeklyUpdateFields
+                      values={editValues}
+                      onChange={(patch) => setEditValues((v) => ({ ...v, ...patch }))}
+                      noteRows={11}
+                    />
                     {editError && <p style={{ fontSize: 12, color: "#F87171", margin: 0 }}>{editError}</p>}
                     <div style={{ display: "flex", gap: 8 }}>
                       <button
