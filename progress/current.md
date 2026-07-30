@@ -1,15 +1,14 @@
 # Current session state
 
 - **Feature:** supabase-rls-lockdown
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-07-30
-- **Role active:** none (waiting on human approval)
-- **Next step:** HUMAN APPROVAL GATE. Read
-  `specs/supabase-rls-lockdown/requirements.md`,
-  `specs/supabase-rls-lockdown/design.md`,
-  `specs/supabase-rls-lockdown/tasks.md` and explicitly approve (or
-  request changes) before `leader` sets status to `in_progress` and hands
-  off to `implementer`. Nothing else happens until that approval.
+- **Role active:** implementer
+- **Next step:** Aprobación humana recibida (2026-07-30). `implementer`
+  ejecuta `specs/supabase-rls-lockdown/tasks.md` de arriba a abajo (§1–§6),
+  escribe `progress/impl_supabase-rls-lockdown.md` con trazabilidad R<n>,
+  corre `npm run verify`. Al terminar, la feature pasa a `in_review` para
+  `reviewer`.
 
 ## Contexto (hallazgo de seguridad, ya verificado, no re-descubrir)
 
