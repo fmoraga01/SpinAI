@@ -143,6 +143,19 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
           opacity: 1;
           pointer-events: auto;
         }
+        .proyecto-rich-text ul, .proyecto-rich-text ol {
+          margin: 8px 0;
+          padding-left: 22px;
+        }
+        .proyecto-rich-text ul { list-style: disc; }
+        .proyecto-rich-text ol { list-style: decimal; }
+        .proyecto-rich-text li { margin: 2px 0; }
+        .proyecto-rich-text blockquote {
+          margin: 8px 0;
+          padding-left: 12px;
+          border-left: 2px solid var(--color-primary);
+          color: var(--color-tertiary);
+        }
       `}</style>
       {groups.map((group, gi) => {
         const isEditingRow = editingId === group.update.id;
@@ -240,6 +253,7 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                         (R15/R16), preservando el whiteSpace: "pre-wrap" ya
                         existente acá. */}
                     <div
+                      className="proyecto-rich-text"
                       style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%", whiteSpace: "pre-wrap" }}
                       dangerouslySetInnerHTML={{ __html: renderFormattedText(group.update.note) }}
                     />

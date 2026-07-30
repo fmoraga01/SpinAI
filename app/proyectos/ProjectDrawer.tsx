@@ -342,7 +342,23 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                   escapa el texto del usuario antes de envolverlo en el set fijo
                   de etiquetas de formato (R15/R16) — nunca se construye HTML de
                   formato a mano acá. */}
+              <style>{`
+                .proyecto-rich-text ul, .proyecto-rich-text ol {
+                  margin: 8px 0;
+                  padding-left: 22px;
+                }
+                .proyecto-rich-text ul { list-style: disc; }
+                .proyecto-rich-text ol { list-style: decimal; }
+                .proyecto-rich-text li { margin: 2px 0; }
+                .proyecto-rich-text blockquote {
+                  margin: 8px 0;
+                  padding-left: 12px;
+                  border-left: 2px solid var(--color-primary);
+                  color: var(--color-tertiary);
+                }
+              `}</style>
               <div
+                className="proyecto-rich-text"
                 style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px", whiteSpace: "pre-wrap" }}
                 dangerouslySetInnerHTML={{ __html: renderFormattedText(project.summary) }}
               />
