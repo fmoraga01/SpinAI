@@ -82,6 +82,13 @@
       "created": "2026-07-30",
       "spec_dir": "specs/supabase-rls-lockdown/",
       "note": "Hallazgo de auditoría de seguridad manual: policies RLS 'for all to anon using (true)' en members/assignments/templates/assignment_logs permitían CRUD completo sin PIN via anon key pública, porque no existe middleware.ts y lib/storage.ts llamaba a getSupabase() (cliente anon) directo desde componentes client. Fix: deny total a anon en esas 4 tablas (sin policy, mismo patrón que projects), policies 'for select' solamente en las de lectura pública (news_items/ai_models/research_papers/hf_trending), y rutas API nuevas bajo app/api/** siguiendo el patrón de app/api/proyectos/** (isAuthenticated + getSupabaseAdmin) para reemplazar las llamadas client-side. Fuera de alcance: rate limiting de /api/auth, PIN constant-time, escape HTML de emails, headers de seguridad, bump de next (ya en dbf8b39), y el fallback hardcodeado de JWT_SECRET (pendiente de confirmación del usuario, no tocado aquí). reviewer aprobó de forma independiente (2026-07-30, progress/review_supabase-rls-lockdown.md): auth coverage verificada por grep en las 18 rutas, cero residuos de getSupabase() anon en el repo, npm run verify y curl real corridos por el propio reviewer, no solo confiando en implementer. Migración supabase/migrations/20260730120000_bloquear_acceso_anon.sql aplicada por el usuario en Supabase dev (2026-07-30) — confirmado por consulta real a pg_policies: cero policies para anon en members/assignments/templates/assignment_logs (deny total), y 'anon read access' (solo SELECT) en las 4 tablas públicas. QA humana end-to-end en navegador con PIN real confirmada por el usuario (2026-07-30): agregar/editar/activar-desactivar/eliminar miembro, calendario de asignados, plantilla y logs funcionan correctamente contra las rutas API nuevas — sin regresión funcional. R1-R19 completamente verificados, feature sin pendientes. Promovida a main y a Supabase prod el 2026-07-30 (ver docs/prod-promotion-checklist.md) — incidente post-cutover ('no muestra nada' en prod) causado por SUPABASE_SERVICE_ROLE_KEY/NEXT_PUBLIC_SUPABASE_URL mal emparejados en Vercel Production (error real de Supabase 'Invalid API key'), no por RLS ni por pérdida de datos; corregido por el usuario y confirmado funcionando end-to-end en prod."
+    },
+    {
+      "id": "rich-text-formatting-proyectos",
+      "title": "Formato de texto (negrita/cursiva/subrayado/tachado/listas/cita) con toolbar de botones en los textareas de Resumen y Nota de /proyectos",
+      "status": "spec_ready",
+      "created": "2026-07-30",
+      "spec_dir": "specs/rich-text-formatting-proyectos/"
     }
   ]
 }
