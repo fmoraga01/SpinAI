@@ -86,7 +86,7 @@
     {
       "id": "rich-text-formatting-proyectos",
       "title": "Formato de texto (negrita/cursiva/subrayado/tachado/listas/cita) con toolbar de botones en los textareas de Resumen y Nota de /proyectos",
-      "status": "spec_ready",
+      "status": "in_progress",
       "created": "2026-07-30",
       "spec_dir": "specs/rich-text-formatting-proyectos/"
     }

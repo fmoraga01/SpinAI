@@ -1,13 +1,13 @@
 # Current session state
 
 - **Feature:** rich-text-formatting-proyectos
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-07-30
-- **Role active:** none (waiting on human approval gate)
-- **Next step:** Human reviews `specs/rich-text-formatting-proyectos/{requirements,design,tasks}.md`
-  and `feature_list.json`. On explicit approval, `leader` sets status to
-  `in_progress` and invokes `implementer` to work through `tasks.md`
-  top to bottom (T1-T10). Nothing has been implemented yet — spec only.
+- **Role active:** implementer
+- **Next step:** Aprobación humana recibida (2026-07-30, incluida revisión
+  de una maqueta visual de la toolbar propuesta antes de aprobar).
+  `implementer` ejecuta `specs/rich-text-formatting-proyectos/tasks.md`
+  (T1-T10) top a top.
 
 Summary of the spec's key decision (for quick orientation): markdown-style
 plain-text syntax edited via a toolbar of buttons wrapping/prefixing the
