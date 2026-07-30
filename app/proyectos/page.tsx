@@ -81,7 +81,7 @@ export default function ProyectosPage() {
         </p>
 
         {loading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {Array.from({ length: 4 }).map((_, i) => <ProjectCardSkeleton key={i} />)}
           </div>
         )}
@@ -117,7 +117,7 @@ export default function ProyectosPage() {
         )}
 
         {!loading && !error && projects.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <CreateProjectCard onClick={handleOpenCreate} />
             {projects.map((p) => <ProjectCard key={p.id} project={p} onSelect={handleSelectProject} />)}
           </div>

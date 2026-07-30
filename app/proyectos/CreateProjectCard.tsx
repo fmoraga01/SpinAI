@@ -5,18 +5,17 @@ export default function CreateProjectCard({ onClick }: { onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer" }}
+      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer", alignSelf: "start" }}
     >
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          gap: 10,
-          height: "100%",
-          minHeight: 120,
-          padding: 18,
+          gap: 8,
+          minHeight: 60,
+          padding: 10,
           boxSizing: "border-box",
           background: "#2C40FF0f",
           border: "1px dashed #2C40FF44",
@@ -28,8 +27,8 @@ export default function CreateProjectCard({ onClick }: { onClick: () => void }) 
       >
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 24,
+            height: 24,
             borderRadius: "var(--radius-md)",
             background: "#2C40FF1a",
             display: "flex",
@@ -38,7 +37,7 @@ export default function CreateProjectCard({ onClick }: { onClick: () => void }) 
             flexShrink: 0,
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2C40FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2C40FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
         </div>
