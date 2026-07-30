@@ -233,7 +233,7 @@ export default function ProjectForm({
           value={values.summary}
           onChange={(e) => setValues((v) => ({ ...v, summary: e.target.value }))}
           placeholder="Resumen de la iniciativa"
-          rows={7}
+          rows={10}
           style={{ ...inputStyle, resize: "vertical", lineHeight: "20px" }}
           {...focusHandlers()}
         />
