@@ -58,14 +58,26 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
 
 ## 3. Pendiente de otra sesión — resolver antes o en el mismo cutover
 
-- **`JWT_SECRET` con fallback hardcodeado** (`"fallback-secret-change-me"`
-  en `app/api/auth/route.ts`, `lib/auth.ts`, `app/api/notify/route.ts`) —
-  hallazgo de la auditoría de seguridad del 2026-07-30, no resuelto a
-  propósito porque no se confirmó si `JWT_SECRET` ya está seteado en prod.
-  Justo en el cutover a prod es el momento de resolverlo: confirmar que la
-  env var existe ahí, y recién entonces quitar el fallback del código.
+- ~~`JWT_SECRET` con fallback hardcodeado~~ — resuelto el 2026-07-30, ver
+  registro de promociones abajo.
 
 ## 4. Registro de promociones
 
 - 2026-07-30: checklist creado, `dev` 83 commits adelante de `main`.
   Ninguna promoción ejecutada todavía.
+- 2026-07-30: **promoción ejecutada.** Confirmado por el usuario antes del
+  merge: `JWT_SECRET` seteado en Vercel Production, `SUPABASE_SERVICE_ROLE_KEY`
+  creada/confirmada en Production, `NEXT_PUBLIC_SUPABASE_URL`/
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` apuntando al proyecto Supabase de prod.
+  Se quitó el fallback hardcodeado de `JWT_SECRET` en `lib/auth.ts`,
+  `app/api/auth/route.ts`, `app/api/notify/route.ts`, `proxy.ts` (chequeo
+  lazy dentro de cada función, no a nivel de módulo, para no romper `next
+  build` en entornos sin la env var en build-time) — commit `4327e20` en
+  `dev`. `main` avanzó por fast-forward de `90c7143` a `4327e20` (sin
+  conflictos, 101 archivos) y se pusheó a `origin/main`.
+  - **PENDIENTE, a ejecutar por el usuario ahora que el código está
+    desplegado**: correr en Supabase **prod** las 5 migraciones de la
+    sección 1 de este archivo, en orden — el código ya está afuera, así
+    que el orden código-antes-que-SQL ya se cumple en cuanto se corran.
+  - **PENDIENTE**: QA end-to-end en prod (equivalente al que se hizo en
+    dev) una vez aplicadas las migraciones.

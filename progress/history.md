@@ -456,3 +456,36 @@ Entry format:
   allá de la promoción a `main`, que sigue esperando aprobación explícita
   del usuario por separado.
 - Merged to dev: commit f24c95c (fix de idempotencia del SQL) · Promoted to main: pending
+
+## Promoción a main — 2026-07-30
+
+- Aprobación explícita del usuario ("avancemos con el paso a prod").
+  Confirmado antes del merge: `JWT_SECRET` seteado en Vercel Production,
+  `SUPABASE_SERVICE_ROLE_KEY` creada/confirmada en Production,
+  `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` apuntando al
+  proyecto Supabase de prod (confirmado por el usuario, no verificable
+  desde este sandbox).
+- Se resolvió el último hallazgo pendiente de la auditoría de seguridad
+  del 2026-07-30: fallback hardcodeado de `JWT_SECRET` eliminado de
+  `lib/auth.ts`, `app/api/auth/route.ts`, `app/api/notify/route.ts`,
+  `proxy.ts` (commit `4327e20` en `dev`) — chequeo lazy dentro de cada
+  función que lo usa, no a nivel de módulo, porque un throw a nivel de
+  módulo rompía `next build` en cualquier entorno sin la env var en
+  build-time (page data collection de Next.js evalúa los módulos de ruta
+  durante el build). Verificado con `npm run verify` y un login real
+  contra un dev server con `JWT_SECRET` seteado a mano.
+- `main` avanzó por fast-forward de `90c7143` a `4327e20` (sin conflictos,
+  101 archivos, +13028/-521 líneas) y se pusheó a `origin/main`. Quedan
+  promovidas de una sola vez todas las features que estaban pendientes:
+  `project-status-tracking`, `project-crud`, `weekly-update-entry`,
+  `weekly-update-edit-delete`, `project-status-field`,
+  `project-status-values-rename`, `supabase-rls-lockdown` — sus entradas
+  arriba en este mismo archivo quedan con "Promoted to main: pending"
+  porque este journal es append-only (no se editan entradas pasadas); esta
+  entrada es la fuente de verdad de que todas se promovieron en este
+  evento.
+- **PENDIENTE, a ejecutar por el usuario ahora que el código está
+  desplegado**: correr en Supabase **prod** las 5 migraciones listadas en
+  `docs/prod-promotion-checklist.md` sección 1, en orden, y hacer QA
+  end-to-end en prod. Ver ese archivo para el detalle completo, incluida
+  la advertencia sobre el seed dummy de `20260728120000_crear_projects.sql`.
