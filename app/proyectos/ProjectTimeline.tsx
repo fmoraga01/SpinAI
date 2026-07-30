@@ -126,12 +126,11 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <style>{`
         .proyecto-timeline-row {
-          transition: border-color 150ms ease-out, transform 150ms ease-out, background 150ms ease-out;
+          transition: border-color 150ms ease-out, background 150ms ease-out;
         }
         .proyecto-timeline-row:hover {
           border-color: rgba(91,108,255,0.4);
           background: var(--color-surface-elevated-hover, var(--color-surface-elevated));
-          transform: translateX(2px);
         }
         .proyecto-timeline-row-actions {
           opacity: 0;
