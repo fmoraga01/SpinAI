@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { getSupabase } from "@/lib/supabase";
 import nodemailer from "nodemailer";
+import { escapeHtml } from "@/lib/escapeHtml";
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET ?? "fallback-secret-change-me"
@@ -67,6 +68,7 @@ export async function POST(req: NextRequest) {
     month: "long",
     year: "numeric",
   });
+  const memberName = escapeHtml(assignment.member_name);
 
   const html = `
 <!DOCTYPE html>
@@ -94,16 +96,16 @@ export async function POST(req: NextRequest) {
               Hola equipo,
             </p>
             <p style="margin:0 0 24px;font-size:15px;color:#D1D5DB;line-height:1.6;">
-              Este viernes le toca a <strong style="color:#ffffff;">${assignment.member_name}</strong> liderar la reuni&#243;n de equipo. &#161;No olviden estar presentes!
+              Este viernes le toca a <strong style="color:#ffffff;">${memberName}</strong> liderar la reuni&#243;n de equipo. &#161;No olviden estar presentes!
             </p>
             <div style="background:#2C40FF0f;border:1px solid #2C40FF33;border-radius:10px;padding:20px 24px;margin-bottom:24px;">
               <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2C40FF;">Fecha</p>
               <p style="margin:0 0 12px;font-size:18px;font-weight:600;color:#ffffff;text-transform:capitalize;">${formatted}</p>
               <p style="margin:0 0 4px;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#2C40FF;">Responsable</p>
-              <p style="margin:0;font-size:18px;font-weight:600;color:#ffffff;">${assignment.member_name}</p>
+              <p style="margin:0;font-size:18px;font-weight:600;color:#ffffff;">${memberName}</p>
             </div>
             <p style="margin:0 0 8px;font-size:14px;color:#9CA3AF;line-height:1.6;">
-              <strong style="color:#D1D5DB;">${assignment.member_name}</strong>, recuerda preparar la l&#225;mina de presentaci&#243;n con anticipaci&#243;n. Puedes usar SpinAI para organizar tu agenda.
+              <strong style="color:#D1D5DB;">${memberName}</strong>, recuerda preparar la l&#225;mina de presentaci&#243;n con anticipaci&#243;n. Puedes usar SpinAI para organizar tu agenda.
             </p>
           </td>
         </tr>
