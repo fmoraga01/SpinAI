@@ -226,7 +226,7 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%" }}>
+                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%", whiteSpace: "pre-wrap" }}>
                       {group.update.note}
                     </p>
                     <div
