@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ProjectStatus } from "@/lib/types";
 import { mondayOf, ProjectFormValues, WeeklyUpdateFormValues } from "@/lib/projects";
 import { PROJECT_STATUS_LABELS } from "./StatusBadge";
@@ -28,28 +28,6 @@ const inputStyle: React.CSSProperties = {
   boxSizing: "border-box",
 };
 
-// Mismo lenguaje visual que MemberSelect (app/components/TemplateEditor.tsx):
-// se apaga la flecha nativa del navegador y se dibuja una propia (▾) para que
-// el <select> deje de verse con el estilo default del sistema.
-const selectStyle: React.CSSProperties = {
-  ...inputStyle,
-  appearance: "none",
-  WebkitAppearance: "none",
-  MozAppearance: "none",
-  paddingRight: 30,
-  cursor: "pointer",
-};
-
-const selectArrowStyle: React.CSSProperties = {
-  position: "absolute",
-  right: 12,
-  top: "50%",
-  transform: "translateY(-50%)",
-  fontSize: 9,
-  color: "#6B7280",
-  pointerEvents: "none",
-};
-
 function focusHandlers(): {
   onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
   onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
@@ -72,6 +50,112 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 const PROJECT_STATUS_OPTIONS = Object.entries(PROJECT_STATUS_LABELS) as [ProjectStatus, string][];
+
+// Mismo patrón que MemberSelect (app/components/TemplateEditor.tsx): botón +
+// lista de opciones propia, en vez de un <select> nativo (cuyo menú desplegado
+// no se puede restylear en ningún navegador).
+function statusOptionStyle(selected: boolean, isLast: boolean): React.CSSProperties {
+  return {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "7px 10px",
+    fontSize: 12,
+    cursor: "pointer",
+    background: selected ? "#2C40FF12" : "transparent",
+    color: selected ? "var(--color-primary)" : "var(--color-text-primary)",
+    border: "none",
+    borderBottom: isLast ? "none" : "1px solid var(--color-border)",
+  };
+}
+
+function StatusSelect({ value, onChange }: { value: ProjectStatus; onChange: (status: ProjectStatus) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 6,
+          background: "var(--color-surface-elevated)",
+          border: `1px solid ${open ? "var(--color-primary)" : "var(--color-border)"}`,
+          borderRadius: "var(--radius-md)",
+          padding: "8px 12px",
+          fontSize: 13,
+          color: "var(--color-text-primary)",
+          cursor: "pointer",
+          transition: "border-color 150ms",
+        }}
+      >
+        <span>{PROJECT_STATUS_LABELS[value]}</span>
+        <span
+          style={{
+            fontSize: 9,
+            color: "#6B7280",
+            flexShrink: 0,
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 150ms",
+          }}
+        >
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            zIndex: 20,
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            maxHeight: 180,
+            overflowY: "auto",
+          }}
+        >
+          {PROJECT_STATUS_OPTIONS.map(([status, label], i) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => {
+                onChange(status);
+                setOpen(false);
+              }}
+              style={statusOptionStyle(value === status, i === PROJECT_STATUS_OPTIONS.length - 1)}
+              onMouseEnter={(e) => {
+                if (value !== status) e.currentTarget.style.background = "var(--color-surface)";
+              }}
+              onMouseLeave={(e) => {
+                if (value !== status) e.currentTarget.style.background = "transparent";
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProjectForm({
   initialValues,
@@ -142,21 +226,7 @@ export default function ProjectForm({
         />
       </Field>
       <Field label="Estado">
-        <div style={{ position: "relative" }}>
-          <select
-            value={values.status}
-            onChange={(e) => setValues((v) => ({ ...v, status: e.target.value as ProjectStatus }))}
-            style={selectStyle}
-            {...focusHandlers()}
-          >
-            {PROJECT_STATUS_OPTIONS.map(([status, label]) => (
-              <option key={status} value={status}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <span style={selectArrowStyle}>▾</span>
-        </div>
+        <StatusSelect value={values.status} onChange={(status) => setValues((v) => ({ ...v, status }))} />
       </Field>
       <Field label="Resumen">
         <textarea
