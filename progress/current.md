@@ -1,16 +1,21 @@
 # Current session state
 
 - **Feature:** rich-text-formatting-proyectos
-- **Status:** in_review
+- **Status:** in_review (veredicto de reviewer: APPROVED, pendiente de que
+  `leader`/humano mueva a `done`)
 - **Started:** 2026-07-30
-- **Role active:** reviewer
-- **Next step:** `implementer` terminó, `tasks.md` T1-T8 y T10 en `[x]`
-  (T9, QA manual end-to-end en navegador, queda `[ ]` con nota explícita:
-  parcialmente cubierta vía Vitest/lectura de código, sin browser tool/PIN
-  real en este sandbox — ver detalle en
-  `progress/impl_rich-text-formatting-proyectos.md`). `reviewer` valida
-  contra `CHECKPOINTS.md` y la traceability R1-R20, corre `npm run verify`
-  de forma independiente. Commit `8d9ba82` en `dev`.
+- **Role active:** reviewer (terminado)
+- **Next step:** `reviewer` aprobó — ver
+  `progress/review_rich-text-formatting-proyectos.md` para el detalle
+  completo (pass/fail por checkpoint de `CHECKPOINTS.md`, verificación
+  independiente de `lib/richText.ts` incluida ejecución manual de casos de
+  inyección XSS, `npm run verify` corrido de forma independiente, 36/36
+  tests). Único punto no bloqueante: T9 de `tasks.md` (QA end-to-end en
+  navegador) queda `[ ]`, mismo bloqueo de sandbox (sin PIN real/browser
+  tool) ya aceptado en 4 features previas — debe viajar a
+  `progress/history.md` cuando `leader` cierre. `leader`/humano decide mover
+  `feature_list.json` a `done` (reviewer no cambia el status él mismo).
+  Commit revisado: `8d9ba82` en `dev`.
 
 Summary of the spec's key decision (for quick orientation): markdown-style
 plain-text syntax edited via a toolbar of buttons wrapping/prefixing the
