@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { Project } from "@/lib/types";
 import StatusBadge from "./StatusBadge";
 
@@ -60,21 +61,19 @@ function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => vo
           borderRadius: "var(--radius-md)",
           color: "var(--color-text-secondary)",
           cursor: "pointer",
-          fontSize: 14,
-          lineHeight: 1,
           transition: "background 150ms ease",
         }}
         onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = "var(--color-border)"; }}
         onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = "transparent"; }}
       >
-        ⋮
+        <EllipsisVerticalIcon style={{ width: 16, height: 16 }} />
       </button>
       {open && (
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
             position: "absolute",
-            top: "calc(100% + 4px)",
+            bottom: "calc(100% + 4px)",
             right: 0,
             zIndex: 20,
             minWidth: 130,
@@ -164,21 +163,21 @@ export default function ProjectCard({ project, onSelect, onEdit, onDelete }: Pro
           >
             {project.name}
           </h3>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-            <StatusBadge status={status} />
-            <CardMenu onEdit={() => onEdit(project.id)} onDelete={() => onDelete(project)} />
-          </div>
+          <StatusBadge status={status} />
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>{project.country}</span>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>·</span>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>{project.businessUnit}</span>
         </div>
-        <p style={{ fontSize: 11.5, color: "#4B5563", margin: 0, marginTop: "auto" }}>
-          {lastUpdate
-            ? `Última actualización: ${new Date(lastUpdate + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`
-            : "Sin actualizaciones registradas"}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginTop: "auto" }}>
+          <p style={{ fontSize: 11.5, color: "#4B5563", margin: 0 }}>
+            {lastUpdate
+              ? `Última actualización: ${new Date(lastUpdate + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`
+              : "Sin actualizaciones registradas"}
+          </p>
+          <CardMenu onEdit={() => onEdit(project.id)} onDelete={() => onDelete(project)} />
+        </div>
       </div>
     </div>
   );
