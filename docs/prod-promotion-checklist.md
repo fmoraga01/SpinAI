@@ -22,17 +22,30 @@ producción). Al promover, correrlas en Supabase prod **en este orden**:
 2. `20260728140000_reemplazar_seed_projects.sql` — borra esos 4 dummy y
    deja solo 1 proyecto real: "Probador Virtual".
 3. `20260729120000_mover_status_a_projects.sql`
-4. `20260729180000_cambiar_valores_status_projects.sql`
+4. `20260729180000_cambiar_valores_status_projects.sql` — ⚠️ tiene 3
+   `UPDATE ... WHERE id = <uuid hardcodeado>` que solo existen en el
+   Supabase de dev donde se escribió. En prod (o cualquier bootstrap desde
+   cero) esos UPDATE no matchean ninguna fila, y el
+   `ALTER TABLE ADD CONSTRAINT` del final de esta misma migración **falla**
+   (la fila del seed queda en `'on_track'`, valor inválido del check
+   nuevo). Corregido por la migración siguiente — no se edita este archivo
+   porque ya está aplicado en dev (convención de
+   `supabase/migrations/README.md`).
 5. `20260730120000_bloquear_acceso_anon.sql` — RLS lockdown (hallazgo de
    auditoría de seguridad, ver `specs/supabase-rls-lockdown/`).
+6. `20260730160000_corregir_seed_status_por_nombre.sql` — corrige el
+   problema del punto 4: hace el mismo `update ... set status = 'piloto'`
+   pero filtrando por `name = 'Probador Virtual'` en vez de por id.
+   Idempotente (en dev, donde el valor ya es `'piloto'`, no cambia nada) —
+   segura de correr en cualquier entorno, incluido un bootstrap desde cero.
 
 Corridas en orden, prod queda con **un solo proyecto real** ("Probador
-Virtual"). Los proyectos que existan en dev más allá de ese (a la fecha de
-este checklist: "Asistente de ventas Easy 2.0", "Asesor de proyectos") se
-cargaron a mano desde la UI de `/proyectos`, **no vía migración** — no van
-a aparecer solos en prod. Si se quieren ahí, hay que volver a cargarlos
-manualmente desde la UI de prod después del deploy (o decidir explícitamente
-que prod arranca solo con "Probador Virtual").
+Virtual", status `piloto`). Los proyectos que existan en dev más allá de
+ese (a la fecha de este checklist: "Asistente de ventas Easy 2.0", "Asesor
+de proyectos") se cargaron a mano desde la UI de `/proyectos`, **no vía
+migración** — no van a aparecer solos en prod. Si se quieren ahí, hay que
+volver a cargarlos manualmente desde la UI de prod después del deploy (o
+decidir explícitamente que prod arranca solo con "Probador Virtual").
 
 Antes de promover, revisar `ls supabase/migrations/` por si aparecieron
 migraciones nuevas después de esta fecha y agregarlas a la lista de arriba.
@@ -76,7 +89,7 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   `dev`. `main` avanzó por fast-forward de `90c7143` a `4327e20` (sin
   conflictos, 101 archivos) y se pusheó a `origin/main`.
   - **PENDIENTE, a ejecutar por el usuario ahora que el código está
-    desplegado**: correr en Supabase **prod** las 5 migraciones de la
+    desplegado**: correr en Supabase **prod** las 6 migraciones de la
     sección 1 de este archivo, en orden — el código ya está afuera, así
     que el orden código-antes-que-SQL ya se cumple en cuanto se corran.
   - **PENDIENTE**: QA end-to-end en prod (equivalente al que se hizo en

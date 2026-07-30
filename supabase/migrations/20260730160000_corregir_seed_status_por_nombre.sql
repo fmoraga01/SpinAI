@@ -1,0 +1,33 @@
+-- Corrige un bug latente de 20260729180000_cambiar_valores_status_projects.sql
+-- para que el historial completo de migraciones sea portable a cualquier
+-- entorno, no solo al Supabase de dev donde se escribió originalmente
+-- (encontrado al preparar el cutover a prod del 2026-07-30).
+--
+-- Esa migración actualiza projects.status filtrando por 3 UUID
+-- hardcodeados de las filas que existían en el Supabase de dev del
+-- usuario en ese momento. Dos de esas filas ("Asistente de ventas Easy
+-- 2.0", "Asesor de proyectos") se cargaron después vía la UI de
+-- /proyectos, nunca vinieron de ninguna migración — no hay forma de
+-- reproducirlas acá, y no hace falta: en cualquier otro entorno
+-- (bootstrap desde cero, o el Supabase de prod) esas filas simplemente no
+-- existen todavía en este punto de la secuencia. La tercera fila
+-- ("Probador Virtual") sí viene del seed de
+-- 20260728140000_reemplazar_seed_projects.sql, pero con un id
+-- autogenerado (gen_random_uuid() por insert) que difiere entre
+-- entornos — el UPDATE de la migración original nunca matchea nada fuera
+-- de ese Supabase de dev puntual. Consecuencia real: en cualquier otro
+-- entorno, la fila del seed queda en 'on_track' tras
+-- 20260729180000_cambiar_valores_status_projects.sql, y el
+-- `alter table projects add constraint projects_status_check` de esa
+-- misma migración falla, porque 'on_track' ya no es un valor válido del
+-- check nuevo ('desarrollo'/'piloto'/'produccion').
+--
+-- No se edita 20260729180000_cambiar_valores_status_projects.sql (ya
+-- aplicada en dev — ver la convención de "nunca editar una migración ya
+-- aplicada" en supabase/migrations/README.md). Se corrige acá, filtrando
+-- por nombre en vez de por id: es idempotente (en el Supabase de dev
+-- donde la migración original ya corrió, este UPDATE no cambia nada,
+-- porque el valor ya es 'piloto') y funciona igual en prod o en un
+-- bootstrap desde cero.
+
+update projects set status = 'piloto' where name = 'Probador Virtual';

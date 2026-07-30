@@ -485,7 +485,7 @@ Entry format:
   entrada es la fuente de verdad de que todas se promovieron en este
   evento.
 - **PENDIENTE, a ejecutar por el usuario ahora que el código está
-  desplegado**: correr en Supabase **prod** las 5 migraciones listadas en
+  desplegado**: correr en Supabase **prod** las 6 migraciones listadas en
   `docs/prod-promotion-checklist.md` sección 1, en orden, y hacer QA
   end-to-end en prod. Ver ese archivo para el detalle completo, incluida
   la advertencia sobre el seed dummy de `20260728120000_crear_projects.sql`.
