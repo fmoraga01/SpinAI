@@ -171,7 +171,6 @@ export default function ProyectosPage() {
         onClose={handleCloseDrawer}
         onCreated={handleCreated}
         onUpdated={handleUpdated}
-        onDeleted={handleDeleted}
       />
 
       {deleteTarget && (
