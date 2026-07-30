@@ -135,10 +135,12 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
         }
         .proyecto-timeline-row-actions {
           opacity: 0;
+          pointer-events: none;
           transition: opacity 150ms ease-out;
         }
         .proyecto-timeline-row:hover .proyecto-timeline-row-actions {
           opacity: 1;
+          pointer-events: auto;
         }
       `}</style>
       {groups.map((group, gi) => {
@@ -166,6 +168,7 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
               <div
                 className="proyecto-timeline-row"
                 style={{
+                  position: "relative",
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
@@ -220,38 +223,48 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                   </>
                 ) : (
                   <>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-                      <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", flex: 1 }}>
-                        {group.update.note}
-                      </p>
-                      <div className="proyecto-timeline-row-actions" style={{ display: "flex", gap: 6 }}>
+                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%" }}>
+                      {group.update.note}
+                    </p>
+                    <div
+                      className="proyecto-timeline-row-actions"
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 10,
+                        display: "flex",
+                        gap: 6,
+                        padding: "4px 4px 4px 24px",
+                        borderRadius: "var(--radius-md)",
+                        background: "linear-gradient(90deg, transparent, var(--color-surface-elevated) 22px)",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => startEdit(group.update)}
+                        disabled={editingId !== null}
+                        style={{
+                          ...actionButtonStyle,
+                          opacity: editingId !== null ? 0.5 : 1,
+                          cursor: editingId !== null ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        Editar
+                      </button>
+                      {confirmDeleteId === group.update.id ? (
                         <button
                           type="button"
-                          onClick={() => startEdit(group.update)}
-                          disabled={editingId !== null}
-                          style={{
-                            ...actionButtonStyle,
-                            opacity: editingId !== null ? 0.5 : 1,
-                            cursor: editingId !== null ? "not-allowed" : "pointer",
-                          }}
+                          onClick={() => handleDeleteClick(group.update.id)}
+                          disabled={deletingId === group.update.id}
+                          style={{ ...actionButtonStyle, color: "#F87171", borderColor: "#F87171", background: "#F8717122" }}
                         >
-                          Editar
+                          {deletingId === group.update.id ? "Eliminando…" : "¿Seguro?"}
                         </button>
-                        {confirmDeleteId === group.update.id ? (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteClick(group.update.id)}
-                            disabled={deletingId === group.update.id}
-                            style={{ ...actionButtonStyle, color: "#F87171", borderColor: "#F87171", background: "#F8717122" }}
-                          >
-                            {deletingId === group.update.id ? "Eliminando…" : "¿Seguro?"}
-                          </button>
-                        ) : (
-                          <button type="button" onClick={() => startConfirmDelete(group.update.id)} style={actionButtonStyle}>
-                            Eliminar
-                          </button>
-                        )}
-                      </div>
+                      ) : (
+                        <button type="button" onClick={() => startConfirmDelete(group.update.id)} style={actionButtonStyle}>
+                          Eliminar
+                        </button>
+                      )}
                     </div>
                     {deleteError[group.update.id] && (
                       <p style={{ fontSize: 12, color: "#F87171", margin: 0 }}>{deleteError[group.update.id]}</p>
