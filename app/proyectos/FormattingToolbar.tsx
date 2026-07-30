@@ -135,10 +135,7 @@ export default function FormattingToolbar({ textareaRef, value, onChange }: Prop
         gap: 2,
         padding: "4px 6px",
         background: "var(--color-surface-elevated)",
-        border: "1px solid var(--color-border)",
-        borderBottom: "none",
-        borderTopLeftRadius: "var(--radius-md)",
-        borderTopRightRadius: "var(--radius-md)",
+        borderBottom: "1px solid var(--color-border)",
       }}
     >
       <button
