@@ -60,7 +60,7 @@ export default function ProjectCard({ project, onSelect }: { project: Project; o
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>·</span>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>{project.businessUnit}</span>
         </div>
-        <p style={{ fontSize: 11.5, color: "#4B5563", margin: 0 }}>
+        <p style={{ fontSize: 11.5, color: "#4B5563", margin: 0, marginTop: "auto" }}>
           {lastUpdate
             ? `Última actualización: ${new Date(lastUpdate + "T12:00:00").toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`
             : "Sin actualizaciones registradas"}
