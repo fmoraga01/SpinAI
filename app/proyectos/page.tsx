@@ -77,7 +77,7 @@ export default function ProyectosPage() {
           Status de Proyectos
         </h1>
         <p style={{ fontSize: 14, color: "var(--color-tertiary)", marginBottom: 28 }}>
-          Avance de las iniciativas internas en curso, con su estado de salud más reciente.
+          Avance semanal de las iniciativas.
         </p>
 
         {loading && (
