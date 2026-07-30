@@ -88,9 +88,9 @@ function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => vo
           <button
             type="button"
             onClick={() => { setOpen(false); onEdit(); }}
-            style={menuItemStyle(false, false)}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-border)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+            style={{ ...menuItemStyle(false, false), transition: "color 150ms" }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = "var(--color-primary)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = "var(--color-text-primary)"; }}
           >
             Editar
           </button>
