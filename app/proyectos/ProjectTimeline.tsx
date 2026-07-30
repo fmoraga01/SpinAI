@@ -31,6 +31,7 @@ const actionButtonStyle: React.CSSProperties = {
   fontWeight: 500,
   padding: "0 8px",
   flexShrink: 0,
+  transition: "background 150ms ease",
 };
 
 export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
@@ -199,7 +200,10 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                           fontSize: 13,
                           fontWeight: 500,
                           cursor: "pointer",
+                          transition: "background 150ms ease",
                         }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-border)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                       >
                         Cancelar
                       </button>
@@ -218,7 +222,10 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                           fontWeight: 500,
                           cursor: isEditValid && !editSubmitting ? "pointer" : "not-allowed",
                           boxShadow: isEditValid && !editSubmitting ? "var(--shadow-glow-sm)" : "none",
+                          transition: "box-shadow 150ms ease",
                         }}
+                        onMouseEnter={(e) => { if (isEditValid && !editSubmitting) e.currentTarget.style.boxShadow = "var(--shadow-glow)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.boxShadow = isEditValid && !editSubmitting ? "var(--shadow-glow-sm)" : "none"; }}
                       >
                         {editSubmitting ? "Guardando…" : "Guardar"}
                       </button>
@@ -251,6 +258,8 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                           opacity: editingId !== null ? 0.5 : 1,
                           cursor: editingId !== null ? "not-allowed" : "pointer",
                         }}
+                        onMouseEnter={(e) => { if (editingId === null) e.currentTarget.style.background = "var(--color-border)"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                       >
                         Editar
                       </button>
@@ -260,11 +269,19 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                           onClick={() => handleDeleteClick(group.update.id)}
                           disabled={deletingId === group.update.id}
                           style={{ ...actionButtonStyle, color: "#F87171", borderColor: "#F87171", background: "#F8717122" }}
+                          onMouseEnter={(e) => { if (deletingId !== group.update.id) e.currentTarget.style.background = "#F8717144"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "#F8717122"; }}
                         >
                           {deletingId === group.update.id ? "Eliminando…" : "¿Seguro?"}
                         </button>
                       ) : (
-                        <button type="button" onClick={() => startConfirmDelete(group.update.id)} style={actionButtonStyle}>
+                        <button
+                          type="button"
+                          onClick={() => startConfirmDelete(group.update.id)}
+                          style={actionButtonStyle}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#F8717122"; e.currentTarget.style.color = "#F87171"; e.currentTarget.style.borderColor = "#F87171"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--color-text-secondary)"; e.currentTarget.style.borderColor = "var(--color-border)"; }}
+                        >
                           Eliminar
                         </button>
                       )}

@@ -23,6 +23,7 @@ function menuItemStyle(danger: boolean, isLast: boolean): React.CSSProperties {
     color: danger ? "#F87171" : "var(--color-text-primary)",
     border: "none",
     borderBottom: isLast ? "none" : "1px solid var(--color-border)",
+    transition: "background 150ms ease",
   };
 }
 
@@ -88,6 +89,8 @@ function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => vo
             type="button"
             onClick={() => { setOpen(false); onEdit(); }}
             style={menuItemStyle(false, false)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-border)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             Editar
           </button>
@@ -95,6 +98,8 @@ function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => vo
             type="button"
             onClick={() => { setOpen(false); onDelete(); }}
             style={menuItemStyle(true, true)}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#F8717122"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
           >
             Eliminar
           </button>
