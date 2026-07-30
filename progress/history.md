@@ -392,3 +392,44 @@ Entry format:
   `on_track`) no renderiza bien porque `StatusBadge` ya no tiene esa clave
   en su config.
 - Merged to dev: commit 4410de7 · Promoted to main: pending
+
+## supabase-rls-lockdown — done 2026-07-30
+
+- Requirements: R1–R19, see specs/supabase-rls-lockdown/requirements.md
+- Summary: hallazgo crítico de una auditoría de seguridad manual — las
+  tablas `members`/`assignments`/`templates`/`assignment_logs` tenían RLS
+  `for all to anon using (true)`, es decir CRUD completo para cualquiera
+  con la anon key pública, sin pasar por el PIN de la app en absoluto (no
+  existe `middleware.ts`; `proxy.ts` solo setea un header para el overlay
+  de `PinGate.tsx`, no bloquea nada a nivel de red/Supabase). `lib/storage.ts`
+  y otros 4 módulos (`hfTrending`/`news`/`research`/`stateOfAi`) llamaban a
+  `getSupabase()` (anon) directo desde componentes cliente. Fix: nueva
+  migración (`supabase/migrations/20260730120000_bloquear_acceso_anon.sql`)
+  que quita el `anon full access` de esas 4 tablas (deny total, mismo
+  patrón que `projects`) y lo reemplaza por `for select` únicamente en las
+  4 tablas de lectura pública (`news_items`/`ai_models`/`research_papers`/
+  `hf_trending`). 14 rutas API nuevas (10 en `app/api/team/**` protegidas
+  por `isAuthenticated`+`getSupabaseAdmin()`, 4 en `app/api/public/**` sin
+  auth) reemplazan el acceso client-side; los 5 cron routes + `/api/notify`
+  migraron de `getSupabase()` a `getSupabaseAdmin()`. `lib/storage.ts` y
+  los otros 4 módulos conservan exactamente las mismas funciones
+  exportadas — ningún componente consumidor cambió. `lib/teamRows.ts`
+  nuevo centraliza mapeos y lógica de negocio server-side, con 10 tests
+  Vitest nuevos. reviewer corrió una revisión independiente (no confió en
+  el reporte de implementer): grep confirmó cero rutas de `app/api/team/**`
+  sin `isAuthenticated`, cero residuos de `getSupabase()` anon en todo el
+  repo, `npm run verify` y `curl` real contra un `npm run dev` propio —
+  aprobó sin objeciones, ver `progress/review_supabase-rls-lockdown.md`.
+- **ACCIÓN REQUERIDA del humano, en este orden — no es QA opcional**:
+  (1) desplegar este código a Supabase dev/producción primero, (2) recién
+  después aplicar `supabase/migrations/20260730120000_bloquear_acceso_anon.sql`
+  en el SQL Editor de Supabase — si se aplica la migración antes que el
+  código, el CRUD de equipo/asignaciones/plantillas/logs se rompe para
+  cualquiera que siga sirviendo el código viejo (`getSupabase()` anon
+  directo) contra una base con RLS ya bloqueado. (3) QA end-to-end en
+  navegador con PIN real: agregar/editar/activar-desactivar/eliminar
+  miembro, editar/intercambiar asignación, asignación masiva, ver/editar
+  plantilla, ver logs, y confirmar que Noticias/Research/HF Trending/State
+  of AI siguen cargando sin PIN — no se pudo ejercitar en este sandbox por
+  falta de credenciales Supabase/PIN reales (R6, R8, R16–R19).
+- Merged to dev: commits 42fe7ad, 261c73a · Promoted to main: pending
