@@ -3,8 +3,16 @@ import { SignJWT } from "jose";
 import { createHash, timingSafeEqual } from "crypto";
 
 const PIN = process.env.PIN ?? "";
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "fallback-secret-change-me");
 const COOKIE = "spinai_token";
+
+// Lazy a propósito — ver comentario en lib/auth.ts: leer JWT_SECRET recién
+// al firmar el token, no al importar el módulo, para no romper "next
+// build" en entornos sin esa env var en build-time.
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("Falta la env var JWT_SECRET");
+  return new TextEncoder().encode(secret);
+}
 
 // Best-effort: en un runtime serverless con múltiples instancias esto no es
 // un límite global exacto (cada instancia tiene su propio Map), pero igual
@@ -64,7 +72,7 @@ export async function POST(req: NextRequest) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set(COOKIE, token, {

@@ -1,8 +1,19 @@
 import { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "fallback-secret-change-me");
 const COOKIE = "spinai_token";
+
+// Lazy a propósito: leer process.env.JWT_SECRET recién al verificar un
+// token (request-time), no al importar el módulo — Next.js evalúa los
+// módulos de cada ruta durante "next build" (page data collection) para
+// generar el bundle, y ese paso no tiene las env vars de runtime
+// disponibles. Un throw a nivel de módulo rompería el build en cualquier
+// entorno sin JWT_SECRET seteado en build-time (CI, este mismo sandbox).
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("Falta la env var JWT_SECRET");
+  return new TextEncoder().encode(secret);
+}
 
 /**
  * Verifica la cookie spinai_token (mismo JWT que emite POST /api/auth al
@@ -15,7 +26,7 @@ export async function isAuthenticated(req: NextRequest): Promise<boolean> {
   if (!token) return false;
 
   try {
-    await jwtVerify(token, JWT_SECRET);
+    await jwtVerify(token, getJwtSecret());
     return true;
   } catch {
     return false;

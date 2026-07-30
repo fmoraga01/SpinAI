@@ -4,17 +4,21 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/escapeHtml";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET ?? "fallback-secret-change-me"
-);
 const COOKIE = "spinai_token";
+
+// Lazy a propósito — ver comentario en lib/auth.ts.
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("Falta la env var JWT_SECRET");
+  return new TextEncoder().encode(secret);
+}
 
 export async function POST(req: NextRequest) {
   // Verify session
   const token = req.cookies.get(COOKIE)?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    await jwtVerify(token, JWT_SECRET);
+    await jwtVerify(token, getJwtSecret());
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

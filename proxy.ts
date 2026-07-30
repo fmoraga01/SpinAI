@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET ?? "fallback-secret-change-me");
 const COOKIE = "spinai_token";
+
+// Lazy a propósito — ver comentario en lib/auth.ts.
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error("Falta la env var JWT_SECRET");
+  return new TextEncoder().encode(secret);
+}
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -14,7 +20,7 @@ export async function proxy(req: NextRequest) {
 
   if (token) {
     try {
-      await jwtVerify(token, JWT_SECRET);
+      await jwtVerify(token, getJwtSecret());
       return NextResponse.next();
     } catch {
       // Token invalid or expired — fall through to redirect
