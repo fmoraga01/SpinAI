@@ -489,3 +489,51 @@ Entry format:
   `docs/prod-promotion-checklist.md` sección 1, en orden, y hacer QA
   end-to-end en prod. Ver ese archivo para el detalle completo, incluida
   la advertencia sobre el seed dummy de `20260728120000_crear_projects.sql`.
+
+## rich-text-formatting-proyectos — done 2026-07-30
+
+- Requirements: R1–R20, see specs/rich-text-formatting-proyectos/requirements.md
+- Summary: formato de texto (negrita, cursiva, subrayado, tachado, lista
+  con viñeta, lista numerada, cita) vía una toolbar de 7 botones en los
+  textareas de "Resumen" y "Nota" de `/proyectos`, en las 5 apariciones
+  (crear/editar proyecto, agregar avance, editar avance). Decisión de
+  diseño central: markdown-en-texto-plano sobre un `<textarea>` nativo
+  (los botones envuelven la selección con `**`/`*`/`++`/`~~` o prefijan
+  líneas con `- `/`1. `/`> `, manipulando `selectionStart`/`selectionEnd`
+  — nunca WYSIWYG/`contentEditable`), en vez de guardar HTML directo — se
+  descartó explícitamente por la superficie de seguridad mucho menor y
+  para no traer una dependencia grande (Slate/TipTap) a un repo
+  minimalista. Subrayado usa un marcador propio `++texto++` (no hay
+  sintaxis estándar en CommonMark/GFM) en vez de HTML crudo `<u>`, para no
+  abrir ninguna puerta a HTML del usuario. Parser propio y acotado
+  (`lib/richText.ts`, ~100 líneas, con `lib/richText.test.ts`) en vez de
+  una librería de markdown genérica (`marked`/`markdown-it`), que traen
+  soporte de HTML crudo embebido por defecto y superficie de ataque
+  innecesaria para solo 7 formatos. Contrato de seguridad: todo texto del
+  usuario pasa por `escapeHtml()` **antes** de que el parser envuelva nada
+  en etiquetas; el parser solo emite un set fijo y cerrado de tags
+  (`strong`/`em`/`u`/`s`/`ul`/`ol`/`li`/`blockquote`), nunca HTML derivado
+  del usuario, a través de un único punto de entrada centralizado
+  (`renderFormattedText()`) que es el único lugar de todo el repo que usa
+  `dangerouslySetInnerHTML` con este contenido. Sin cambios de esquema
+  Supabase ni de rutas API — mismo campo `text`, misma validación de
+  "obligatorio no vacío" ya existente. El usuario revisó y aprobó una
+  maqueta visual (Artifact) del diseño de la toolbar antes de aprobar la
+  spec — la implementación replica ese diseño (2 grupos de botones
+  separados por un divisor, letras estilizadas B/I/U/S̶ + iconos para
+  viñeta/numerada/cita, toolbar pegada al textarea compartiendo
+  borde/radius, mismo hover ya usado en el resto de `/proyectos`).
+  reviewer aprobó de forma independiente (2026-07-30,
+  progress/review_rich-text-formatting-proyectos.md): verificó a mano el
+  orden escapado-antes-que-envuelto ejecutando `renderFormattedText()`
+  con inputs de inyección (`<script>`, `<img onerror>`) y confirmando que
+  el HTML de salida no contiene ninguna etiqueta real; confirmó que las 5
+  apariciones están cubiertas (grep de `<textarea` en `app/proyectos/`);
+  corrió `npm run verify` de forma independiente (36/36 tests).
+- **Pendiente de QA humana end-to-end en navegador con PIN real** (no
+  ejercitable en sandbox por falta de credenciales): probar los 7 botones
+  con y sin selección en las 5 apariciones, confirmar que un resumen/nota
+  real preexistente sin marcadores se sigue viendo exactamente igual que
+  antes, y confirmar visualmente que la toolbar coincide con la maqueta
+  aprobada.
+- Merged to dev: commits 8d9ba82, df4525b · Promoted to main: pending
