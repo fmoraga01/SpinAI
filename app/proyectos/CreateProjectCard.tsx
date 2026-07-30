@@ -5,7 +5,7 @@ export default function CreateProjectCard({ onClick }: { onClick: () => void }) 
     <button
       type="button"
       onClick={onClick}
-      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer", alignSelf: "start" }}
+      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer" }}
     >
       <div
         style={{
@@ -14,6 +14,7 @@ export default function CreateProjectCard({ onClick }: { onClick: () => void }) 
           alignItems: "center",
           justifyContent: "center",
           gap: 8,
+          height: "100%",
           minHeight: 60,
           padding: 10,
           boxSizing: "border-box",

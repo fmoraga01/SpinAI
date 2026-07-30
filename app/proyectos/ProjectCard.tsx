@@ -35,7 +35,22 @@ export default function ProjectCard({ project, onSelect }: { project: Project; o
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", margin: 0, lineHeight: "22px" }}>
+          <h3
+            style={{
+              fontSize: 16,
+              fontWeight: 600,
+              color: "var(--color-text-primary)",
+              margin: 0,
+              lineHeight: "22px",
+              minWidth: 0,
+              flex: 1,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
             {project.name}
           </h3>
           <StatusBadge status={status} />
