@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/escapeHtml";
 
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "assignmentId required" }, { status: 400 });
   }
 
-  const db = getSupabase();
+  const db = getSupabaseAdmin();
 
   // Fetch assignment + all active members in parallel
   const [{ data: assignment, error: aErr }, { data: members, error: mErr }] = await Promise.all([

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 const AA_MODELS_URL = "https://artificialanalysis.ai/api/v2/data/llms/models";
 
@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "La API no devolvió modelos" }, { status: 502 });
   }
 
-  const { error } = await getSupabase().from("ai_models").upsert(rows, { onConflict: "id" });
+  const { error } = await getSupabaseAdmin().from("ai_models").upsert(rows, { onConflict: "id" });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

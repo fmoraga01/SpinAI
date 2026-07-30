@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Parser from "rss-parser";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 const ARXIV_URL =
   "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=30";
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "arXiv no devolvió papers" }, { status: 502 });
   }
 
-  const { error } = await getSupabase()
+  const { error } = await getSupabaseAdmin()
     .from("research_papers")
     .upsert(rows, { onConflict: "arxiv_id", ignoreDuplicates: true });
 

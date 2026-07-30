@@ -1,5 +1,3 @@
-import { getSupabase } from "./supabase";
-
 export interface AiModel {
   id: string;
   name: string;
@@ -18,42 +16,13 @@ export interface AiModel {
   fetchedAt: string;
 }
 
-function toNumber(value: unknown): number | null {
-  // ojo: Number(null) da 0, no NaN — hay que descartar null/undefined antes
-  // de convertir, o un valor NULL de la DB termina mostrándose como "0.0".
-  if (value === null || value === undefined) return null;
-  const num = Number(value);
-  return Number.isFinite(num) ? num : null;
-}
-
-function rowToModel(row: Record<string, unknown>): AiModel {
-  return {
-    id: row.id as string,
-    name: row.name as string,
-    slug: row.slug as string,
-    creatorName: (row.creator_name as string | null) ?? null,
-    creatorSlug: (row.creator_slug as string | null) ?? null,
-    releaseDate: (row.release_date as string | null) ?? null,
-    intelligenceIndex: toNumber(row.intelligence_index),
-    codingIndex: toNumber(row.coding_index),
-    mathIndex: toNumber(row.math_index),
-    priceInput1m: toNumber(row.price_input_1m),
-    priceOutput1m: toNumber(row.price_output_1m),
-    priceBlended1m: toNumber(row.price_blended_1m),
-    tokensPerSecond: toNumber(row.tokens_per_second),
-    ttftSeconds: toNumber(row.ttft_seconds),
-    fetchedAt: row.fetched_at as string,
-  };
-}
-
+// Dato público — pasa por app/api/public/ai-models (getSupabaseAdmin
+// server-side, mapeo de fila cruda incluido ahí). Ver
+// specs/supabase-rls-lockdown/design.md, punto 4.
 export async function loadAiModels(): Promise<AiModel[]> {
-  const { data, error } = await getSupabase()
-    .from("ai_models")
-    .select("*")
-    .order("intelligence_index", { ascending: false, nullsFirst: false });
-
-  if (error) throw new Error(error.message);
-  return (data ?? []).map(rowToModel);
+  const res = await fetch("/api/public/ai-models");
+  if (!res.ok) throw new Error(`No se pudieron cargar los modelos (${res.status})`);
+  return res.json();
 }
 
 // La API devuelve variantes del mismo modelo (reasoning/high/low...) que

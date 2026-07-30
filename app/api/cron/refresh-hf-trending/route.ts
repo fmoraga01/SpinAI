@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 // La API pública no expone un sort de "trending" real para modelos (se
 // probó sort=trending y sort=trending_score, ambos rechazados — el
@@ -139,7 +139,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Hugging Face no devolvió datos" }, { status: 502 });
   }
 
-  const db = getSupabase();
+  const db = getSupabaseAdmin();
 
   if (modelRows.length > 0) {
     const { error } = await db.from("hf_trending").delete().eq("kind", "model");

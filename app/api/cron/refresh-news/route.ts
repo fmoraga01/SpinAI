@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Parser from "rss-parser";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { NEWS_SOURCES } from "@/lib/newsSources";
 
 interface MediaTag {
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const db = getSupabase();
+  const db = getSupabaseAdmin();
   const results: Record<string, { ok: boolean; count?: number; error?: string }> = {};
   let totalUpserted = 0;
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import nodemailer from "nodemailer";
 import { escapeHtml } from "@/lib/escapeHtml";
 
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const db = getSupabase();
+  const db = getSupabaseAdmin();
 
   // Find next upcoming assignment
   const today = new Date();
