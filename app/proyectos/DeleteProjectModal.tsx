@@ -49,7 +49,7 @@ export default function DeleteProjectModal({ projectName, onConfirm, onCancel, d
           {`¿Eliminar "${projectName}"?`}
         </p>
         <p style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: "20px", margin: "0 0 20px" }}>
-          Esto también borrará sus KPIs y avances semanales.
+          Esto también borrará los avances semanales.
         </p>
 
         {error && (
