@@ -257,9 +257,17 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                           ...actionButtonStyle,
                           opacity: editingId !== null ? 0.5 : 1,
                           cursor: editingId !== null ? "not-allowed" : "pointer",
+                          transition: "border-color 150ms, color 150ms",
                         }}
-                        onMouseEnter={(e) => { if (editingId === null) e.currentTarget.style.background = "var(--color-border)"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                        onMouseEnter={(e) => {
+                          if (editingId !== null) return;
+                          e.currentTarget.style.borderColor = "var(--color-primary)";
+                          e.currentTarget.style.color = "var(--color-primary)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = "var(--color-border)";
+                          e.currentTarget.style.color = "var(--color-text-secondary)";
+                        }}
                       >
                         Editar
                       </button>
