@@ -271,7 +271,10 @@ export default function ProjectForm({
             fontSize: 13,
             fontWeight: 500,
             cursor: "pointer",
+            transition: "background 150ms ease",
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-border)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           Cancelar
         </button>
@@ -289,7 +292,10 @@ export default function ProjectForm({
             fontWeight: 500,
             cursor: canSubmit && !submitting ? "pointer" : "not-allowed",
             boxShadow: canSubmit && !submitting ? "var(--shadow-glow-sm)" : "none",
+            transition: "box-shadow 150ms ease",
           }}
+          onMouseEnter={(e) => { if (canSubmit && !submitting) e.currentTarget.style.boxShadow = "var(--shadow-glow)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = canSubmit && !submitting ? "var(--shadow-glow-sm)" : "none"; }}
         >
           {submitting ? "Guardando…" : submitLabel}
         </button>
