@@ -63,7 +63,10 @@ export default function AddUpdateForm({ onSubmit, onCancel, error }: Props) {
             fontSize: 13,
             fontWeight: 500,
             cursor: "pointer",
+            transition: "background 150ms ease",
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = "var(--color-border)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
         >
           Cancelar
         </button>
@@ -81,7 +84,10 @@ export default function AddUpdateForm({ onSubmit, onCancel, error }: Props) {
             fontWeight: 500,
             cursor: isValid && !submitting ? "pointer" : "not-allowed",
             boxShadow: isValid && !submitting ? "var(--shadow-glow-sm)" : "none",
+            transition: "box-shadow 150ms ease",
           }}
+          onMouseEnter={(e) => { if (isValid && !submitting) e.currentTarget.style.boxShadow = "var(--shadow-glow)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.boxShadow = isValid && !submitting ? "var(--shadow-glow-sm)" : "none"; }}
         >
           {submitting ? "Guardando…" : "Agregar"}
         </button>
