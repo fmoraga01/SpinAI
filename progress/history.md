@@ -433,3 +433,26 @@ Entry format:
   of AI siguen cargando sin PIN — no se pudo ejercitar en este sandbox por
   falta de credenciales Supabase/PIN reales (R6, R8, R16–R19).
 - Merged to dev: commits 42fe7ad, 261c73a · Promoted to main: pending
+
+## supabase-rls-lockdown — acción requerida del humano completada 2026-07-30
+
+- Seguimiento de la entrada anterior (no se edita, se agrega esta nota
+  aparte por la regla append-only de este archivo).
+- El usuario aplicó `supabase/migrations/20260730120000_bloquear_acceso_anon.sql`
+  en Supabase dev (el editor SQL de Supabase corre el bloque en una
+  transacción implícita — un primer intento falló porque `"anon read
+  access"` en `news_items` ya existía de una corrida parcial anterior, lo
+  que revirtió también los drops de `members`/`assignments`/`templates`/
+  `assignment_logs`; se corrigió el script agregando `drop policy if
+  exists "anon read access"` antes de cada create, commit `f24c95c`, para
+  que sea seguro re-correrlo completo). Confirmado por consulta real a
+  `pg_policies`: cero policies para `anon` en las 4 tablas confidenciales,
+  `"anon read access"` (solo `SELECT`) en las 4 públicas.
+- QA end-to-end en el navegador con PIN real confirmada por el usuario:
+  agregar/editar/activar-desactivar/eliminar miembro, calendario de
+  asignados, plantilla y logs funcionan sin regresión contra las rutas API
+  nuevas.
+- R1–R19 completamente verificados. Sin pendientes para esta feature más
+  allá de la promoción a `main`, que sigue esperando aprobación explícita
+  del usuario por separado.
+- Merged to dev: commit f24c95c (fix de idempotencia del SQL) · Promoted to main: pending
