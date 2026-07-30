@@ -43,7 +43,7 @@ export default function AddUpdateForm({ onSubmit, onCancel, error }: Props) {
         marginBottom: 20,
       }}
     >
-      <WeeklyUpdateFields values={values} onChange={(patch) => setValues((v) => ({ ...v, ...patch }))} />
+      <WeeklyUpdateFields values={values} onChange={(patch) => setValues((v) => ({ ...v, ...patch }))} noteRows={11} />
 
       {error && (
         <p style={{ fontSize: 13, color: "#F87171", margin: 0 }}>{error}</p>
