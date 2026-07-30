@@ -7,9 +7,10 @@ interface Props {
   onConfirm: () => void;
   onCancel: () => void;
   deleting: boolean;
+  error?: string | null;
 }
 
-export default function DeleteProjectModal({ projectName, onConfirm, onCancel, deleting }: Props) {
+export default function DeleteProjectModal({ projectName, onConfirm, onCancel, deleting, error }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onCancel();
@@ -50,6 +51,10 @@ export default function DeleteProjectModal({ projectName, onConfirm, onCancel, d
         <p style={{ fontSize: 13, color: "var(--color-text-secondary)", lineHeight: "20px", margin: "0 0 20px" }}>
           Esto también borrará sus KPIs y avances semanales.
         </p>
+
+        {error && (
+          <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px" }}>{error}</p>
+        )}
 
         <div style={{ display: "flex", gap: 8 }}>
           <button

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Nav from "../components/Nav";
-import { loadProjects } from "@/lib/projects";
+import { loadProjects, deleteProject } from "@/lib/projects";
 import { Project } from "@/lib/types";
 import ProjectCard from "./ProjectCard";
 import ProjectDrawer from "./ProjectDrawer";
 import CreateProjectCard from "./CreateProjectCard";
+import DeleteProjectModal from "./DeleteProjectModal";
 
 function ProjectCardSkeleton() {
   return (
@@ -34,6 +35,10 @@ export default function ProyectosPage() {
   const [error, setError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editOnOpen, setEditOnOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteModalError, setDeleteModalError] = useState<string | null>(null);
 
   useEffect(() => {
     loadProjects()
@@ -44,17 +49,26 @@ export default function ProyectosPage() {
 
   function handleSelectProject(id: string) {
     setCreating(false);
+    setEditOnOpen(false);
+    setSelectedId(id);
+  }
+
+  function handleEditProject(id: string) {
+    setCreating(false);
+    setEditOnOpen(true);
     setSelectedId(id);
   }
 
   function handleOpenCreate() {
     setSelectedId(null);
+    setEditOnOpen(false);
     setCreating(true);
   }
 
   function handleCloseDrawer() {
     setSelectedId(null);
     setCreating(false);
+    setEditOnOpen(false);
   }
 
   function handleCreated(project: Project) {
@@ -67,6 +81,25 @@ export default function ProyectosPage() {
 
   function handleDeleted(id: string) {
     setProjects((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function handleRequestDelete(project: Project) {
+    setDeleteModalError(null);
+    setDeleteTarget(project);
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteProject(deleteTarget.id);
+      handleDeleted(deleteTarget.id);
+      setDeleteTarget(null);
+    } catch (e) {
+      setDeleteModalError(e instanceof Error ? e.message : "No se pudo eliminar el proyecto");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -119,19 +152,37 @@ export default function ProyectosPage() {
         {!loading && !error && projects.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <CreateProjectCard onClick={handleOpenCreate} />
-            {projects.map((p) => <ProjectCard key={p.id} project={p} onSelect={handleSelectProject} />)}
+            {projects.map((p) => (
+              <ProjectCard
+                key={p.id}
+                project={p}
+                onSelect={handleSelectProject}
+                onEdit={handleEditProject}
+                onDelete={handleRequestDelete}
+              />
+            ))}
           </div>
         )}
       </div>
 
       <ProjectDrawer
         projectId={selectedId}
-        mode={creating ? "create" : "view"}
+        mode={creating ? "create" : editOnOpen ? "edit" : "view"}
         onClose={handleCloseDrawer}
         onCreated={handleCreated}
         onUpdated={handleUpdated}
         onDeleted={handleDeleted}
       />
+
+      {deleteTarget && (
+        <DeleteProjectModal
+          projectName={deleteTarget.name}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setDeleteTarget(null)}
+          deleting={deleting}
+          error={deleteModalError}
+        />
+      )}
     </div>
   );
 }

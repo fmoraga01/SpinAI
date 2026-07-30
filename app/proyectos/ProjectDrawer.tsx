@@ -21,7 +21,7 @@ import AddUpdateForm from "./AddUpdateForm";
 
 interface Props {
   projectId: string | null;
-  mode: "view" | "create";
+  mode: "view" | "create" | "edit";
   onClose: () => void;
   onCreated: (project: Project) => void;
   onUpdated: (project: Project) => void;
@@ -97,7 +97,13 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
       setError(false);
     });
     loadProject(projectId)
-      .then(setProject)
+      .then((p) => {
+        setProject(p);
+        // R-edit: solo al resolver el fetch, para que ProjectForm reciba
+        // `initialValues` ya poblados en su primer render (no reacciona a
+        // cambios posteriores del prop, solo lee el valor inicial).
+        if (mode === "edit") setFormMode("form");
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
     return () => cancelAnimationFrame(raf);

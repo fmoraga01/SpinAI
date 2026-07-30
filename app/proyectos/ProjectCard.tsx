@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Project } from "@/lib/types";
 import StatusBadge from "./StatusBadge";
 
@@ -8,15 +9,125 @@ function latestUpdateDate(project: Project): string | null {
   return [...project.updates].sort((a, b) => b.weekOf.localeCompare(a.weekOf))[0].weekOf;
 }
 
-export default function ProjectCard({ project, onSelect }: { project: Project; onSelect: (id: string) => void }) {
+function menuItemStyle(danger: boolean, isLast: boolean): React.CSSProperties {
+  return {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "8px 12px",
+    fontSize: 12.5,
+    fontWeight: 500,
+    cursor: "pointer",
+    background: "transparent",
+    color: danger ? "#F87171" : "var(--color-text-primary)",
+    border: "none",
+    borderBottom: isLast ? "none" : "1px solid var(--color-border)",
+  };
+}
+
+// Mismo patrón que StatusSelect (ProjectForm.tsx): botón + lista de opciones
+// propia posicionada absolute, con click-outside para cerrar.
+function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: "relative", flexShrink: 0 }}>
+      <button
+        type="button"
+        aria-label="Más opciones"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen((o) => !o);
+        }}
+        style={{
+          width: 24,
+          height: 24,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: open ? "var(--color-border)" : "transparent",
+          border: "none",
+          borderRadius: "var(--radius-md)",
+          color: "var(--color-text-secondary)",
+          cursor: "pointer",
+          fontSize: 14,
+          lineHeight: 1,
+          transition: "background 150ms ease",
+        }}
+        onMouseEnter={(e) => { if (!open) e.currentTarget.style.background = "var(--color-border)"; }}
+        onMouseLeave={(e) => { if (!open) e.currentTarget.style.background = "transparent"; }}
+      >
+        ⋮
+      </button>
+      {open && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            right: 0,
+            zIndex: 20,
+            minWidth: 130,
+            background: "var(--color-surface-elevated)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onEdit(); }}
+            style={menuItemStyle(false, false)}
+          >
+            Editar
+          </button>
+          <button
+            type="button"
+            onClick={() => { setOpen(false); onDelete(); }}
+            style={menuItemStyle(true, true)}
+          >
+            Eliminar
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface Props {
+  project: Project;
+  onSelect: (id: string) => void;
+  onEdit: (id: string) => void;
+  onDelete: (project: Project) => void;
+}
+
+export default function ProjectCard({ project, onSelect, onEdit, onDelete }: Props) {
   const status = project.status;
   const lastUpdate = latestUpdateDate(project);
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onSelect(project.id)}
-      style={{ all: "unset", display: "block", width: "100%", cursor: "pointer" }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(project.id);
+        }
+      }}
+      style={{ display: "block", width: "100%", cursor: "pointer" }}
     >
       <div
         style={{
@@ -53,7 +164,10 @@ export default function ProjectCard({ project, onSelect }: { project: Project; o
           >
             {project.name}
           </h3>
-          <StatusBadge status={status} />
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+            <StatusBadge status={status} />
+            <CardMenu onEdit={() => onEdit(project.id)} onDelete={() => onDelete(project)} />
+          </div>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <span style={{ fontSize: 12, color: "var(--color-tertiary)" }}>{project.country}</span>
@@ -66,6 +180,6 @@ export default function ProjectCard({ project, onSelect }: { project: Project; o
             : "Sin actualizaciones registradas"}
         </p>
       </div>
-    </button>
+    </div>
   );
 }
