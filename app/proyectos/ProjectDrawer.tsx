@@ -12,6 +12,7 @@ import {
   WeeklyUpdateFormValues,
 } from "@/lib/projects";
 import { Project } from "@/lib/types";
+import { renderFormattedText } from "@/lib/richText";
 import StatusBadge from "./StatusBadge";
 import ProjectTimeline from "./ProjectTimeline";
 import ProjectForm from "./ProjectForm";
@@ -336,9 +337,15 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px" }}>
                 Resumen de la iniciativa
               </p>
-              <p style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px" }}>
-                {project.summary}
-              </p>
+              {/* Único uso de dangerouslySetInnerHTML en este componente: el HTML
+                  viene exclusivamente de renderFormattedText() (R12, R17), que
+                  escapa el texto del usuario antes de envolverlo en el set fijo
+                  de etiquetas de formato (R15/R16) — nunca se construye HTML de
+                  formato a mano acá. */}
+              <div
+                style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px", whiteSpace: "pre-wrap" }}
+                dangerouslySetInnerHTML={{ __html: renderFormattedText(project.summary) }}
+              />
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32 }}>
                 <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>País: {project.country}</span>
                 <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>·</span>

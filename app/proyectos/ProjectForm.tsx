@@ -5,6 +5,8 @@ import { ProjectStatus } from "@/lib/types";
 import { mondayOf, ProjectFormValues, WeeklyUpdateFormValues } from "@/lib/projects";
 import { PROJECT_STATUS_LABELS } from "./StatusBadge";
 import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
+import FormattableTextarea from "./FormattableTextarea";
+import { inputStyle, focusHandlers } from "./formStyles";
 
 interface Props {
   initialValues: ProjectFormValues;
@@ -13,29 +15,6 @@ interface Props {
   onCancel: () => void;
   error: string | null;
   showFirstUpdateSection: boolean; // true solo en modo creación (project === null en ProjectDrawer)
-}
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--color-surface-elevated)",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-md)",
-  padding: "8px 12px",
-  color: "var(--color-text-primary)",
-  fontSize: 13,
-  transition: "border-color 150ms ease",
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
-function focusHandlers(): {
-  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
-  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
-} {
-  return {
-    onFocus: (e) => (e.currentTarget.style.borderColor = "#2C40FF"),
-    onBlur: (e) => (e.currentTarget.style.borderColor = "var(--color-border)"),
-  };
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -229,13 +208,11 @@ export default function ProjectForm({
         <StatusSelect value={values.status} onChange={(status) => setValues((v) => ({ ...v, status }))} />
       </Field>
       <Field label="Resumen">
-        <textarea
+        <FormattableTextarea
           value={values.summary}
-          onChange={(e) => setValues((v) => ({ ...v, summary: e.target.value }))}
+          onChange={(next) => setValues((v) => ({ ...v, summary: next }))}
           placeholder="Resumen de la iniciativa"
           rows={10}
-          style={{ ...inputStyle, resize: "vertical", lineHeight: "20px" }}
-          {...focusHandlers()}
         />
       </Field>
 

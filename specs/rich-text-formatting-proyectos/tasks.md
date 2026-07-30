@@ -5,7 +5,7 @@ y es la pieza con mayor responsabilidad de seguridad), luego el toolbar +
 textarea compartido, luego integración en los 2 puntos de edición, luego
 integración en los 2 puntos de lectura, luego verificación end-to-end.
 
-- [ ] **T1 — `lib/richText.ts` (`renderFormattedText`) + tests** (`R12`-`R20`)
+- [x] **T1 — `lib/richText.ts` (`renderFormattedText`) + tests** (`R12`-`R20`)
   - Implementar `renderFormattedText(raw: string): string` según
     `design.md`: separa por líneas, agrupa líneas consecutivas de
     viñeta/numerada/cita en `<ul>`/`<ol>`/`<blockquote>`, y aplica
@@ -26,7 +26,7 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     (`strong`/`em`/`u`/`s`/`ul`/`ol`/`li`/`blockquote`).
   - Correr `npm run test` y confirmar que todos pasan antes de continuar.
 
-- [ ] **T2 — `FormattingToolbar.tsx`** (`R1`-`R9`)
+- [x] **T2 — `FormattingToolbar.tsx`** (`R1`-`R9`)
   - Nuevo componente `app/proyectos/FormattingToolbar.tsx`: 7 botones
     (negrita, cursiva, subrayado, tachado, viñeta, numerada, cita), cada
     uno invocando `wrapSelection`/`prefixLines` (según `design.md`) sobre
@@ -44,7 +44,7 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     "B", "I", "S", "¶") si no — criterio visual lo define `implementer`
     corriendo `design-check` (ver T5).
 
-- [ ] **T3 — `FormattableTextarea.tsx`** (`R1`, `R10`, `R11`)
+- [x] **T3 — `FormattableTextarea.tsx`** (`R1`, `R10`, `R11`)
   - Nuevo componente `app/proyectos/FormattableTextarea.tsx`: compone
     `FormattingToolbar` + `<textarea>` controlado, mismo `inputStyle`/
     `focusHandlers` que ya usan `ProjectForm.tsx`/`WeeklyUpdateFields.tsx`
@@ -55,7 +55,7 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     `<textarea>` que reemplaza en cada punto de uso, para que el reemplazo
     en `ProjectForm.tsx`/`WeeklyUpdateFields.tsx` sea un cambio mínimo.
 
-- [ ] **T4 — Integrar `FormattableTextarea` en los 2 puntos de edición** (`R1`, `R10`, `R11`, `R17`)
+- [x] **T4 — Integrar `FormattableTextarea` en los 2 puntos de edición** (`R1`, `R10`, `R11`, `R17`)
   - `ProjectForm.tsx`: reemplazar el `<textarea>` de "Resumen" (línea
     ~232) por `<FormattableTextarea value={values.summary} onChange={...}
     ...>` — cubre las apariciones (1) creación y (3) edición, ya que es el
@@ -71,14 +71,14 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     no debería requerir tocar esa lógica, ya que `FormattableTextarea`
     sigue exponiendo el mismo `value: string`.
 
-- [ ] **T5 — `design-check` sobre los componentes nuevos/modificados de T2-T4**
+- [x] **T5 — `design-check` sobre los componentes nuevos/modificados de T2-T4**
   - Correr el skill `design-check` sobre `FormattingToolbar.tsx`,
     `FormattableTextarea.tsx`, `ProjectForm.tsx` y `WeeklyUpdateFields.tsx`
     tras los cambios de T2-T4 (regla obligatoria de `docs/specs.md` para
     cambios en `app/proyectos/*.tsx`). Documentar resultado en
     `progress/impl_rich-text-formatting-proyectos.md`.
 
-- [ ] **T6 — Renderizado en `ProjectDrawer.tsx`** (`R12`, `R14`, `R15`-`R17`)
+- [x] **T6 — Renderizado en `ProjectDrawer.tsx`** (`R12`, `R14`, `R15`-`R17`)
   - Reemplazar `<p>{project.summary}</p>` (línea ~339-341) por un `<div>`
     con `whiteSpace: "pre-wrap"` (mismos estilos de fuente/color/line-height
     ya existentes) y `dangerouslySetInnerHTML={{ __html:
@@ -90,7 +90,7 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     existente sin marcadores (texto plano, dato real hoy en Supabase dev)
     se sigue viendo exactamente igual que antes de esta feature (R14).
 
-- [ ] **T7 — Renderizado en `ProjectTimeline.tsx`** (`R13`-`R17`)
+- [x] **T7 — Renderizado en `ProjectTimeline.tsx`** (`R13`-`R17`)
   - Mismo reemplazo que T6, aplicado a `{group.update.note}` (línea
     ~236-238), preservando el `whiteSpace: "pre-wrap"` ya presente hoy en
     ese `<p>`.
@@ -98,11 +98,21 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     correctamente en el timeline; una nota preexistente sin formato se ve
     igual que antes.
 
-- [ ] **T8 — `design-check` sobre los cambios de lectura de T6-T7**
+- [x] **T8 — `design-check` sobre los cambios de lectura de T6-T7**
   - Correr `design-check` sobre `ProjectDrawer.tsx` y `ProjectTimeline.tsx`
     tras los cambios. Documentar resultado.
 
-- [ ] **T9 — QA manual end-to-end (los 5 puntos de aparición)**
+- [ ] **T9 — QA manual end-to-end (los 5 puntos de aparición)** — parcialmente
+  verificado, ver `progress/impl_rich-text-formatting-proyectos.md`: sin
+  acceso a browser tool ni PIN real en este sandbox (mismo bloqueo que
+  features anteriores), no se pudo ejercitar clicks reales de los 7 botones
+  contra un `<textarea>` vivo en el navegador ni el guardado real contra
+  Supabase. Lo que sí se cubrió: `renderFormattedText()` con inputs
+  equivalentes a los 5 puntos de aparición vía Vitest (R12-R20, incluida la
+  inyección `<script>`/`<img onerror>` de R15), y revisión de código de
+  `wrapSelection`/`prefixLines` línea por línea contra `design.md`. Pendiente
+  de QA humana real en navegador antes de dar la feature por completamente
+  probada.
   - Crear un proyecto nuevo: aplicar los 7 tipos de formato al campo
     "Resumen" usando los botones de la toolbar, confirmar que el texto
     guardado (visible al reabrir en modo edición) conserva los
@@ -137,7 +147,7 @@ integración en los 2 puntos de lectura, luego verificación end-to-end.
     símbolos `<`/`>` visibles), sin ejecutar ningún script ni romper el
     layout de la página (R15).
 
-- [ ] **T10 — Verificación y traceability**
+- [x] **T10 — Verificación y traceability**
   - Correr `npm run verify` (lint + build + test + check-sdd-state) —
     debe incluir los tests nuevos de `lib/richText.test.ts` de T1.
   - Escribir `progress/impl_rich-text-formatting-proyectos.md` con, para

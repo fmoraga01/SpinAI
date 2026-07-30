@@ -2,6 +2,8 @@
 
 import { mondayOf } from "@/lib/projects";
 import { weekLabel } from "./ProjectTimeline";
+import FormattableTextarea from "./FormattableTextarea";
+import { inputStyle, focusHandlers } from "./formStyles";
 
 export interface WeeklyUpdateValues {
   date: string; // valor crudo del <input type="date">, "" si vacío
@@ -12,29 +14,6 @@ interface Props {
   values: WeeklyUpdateValues;
   onChange: (patch: Partial<WeeklyUpdateValues>) => void;
   noteRows?: number;
-}
-
-const inputStyle: React.CSSProperties = {
-  background: "var(--color-surface-elevated)",
-  border: "1px solid var(--color-border)",
-  borderRadius: "var(--radius-md)",
-  padding: "8px 12px",
-  color: "var(--color-text-primary)",
-  fontSize: 13,
-  transition: "border-color 150ms ease",
-  outline: "none",
-  width: "100%",
-  boxSizing: "border-box",
-};
-
-function focusHandlers(): {
-  onFocus: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  onBlur: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-} {
-  return {
-    onFocus: (e) => (e.currentTarget.style.borderColor = "#2C40FF"),
-    onBlur: (e) => (e.currentTarget.style.borderColor = "var(--color-border)"),
-  };
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -66,13 +45,11 @@ export default function WeeklyUpdateFields({ values, onChange, noteRows = 7 }: P
         )}
       </Field>
       <Field label="Nota">
-        <textarea
+        <FormattableTextarea
           value={values.note}
-          onChange={(e) => onChange({ note: e.target.value })}
+          onChange={(next) => onChange({ note: next })}
           placeholder="Qué pasó esta semana"
           rows={noteRows}
-          style={{ ...inputStyle, resize: "vertical", lineHeight: "20px" }}
-          {...focusHandlers()}
         />
       </Field>
     </div>

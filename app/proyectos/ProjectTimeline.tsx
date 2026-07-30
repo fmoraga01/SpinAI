@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { WeeklyUpdate } from "@/lib/types";
 import { mondayOf, WeeklyUpdateFormValues } from "@/lib/projects";
+import { renderFormattedText } from "@/lib/richText";
 import WeeklyUpdateFields, { WeeklyUpdateValues } from "./WeeklyUpdateFields";
 
 export function weekLabel(weekOf: string): string {
@@ -233,9 +234,15 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
                   </>
                 ) : (
                   <>
-                    <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%", whiteSpace: "pre-wrap" }}>
-                      {group.update.note}
-                    </p>
+                    {/* Único uso de dangerouslySetInnerHTML en este componente: el
+                        HTML viene exclusivamente de renderFormattedText() (R13,
+                        R17) — mismo contrato de saneamiento que ProjectDrawer.tsx
+                        (R15/R16), preservando el whiteSpace: "pre-wrap" ya
+                        existente acá. */}
+                    <div
+                      style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: 0, lineHeight: "19px", width: "100%", whiteSpace: "pre-wrap" }}
+                      dangerouslySetInnerHTML={{ __html: renderFormattedText(group.update.note) }}
+                    />
                     <div
                       className="proyecto-timeline-row-actions"
                       style={{
