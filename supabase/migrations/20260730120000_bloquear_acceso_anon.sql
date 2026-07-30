@@ -25,17 +25,21 @@ drop policy if exists "anon full access" on assignment_logs;
 -- (service role, bypassea RLS) como parte de esta misma feature.
 
 drop policy if exists "anon full access" on news_items;
+drop policy if exists "anon read access" on news_items;
 create policy "anon read access" on news_items
   for select to anon using (true);
 
 drop policy if exists "anon full access" on ai_models;
+drop policy if exists "anon read access" on ai_models;
 create policy "anon read access" on ai_models
   for select to anon using (true);
 
 drop policy if exists "anon full access" on research_papers;
+drop policy if exists "anon read access" on research_papers;
 create policy "anon read access" on research_papers
   for select to anon using (true);
 
 drop policy if exists "anon full access" on hf_trending;
+drop policy if exists "anon read access" on hf_trending;
 create policy "anon read access" on hf_trending
   for select to anon using (true);
