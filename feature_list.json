@@ -74,6 +74,14 @@
       "created": "2026-07-29",
       "spec_dir": "specs/project-status-values-rename/",
       "note": "Migración supabase/migrations/20260729180000_cambiar_valores_status_projects.sql aplicada por el usuario en Supabase dev (2026-07-29). Pendiente: QA visual en el navegador de los 3 badges (Asistente de ventas Easy 2.0 = Desarrollo, Probador Virtual = Piloto, Asesor de proyectos = Desarrollo) y confirmar que crear/editar un proyecto con los nuevos valores funciona end-to-end — no se pudo ejercitar desde este sandbox por falta de PIN/browser tool."
+    },
+    {
+      "id": "supabase-rls-lockdown",
+      "title": "Cerrar acceso anon de Supabase (RLS) para members/assignments/templates/assignment_logs y mover lib/storage.ts (+ hfTrending/news/research/stateOfAi) a rutas API server-side",
+      "status": "spec_ready",
+      "created": "2026-07-30",
+      "spec_dir": "specs/supabase-rls-lockdown/",
+      "note": "Hallazgo de auditoría de seguridad manual: policies RLS 'for all to anon using (true)' en members/assignments/templates/assignment_logs permiten CRUD completo sin PIN via anon key pública, porque no existe middleware.ts y lib/storage.ts llama a getSupabase() (cliente anon) directo desde componentes client. Fix: deny total a anon en esas 4 tablas (sin policy, mismo patrón que projects), policies 'for select' solamente en las de lectura pública (news_items/ai_models/research_papers/hf_trending), y rutas API nuevas bajo app/api/** siguiendo el patrón de app/api/proyectos/** (isAuthenticated + getSupabaseAdmin) para reemplazar las llamadas client-side. Fuera de alcance: rate limiting de /api/auth, PIN constant-time, escape HTML de emails, headers de seguridad, bump de next, y el fallback hardcodeado de JWT_SECRET (ya resueltos aparte / pendientes de confirmación del usuario, no tocar aquí)."
     }
   ]
 }
