@@ -69,7 +69,7 @@ export default function WeeklyUpdateFields({ values, onChange }: Props) {
           value={values.note}
           onChange={(e) => onChange({ note: e.target.value })}
           placeholder="Qué pasó esta semana"
-          rows={4}
+          rows={5}
           style={{ ...inputStyle, resize: "vertical", lineHeight: "20px" }}
           {...focusHandlers()}
         />
