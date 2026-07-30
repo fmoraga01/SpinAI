@@ -73,7 +73,7 @@ function CardMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => vo
           onClick={(e) => e.stopPropagation()}
           style={{
             position: "absolute",
-            bottom: "calc(100% + 4px)",
+            top: "calc(100% + 4px)",
             right: 0,
             zIndex: 20,
             minWidth: 130,
