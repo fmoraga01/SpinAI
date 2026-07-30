@@ -120,5 +120,38 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
     `templates`/`assignment_logs` sin ninguna policy para `anon` (deny
     total); `news_items`/`ai_models`/`research_papers`/`hf_trending` con
     únicamente `"anon read access"` (`SELECT`).
-  - **PENDIENTE**: QA end-to-end en prod (equivalente al que se hizo en
-    dev) con el PIN de producción.
+  - QA end-to-end en prod con el PIN de producción: ✅ confirmado por el
+    usuario tras el incidente y fix descritos abajo.
+
+- 2026-07-30: **incidente post-cutover — "no muestra nada" en prod.**
+  Justo después de las migraciones SQL, el usuario reportó que ninguna
+  sección cargaba datos: noticias, State of AI, calendario de asignados,
+  equipo, log de cambios, todo vacío. Diagnóstico (con las herramientas
+  MCP de Vercel, no solo curl — este sandbox no llega directo a
+  `*.vercel.app`, hace falta `web_fetch_vercel_url`/`get_access_to_vercel_url`):
+  - Primera hipótesis descartada: Deployment Protection de Vercel. El
+    usuario confirmó con captura que "Vercel Authentication" y "Password
+    Protection" estaban ambas apagadas — no era esto (el 403 inicial que
+    vi era de la red del propio sandbox, no de Vercel).
+  - Causa real: `GET /api/public/news` y `/api/public/ai-models`
+    devolvían `500 {"error":"Invalid API key"}` — el error textual de
+    Supabase cuando la key no corresponde al proyecto de la URL dada.
+    `SUPABASE_SERVICE_ROLE_KEY` y/o `NEXT_PUBLIC_SUPABASE_URL` en Vercel
+    **Production** no eran del mismo proyecto de Supabase (pese a que el
+    usuario los había confirmado/creado antes del cutover). Como tras
+    `supabase-rls-lockdown` **todas** las rutas (públicas y protegidas)
+    pasan por `getSupabaseAdmin()`, un solo par de env vars mal
+    emparejado rompía absolutamente todo a la vez — de ahí que pareciera
+    "se perdieron todos los datos" cuando en realidad ninguna tabla se
+    tocó.
+  - Hallazgo colateral, no arreglado todavía: `app/api/team/logs/route.ts`
+    devuelve `tableError: true` ante **cualquier** error de Supabase (no
+    solo "tabla no existe"), y `ChangeLog.tsx` lo renderiza siempre como
+    "Tabla no encontrada" con un `CREATE TABLE` sugerido — con este
+    incidente, ese mensaje confundió más de lo que ayudó (la tabla sí
+    existía). Candidato a mejora futura: distinguir el código de error de
+    Postgres (`42P01`) del resto en vez de un catch-all genérico.
+  - Fix: el usuario corrigió `SUPABASE_SERVICE_ROLE_KEY`/
+    `NEXT_PUBLIC_SUPABASE_URL` en Vercel Production contra el dashboard
+    real de Supabase prod y redesplegó. Confirmado funcionando de nuevo
+    end-to-end.
