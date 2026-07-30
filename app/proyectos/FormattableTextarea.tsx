@@ -31,14 +31,17 @@ export default function FormattableTextarea({ value, onChange, placeholder, rows
   return (
     <div
       className="sp-formattable-field"
-      style={{
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
-        overflow: "hidden",
-        transition: "border-color 150ms ease",
-      }}
+      style={{ borderRadius: "var(--radius-md)", overflow: "hidden" }}
     >
+      {/* El borde (reposo + foco) vive acá, no en `style` inline: un estilo
+          inline tiene más especificidad que cualquier regla de esta hoja,
+          así que si `border-color` se pusiera inline la regla :focus-within
+          de abajo nunca podría pisarlo. */}
       <style>{`
+        .sp-formattable-field {
+          border: 1px solid var(--color-border);
+          transition: border-color 150ms ease;
+        }
         .sp-formattable-field:focus-within {
           border-color: var(--color-primary);
         }
