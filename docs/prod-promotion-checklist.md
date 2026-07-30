@@ -88,9 +88,37 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   build` en entornos sin la env var en build-time) — commit `4327e20` en
   `dev`. `main` avanzó por fast-forward de `90c7143` a `4327e20` (sin
   conflictos, 101 archivos) y se pusheó a `origin/main`.
-  - **PENDIENTE, a ejecutar por el usuario ahora que el código está
-    desplegado**: correr en Supabase **prod** las 6 migraciones de la
-    sección 1 de este archivo, en orden — el código ya está afuera, así
-    que el orden código-antes-que-SQL ya se cumple en cuanto se corran.
+- 2026-07-30: **migraciones SQL aplicadas en Supabase prod.** No fue un
+  solo bloque limpio — dos hallazgos importantes durante la ejecución:
+  - **El editor SQL de Supabase no es una transacción única**: ejecuta
+    cada sentencia con autocommit (no revierte las anteriores si una
+    posterior falla dentro del mismo envío). El primer intento de correr
+    el bloque completo de las 6 migraciones falló en el paso 2
+    (`column "status" of relation "project_weekly_updates" does not
+    exist`) porque un intento previo, no documentado en esta sesión, ya
+    había dejado las migraciones 1–3 aplicadas parcialmente en prod.
+    Se diagnosticó el estado real con consultas a
+    `information_schema.columns`, `pg_constraint`, `pg_policies` y los
+    datos de `projects`/`project_kpis`/`project_weekly_updates` antes de
+    seguir, en vez de re-correr el bloque completo a ciegas.
+  - **Prod tenía una policy extra que dev no tiene**: `members`,
+    `assignments`, `templates`, `assignment_logs` tenían tanto
+    `"anon full access"` (la que sí está en el historial de migraciones)
+    como `"anon_all"` (mismo efecto — `ALL` para `anon` — pero de origen
+    desconocido, no viene de ningún archivo en `supabase/migrations/`,
+    probablemente de una configuración manual anterior a la convención de
+    migraciones de este repo). El script de la migración 5 solo borraba
+    `"anon full access"` por nombre — de haberlo corrido tal cual, la
+    migración habría "tenido éxito" sin errores pero **`anon_all` habría
+    seguido dando CRUD completo**, dejando el hallazgo crítico de la
+    auditoría sin resolver en prod pese a que todo parecía estar bien.
+    Se agregó `drop policy if exists "anon_all"` a las 4 tablas
+    confidenciales antes de correr.
+  - Estado final verificado con las mismas consultas de diagnóstico:
+    `projects` tiene 1 fila real ("Probador Virtual", `status = 'piloto'`,
+    con sus 3 KPIs y 1 avance semanal intactos); `members`/`assignments`/
+    `templates`/`assignment_logs` sin ninguna policy para `anon` (deny
+    total); `news_items`/`ai_models`/`research_papers`/`hf_trending` con
+    únicamente `"anon read access"` (`SELECT`).
   - **PENDIENTE**: QA end-to-end en prod (equivalente al que se hizo en
-    dev) una vez aplicadas las migraciones.
+    dev) con el PIN de producción.
