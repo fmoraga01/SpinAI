@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDrawer, DrawerView } from "./DrawerContext";
 import { loadData } from "@/lib/storage";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 function hasUpcomingAssignments(assignments: { date: string }[]): boolean {
   const today = new Date();
@@ -109,7 +110,9 @@ export default function Nav() {
         {/* Nav links */}
         <nav className="flex items-center gap-1">
           <NavLink href="/" active={homeActive}>Home</NavLink>
-          <NavLink href="/proyectos" active={proyectosActive}>Status de Proyectos</NavLink>
+          {FEATURE_FLAGS.proyectosStatusVisible && (
+            <NavLink href="/proyectos" active={proyectosActive}>Status de Proyectos</NavLink>
+          )}
           <NavLink href="/noticias" active={noticiasActive}>Noticias de IA</NavLink>
           <NavLink href="/state-of-ai" active={stateOfAiActive}>State of AI</NavLink>
           {visibleLinks.map(({ view, label }) => {

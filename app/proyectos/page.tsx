@@ -8,6 +8,7 @@ import ProjectCard from "./ProjectCard";
 import ProjectDrawer from "./ProjectDrawer";
 import CreateProjectCard from "./CreateProjectCard";
 import DeleteProjectModal from "./DeleteProjectModal";
+import { FEATURE_FLAGS } from "@/lib/featureFlags";
 
 function ProjectCardSkeleton() {
   return (
@@ -100,6 +101,17 @@ export default function ProyectosPage() {
     } finally {
       setDeleting(false);
     }
+  }
+
+  if (!FEATURE_FLAGS.proyectosStatusVisible) {
+    return (
+      <div style={{ minHeight: "100vh", background: "var(--color-bg)" }}>
+        <Nav />
+        <div className="max-w-4xl mx-auto px-6" style={{ paddingTop: 96, paddingBottom: 64, textAlign: "center", color: "var(--color-tertiary)", fontSize: 14 }}>
+          Esta sección no está disponible por el momento.
+        </div>
+      </div>
+    );
   }
 
   return (
