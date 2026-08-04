@@ -19,6 +19,26 @@ interface Props {
   updates: WeeklyUpdate[];
   onEdit: (id: string, values: WeeklyUpdateFormValues) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  reduced: boolean;
+}
+
+// ProjectTimeline es siempre el Bloque 5 (índice fijo) de
+// ProjectDrawer.tsx's vista — tiene un único call site, así que el índice
+// se hardcodea acá en vez de recibirse como prop (ver design.md). El "+1"
+// (6 en vez de 5) es el mismo "ancla" que usan las specs previas: la
+// primera fila/empty-state nunca empieza antes de que hubiera terminado el
+// delay propio del bloque.
+function emptyStateMotionStyle(reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return { animation: "proyectoDetailIn 220ms ease-in-out backwards", animationDelay: "150ms" };
+}
+
+function rowMotionStyle(index: number, reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return {
+    animation: "proyectoDetailIn 220ms ease-in-out backwards",
+    animationDelay: `${(6 + Math.min(index, 8)) * 30}ms`,
+  };
 }
 
 const actionButtonStyle: React.CSSProperties = {
@@ -35,7 +55,7 @@ const actionButtonStyle: React.CSSProperties = {
   transition: "background 150ms ease",
 };
 
-export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
+export default function ProjectTimeline({ updates, onEdit, onDelete, reduced }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<WeeklyUpdateValues>({ date: "", note: "" });
   const [editError, setEditError] = useState<string | null>(null);
@@ -115,6 +135,7 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
           borderRadius: "var(--radius-md)",
           textAlign: "center",
           padding: "32px 18px",
+          ...emptyStateMotionStyle(reduced),
         }}
       >
         <p style={{ fontSize: 13, color: "var(--color-tertiary)", margin: 0 }}>
@@ -127,6 +148,10 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
       <style>{`
+        @keyframes proyectoDetailIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         .proyecto-timeline-row {
           transition: border-color 150ms ease-out, background 150ms ease-out;
         }
@@ -160,7 +185,7 @@ export default function ProjectTimeline({ updates, onEdit, onDelete }: Props) {
       {groups.map((group, gi) => {
         const isEditingRow = editingId === group.update.id;
         return (
-          <div key={group.key} style={{ display: "flex", gap: 20 }}>
+          <div key={group.key} style={{ display: "flex", gap: 20, ...rowMotionStyle(gi, reduced) }}>
             {/* Riel de tiempo */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 12 }}>
               <div

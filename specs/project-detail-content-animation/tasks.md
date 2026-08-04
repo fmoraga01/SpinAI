@@ -1,11 +1,11 @@
 # Tasks — project-detail-content-animation
 
-1. [ ] **Import the reduced-motion hook in `ProjectDrawer.tsx`.** Import
+1. [x] **Import the reduced-motion hook in `ProjectDrawer.tsx`.** Import
    `usePrefersReducedMotion` from `@/app/state-of-ai/useReducedMotion` and
    call it once at the top of the `ProjectDrawer` component, alongside its
    existing `useState` calls (it's already `"use client"`). *(Serves R7)*
 
-2. [ ] **Add the `proyectoDetailIn` keyframes and `blockMotionStyle` helper
+2. [x] **Add the `proyectoDetailIn` keyframes and `blockMotionStyle` helper
    in `ProjectDrawer.tsx`.** Add a `proyectoDetailIn` `@keyframes` rule
    (`opacity 0 → 1`, `translateY(4px) → translateY(0)`) to the file's
    existing `<style>` tag (the one that already carries the
@@ -17,42 +17,42 @@
      animationDelay: `${index * 30}ms` }`.
    *(Serves R1, R2, R6, R7)*
 
-3. [ ] **Apply Block 0 (`firstUpdateError`).** Merge `blockMotionStyle(0,
+3. [x] **Apply Block 0 (`firstUpdateError`).** Merge `blockMotionStyle(0,
    reduced)` into the `firstUpdateError` `<p>`'s existing `style` object.
    *(Serves R1, R2)*
 
-4. [ ] **Apply Block 1 (resumen).** Merge `blockMotionStyle(1, reduced)`
+4. [x] **Apply Block 1 (resumen).** Merge `blockMotionStyle(1, reduced)`
    into *both* the "Resumen de la iniciativa" label `<p>`'s existing
    `style` object and the rich-text summary `<div className=
    "proyecto-rich-text" ...>`'s existing `style` object — do not introduce
    a wrapping element (see design.md's "Scope decision" on this). *(Serves
    R1, R2, R3)*
 
-5. [ ] **Apply Block 2 (metadata line).** Merge `blockMotionStyle(2,
+5. [x] **Apply Block 2 (metadata line).** Merge `blockMotionStyle(2,
    reduced)` into the "País: X · Negocio: Y" line's existing `style`
    object. Do not stagger the two `<span>`s or the `·` separator
    individually. *(Serves R1, R2, R3)*
 
-6. [ ] **Apply Block 3 (avance header).** Merge `blockMotionStyle(3,
+6. [x] **Apply Block 3 (avance header).** Merge `blockMotionStyle(3,
    reduced)` into the "Avance semanal" header `<div>`'s existing `style`
    object (the one wrapping the uppercase label and the "Agregar avance"
    button). Do not add `animation`/`animationDelay` to the label or the
    button individually. *(Serves R1, R2, R3)*
 
-7. [ ] **Apply Block 4 (`AddUpdateForm`).** Wrap the existing
+7. [x] **Apply Block 4 (`AddUpdateForm`).** Wrap the existing
    `{addingUpdate && (<AddUpdateForm .../>)}` call in a new `<div
    style={blockMotionStyle(4, reduced)}>...</div>` — do not modify
    `AddUpdateForm.tsx` itself (see design.md's "Scope decision" on this).
    *(Serves R1, R2, R9)*
 
-8. [ ] **Thread `reduced` into `ProjectTimeline`.** Add `reduced: boolean`
+8. [x] **Thread `reduced` into `ProjectTimeline`.** Add `reduced: boolean`
    to `ProjectTimeline`'s `Props` interface in `ProjectTimeline.tsx`, and
    pass `reduced={reduced}` from the existing `<ProjectTimeline
    updates={project.updates} onEdit={handleEditUpdate}
    onDelete={handleDeleteUpdate} />` call site in `ProjectDrawer.tsx`.
    *(Serves R7, precondition for tasks 9–10)*
 
-9. [ ] **Add the keyframes and helpers in `ProjectTimeline.tsx`, apply to
+9. [x] **Add the keyframes and helpers in `ProjectTimeline.tsx`, apply to
    the empty state.** Add the same `proyectoDetailIn` `@keyframes` rule to
    this file's own existing `<style>` tag (the one that already duplicates
    `.proyecto-rich-text` between the two files — see design.md). Add two
@@ -69,7 +69,7 @@
    stagger its `<p>` separately — it's the only element in that branch.
    *(Serves R1, R2, R5, R6, R7)*
 
-10. [ ] **Apply the row animation in `ProjectTimeline.tsx`.** In the
+10. [x] **Apply the row animation in `ProjectTimeline.tsx`.** In the
     `groups.map((group, gi) => ...)` branch, merge `rowMotionStyle(gi,
     reduced)` into each row's outer `<div key={group.key} style={{
     display: "flex", gap: 20 }}>` (the element wrapping both the timeline
@@ -79,7 +79,7 @@
     the rich-text note, or the edit/delete action buttons individually.
     *(Serves R1, R4, R6)*
 
-11. [ ] **Verify no interference with existing behavior.** Confirm the
+11. [x] **Verify no interference with existing behavior.** Confirm the
     following are byte-for-byte unchanged: `ProjectDrawer.tsx`'s
     open/close `visible`/`mounted` transition logic, the header close
     button's hover transitions, the "Agregar avance" button's hover
@@ -93,14 +93,14 @@
     `app/proyectos/page.tsx` (this file should not be touched at all).
     *(Serves scope/non-goals confirmation, and the precondition for R9/R10)*
 
-12. [ ] **Verify non-blocking interactivity by reading the diff.** Confirm
+12. [x] **Verify non-blocking interactivity by reading the diff.** Confirm
     the only CSS properties introduced anywhere in this change are
     `opacity`, `transform`, `animation`, and `animation-delay` — no
     `pointer-events`, new `disabled` conditions, `visibility`, or `display`
     toggling was added anywhere tied to animation state. *(Serves R8 —
     precondition for the manual QA step below)*
 
-13. [ ] **Manual QA pass** (document in
+13. [x] **Manual QA pass** (document in
     `progress/impl_project-detail-content-animation.md` per
     `docs/specs.md` traceability):
     - Open the drawer on a project that has zero weekly updates (or a
@@ -145,5 +145,5 @@
       and `app/proyectos/ProjectTimeline.tsx` per `CHECKPOINTS.md` and
       address or note any findings.
 
-14. [ ] **Lint/build check.** Run `npm run lint` and `npm run build`; both
+14. [x] **Lint/build check.** Run `npm run lint` and `npm run build`; both
     must pass before moving the feature to `in_review`.

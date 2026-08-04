@@ -13,6 +13,7 @@ import {
 } from "@/lib/projects";
 import { Project } from "@/lib/types";
 import { renderFormattedText } from "@/lib/richText";
+import { usePrefersReducedMotion } from "@/app/state-of-ai/useReducedMotion";
 import StatusBadge from "./StatusBadge";
 import ProjectTimeline from "./ProjectTimeline";
 import ProjectForm from "./ProjectForm";
@@ -26,12 +27,24 @@ interface Props {
   onUpdated: (project: Project) => void;
 }
 
+// R2: el delay de cada bloque depende solo de su posición fija en la lista
+// de requirements.md (0-5), nunca de cuántos de los otros bloques están
+// montados en un render dado.
+function blockMotionStyle(index: number, reduced: boolean): React.CSSProperties {
+  if (reduced) return {};
+  return {
+    animation: "proyectoDetailIn 220ms ease-in-out backwards",
+    animationDelay: `${index * 30}ms`,
+  };
+}
+
 export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onUpdated }: Props) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const reduced = usePrefersReducedMotion();
 
   const [formMode, setFormMode] = useState<"view" | "form">("view");
   const [formError, setFormError] = useState<string | null>(null);
@@ -332,9 +345,9 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
           {formMode === "view" && !loading && !error && project !== null && (
             <>
               {firstUpdateError && (
-                <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px" }}>{firstUpdateError}</p>
+                <p style={{ fontSize: 13, color: "#F87171", margin: "0 0 16px", ...blockMotionStyle(0, reduced) }}>{firstUpdateError}</p>
               )}
-              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px" }}>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: "0 0 8px", ...blockMotionStyle(1, reduced) }}>
                 Resumen de la iniciativa
               </p>
               {/* Único uso de dangerouslySetInnerHTML en este componente: el HTML
@@ -343,6 +356,10 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                   de etiquetas de formato (R15/R16) — nunca se construye HTML de
                   formato a mano acá. */}
               <style>{`
+                @keyframes proyectoDetailIn {
+                  from { opacity: 0; transform: translateY(4px); }
+                  to   { opacity: 1; transform: translateY(0); }
+                }
                 .proyecto-rich-text ul, .proyecto-rich-text ol {
                   margin: 8px 0;
                   padding-left: 22px;
@@ -359,17 +376,17 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
               `}</style>
               <div
                 className="proyecto-rich-text"
-                style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px", whiteSpace: "pre-wrap" }}
+                style={{ fontSize: 14.5, color: "var(--color-text-secondary)", lineHeight: "22px", margin: "0 0 16px", whiteSpace: "pre-wrap", ...blockMotionStyle(1, reduced) }}
                 dangerouslySetInnerHTML={{ __html: renderFormattedText(project.summary) }}
               />
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32 }}>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32, ...blockMotionStyle(2, reduced) }}>
                 <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>País: {project.country}</span>
                 <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>·</span>
                 <span style={{ fontSize: 13, color: "var(--color-tertiary)" }}>Negocio: {project.businessUnit}</span>
               </div>
 
               <section>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, ...blockMotionStyle(3, reduced) }}>
                   <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-primary)", margin: 0 }}>
                     Avance semanal
                   </p>
@@ -402,13 +419,15 @@ export default function ProjectDrawer({ projectId, mode, onClose, onCreated, onU
                   )}
                 </div>
                 {addingUpdate && (
-                  <AddUpdateForm
-                    onSubmit={handleAddUpdate}
-                    onCancel={() => { setAddingUpdate(false); setAddUpdateError(null); }}
-                    error={addUpdateError}
-                  />
+                  <div style={blockMotionStyle(4, reduced)}>
+                    <AddUpdateForm
+                      onSubmit={handleAddUpdate}
+                      onCancel={() => { setAddingUpdate(false); setAddUpdateError(null); }}
+                      error={addUpdateError}
+                    />
+                  </div>
                 )}
-                <ProjectTimeline updates={project.updates} onEdit={handleEditUpdate} onDelete={handleDeleteUpdate} />
+                <ProjectTimeline updates={project.updates} onEdit={handleEditUpdate} onDelete={handleDeleteUpdate} reduced={reduced} />
               </section>
             </>
           )}
