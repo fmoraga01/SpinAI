@@ -90,6 +90,13 @@
       "created": "2026-07-30",
       "spec_dir": "specs/rich-text-formatting-proyectos/",
       "note": "Aprobación de UI vía maqueta visual (Artifact) antes de aprobar la spec. reviewer aprobó de forma independiente (2026-07-30, progress/review_rich-text-formatting-proyectos.md): contrato de seguridad de lib/richText.ts verificado a mano (escapeHtml() antes de envolver en tags, casos de inyección <script>/<img onerror> confirmados inertes), las 5 apariciones del textarea cubiertas (WeeklyUpdateFields.tsx compartido + ProjectForm.tsx), único dangerouslySetInnerHTML en ProjectDrawer.tsx/ProjectTimeline.tsx alimentado solo por renderFormattedText(), npm run verify corrido de forma independiente (36/36 tests). Pendiente: QA humana end-to-end en navegador con PIN real (probar los 7 botones con y sin selección, en las 5 apariciones, y que un resumen/nota real preexistente sin marcadores se siga viendo igual) — no ejercitable en sandbox por falta de credenciales reales."
+    },
+    {
+      "id": "project-detail-content-animation",
+      "title": "Animar el contenido de detalle de los proyectos (Status de Proyectos)",
+      "status": "spec_ready",
+      "created": "2026-08-04",
+      "spec_dir": "specs/project-detail-content-animation/"
     }
   ]
 }

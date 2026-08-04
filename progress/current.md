@@ -1,17 +1,11 @@
 # Current session state
 
-When `leader` starts a feature, this file gets replaced with:
-
-```markdown
-# Current session state
-
-- **Feature:** <feature-id>
-- **Status:** in_progress | in_review
-- **Started:** YYYY-MM-DD
-- **Role active:** spec-author | implementer | reviewer
-- **Next step:** <what happens next and who does it>
-```
-
-This file always reflects the *single* active feature (see the one-feature-
-at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
-is cleared from here and summarized in `progress/history.md`.
+- **Feature:** project-detail-content-animation
+- **Status:** spec_ready
+- **Started:** 2026-08-04
+- **Role active:** none — waiting on human approval
+- **Next step:** requirements.md/design.md/tasks.md are written in
+  specs/project-detail-content-animation/. This is the human approval gate
+  (docs/specs.md) — do NOT invoke implementer until the human explicitly
+  approves the spec. Once approved: set status to in_progress, invoke
+  implementer, then reviewer, per the normal lifecycle.
