@@ -1,11 +1,17 @@
 # Current session state
 
-- **Feature:** project-detail-content-animation
-- **Status:** in_review
-- **Started:** 2026-08-04
-- **Role active:** reviewer (just invoked)
-- **Next step:** implementer finished all 14 tasks, `npm run verify` green,
-  committed/pushed to `origin/dev` (`57b5c54`). reviewer is now validating
-  against `CHECKPOINTS.md` and requirement traceability. Once it approves:
-  set status to `done`, append summary to `progress/history.md`, reset this
-  file to the empty template.
+When `leader` starts a feature, this file gets replaced with:
+
+```markdown
+# Current session state
+
+- **Feature:** <feature-id>
+- **Status:** in_progress | in_review
+- **Started:** YYYY-MM-DD
+- **Role active:** spec-author | implementer | reviewer
+- **Next step:** <what happens next and who does it>
+```
+
+This file always reflects the *single* active feature (see the one-feature-
+at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
+is cleared from here and summarized in `progress/history.md`.

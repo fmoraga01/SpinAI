@@ -14,6 +14,12 @@ Entry format:
 - Merged to dev: <date/commit> · Promoted to main: <date/commit, or "pending">
 ```
 
+## project-detail-content-animation — done 2026-08-04
+
+- Requirements: R1–R10, see specs/project-detail-content-animation/requirements.md
+- Summary: entrada animada sutil (fade + translateY(4px), 220ms ease-in-out, stagger 30ms) para el contenido en modo vista de `ProjectDrawer.tsx` (resumen, metadata, avance semanal, formulario de agregar avance) y para el timeline de avances de `ProjectTimeline.tsx` (filas con stagger propio, cap en 8, y su empty state) — quinta feature de esta serie, reusa verbatim los valores de duración/easing/stagger de las 4 previas (`schedule-content-animation`, `template-editor-content-animation`, `members-panel-content-animation`, `changelog-empty-state-animation`), validados contra research UX/UI (NN/G, Material Design) citada en design.md. Respeta `prefers-reduced-motion` desde el primer paint, nunca bloquea interactividad (R8), y no repite la animación en updates in-place del mismo proyecto (agregar/editar/borrar avance) — solo al remontar (cambiar de proyecto, cerrar/reabrir, volver de edición).
+- Merged to dev: 2026-08-04, commit 57b5c54 (implementación) · Promoted to main: pending
+
 ---
 
 ## changelog-empty-state-animation — done 2026-07-21
