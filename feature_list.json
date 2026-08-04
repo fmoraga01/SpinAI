@@ -94,7 +94,7 @@
     {
       "id": "project-detail-content-animation",
       "title": "Animar el contenido de detalle de los proyectos (Status de Proyectos)",
-      "status": "spec_ready",
+      "status": "in_progress",
       "created": "2026-08-04",
       "spec_dir": "specs/project-detail-content-animation/"
     }
