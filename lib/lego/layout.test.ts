@@ -144,13 +144,37 @@ describe("chooseGridDims", () => {
     }
   );
 
-  it.each([30, 35, 40, 80, 100, 120])(
-    "keeps dimensions close to each other (roughly cubic, not a slab) for n=%i",
-    (n) => {
+  // Regression guard (4th reopen — see progress/current.md "Bug 4" and
+  // progress/impl_project-hero-lego-animation.md dated section): the old
+  // tie-break-by-spread logic only ever activated when `waste` matched
+  // exactly between two candidate boxes, which almost never happens for a
+  // real `n` — so it always returned the globally least-wasteful box no
+  // matter how elongated (e.g. `n=81` -> `[3,4,7]`, spread=4). A test that
+  // only sampled a handful of `n` values (30, 35, 40, 80, 100, 120) missed
+  // this because those particular values happened to dodge the bug. This
+  // iterates *every* integer `n` in both quality tiers, not a sample, so an
+  // isolated bad case like `n=81` can't slip through unnoticed again.
+  // Bound (spread <= 1, fill >= 75%) verified by exhaustive brute force
+  // before implementing `chooseGridDimsWithCap()` — see progress/current.md.
+  it("keeps spread <= 1 and fill >= 75% for every n in the reduced tier (30-40)", () => {
+    for (let n = 30; n <= 40; n++) {
       const dims = chooseGridDims(n);
-      expect(Math.max(...dims) - Math.min(...dims)).toBeLessThanOrEqual(2);
+      const gridSize = dims[0] * dims[1] * dims[2];
+      const spread = Math.max(...dims) - Math.min(...dims);
+      expect(spread, `spread for n=${n}`).toBeLessThanOrEqual(1);
+      expect(n / gridSize, `fill ratio for n=${n}`).toBeGreaterThanOrEqual(0.75);
     }
-  );
+  });
+
+  it("keeps spread <= 1 and fill >= 75% for every n in the full tier (80-120)", () => {
+    for (let n = 80; n <= 120; n++) {
+      const dims = chooseGridDims(n);
+      const gridSize = dims[0] * dims[1] * dims[2];
+      const spread = Math.max(...dims) - Math.min(...dims);
+      expect(spread, `spread for n=${n}`).toBeLessThanOrEqual(1);
+      expect(n / gridSize, `fill ratio for n=${n}`).toBeGreaterThanOrEqual(0.75);
+    }
+  });
 });
 
 describe("selectFinalLockCorners", () => {

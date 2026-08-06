@@ -614,3 +614,100 @@ dimensions instead of 1), `lib/lego/layout.test.ts` (new
 **Not touched, per the reopening instructions**: the bug 1/bug 2 fixes
 (commits `3758211`/`f3a9c47`), the all-`"2x2"` brick-size trade-off (still
 pending a separate user decision, unrelated to this bug).
+
+## Bug 4 (2026-08-06, 4th reopen) — `chooseGridDims()` tie-break by spread almost never fired
+
+**Symptom** (found by `reviewer` during the 3rd-reopen review pass, after
+bug 3's fix above was confirmed to solve the `n=30`/`prefers-reduced-motion`
+case): for `n=81` (tier `full`, range `[80,120]`), `chooseGridDims(81)`
+returned `[3,4,7]` (spread=4) — an obviously elongated slab, not a
+reasonably cubic box. The reviewer verified by brute force that this
+degenerate case hit 22 of the 41 integer `n` values in `[80,120]`.
+
+**Root cause**: the 3rd-reopen fix's `chooseGridDims()` used spread
+(`max(dims) - min(dims)`) only as a **tie-break** — compared only when
+`waste` (`product - n`) matched *exactly* between two candidate triples.
+That almost never happens for a real `n` (waste rarely lands on the same
+integer for two different triples), so the tie-break essentially never
+fired and the function always returned the single globally
+least-wasteful triple, regardless of how elongated it was.
+
+**Fix**: replaced the tie-break with a hard filter + cap-relaxation loop
+(`chooseGridDimsWithCap(n, maxSpread)` + `chooseGridDims(n)` trying
+`maxSpread` from 1 to 5): candidates whose spread exceeds the current cap
+are discarded outright (not compared), and waste is minimized only among
+the triples that pass the cap. The cap is relaxed (1 -> 2 -> ... -> 5) only
+if no triple satisfies the current one. This was prototyped and verified by
+an exhaustive brute-force run (see the dated `progress/current.md` section
+that specified this fix) *before* transcribing it here — the algorithm was
+implemented as designed, no changes were needed during transcription beyond
+matching this file's naming/comment conventions.
+
+**New Vitest coverage** (`lib/lego/layout.test.ts`,
+`describe("chooseGridDims")`): the previous regression test only sampled 6
+`n` values (`30, 35, 40, 80, 100, 120`), which happened to dodge the bug —
+exactly why it slipped through the 3rd-reopen review. Replaced the
+"roughly cubic" tie-break-window test with two tests that iterate **every**
+integer `n` in each quality tier's full range (`for (let n = 30; n <= 40;
+n++)` and `for (let n = 80; n <= 120; n++)`), asserting `spread <= 1` and
+`fill >= 0.75` for each — the sampled `fill >= 0.8` test and the `dims >= 3`
+test were kept as-is (still valid, cap-relaxation search still guarantees
+both). All 35 tests in the file pass, including the two new full-range
+ones. `npm run verify` (lint + build + vitest + `check-sdd-state`) is
+green.
+
+**Real-browser QA** (Chromium + Playwright, same mechanics as previous
+passes — `PIN`/`JWT_SECRET` env vars local to the `npm run dev` process
+only, `Math.random` override registered only *after* logging in via the
+PIN gate to avoid breaking its click handler, per the note in the "Bug 3"
+section above). To deterministically hit tier `full` with `n=81`:
+`navigator.hardwareConcurrency`/`navigator.deviceMemory` overridden to 16
+via `page.addInitScript` (sandbox's real `hardwareConcurrency=4` would
+otherwise force tier `reduced` even at desktop width, per
+`lib/lego/quality.ts`), plus `Math.random = () => 0.025` (so
+`pickBrickCount("full")` = `round(80 + 0.025*40)` = `81` exactly). Verified
+via `page.evaluate` that the forced values actually took (`hardwareConcurrency:
+16, deviceMemory: 16, innerWidth: 1440`).
+
+- At the default camera (`CAMERA_RADIUS=11` in both `scene.ts` and
+  `timeline.ts` — note there are two separate copies of this constant, one
+  for the initial static setup and one used every frame during the
+  autoRotate orbit tween in `timeline.ts`; both would need to move together
+  for any future camera change), the assembled `n=81` box reads as a
+  solid, dense, gapless arrangement with no overlapping pieces — same
+  close-up "product photography" framing as every other confirmed pass, no
+  regression there.
+- To get an unambiguous read on the box's actual proportions (the default
+  framing is close enough that the full silhouette isn't visible), both
+  `CAMERA_RADIUS`/`CAMERA_HEIGHT` copies (`scene.ts` and `timeline.ts`) were
+  **temporarily** bumped to `22`/`6` for one extra screenshot pass only,
+  then immediately reverted (confirmed via `git diff --stat` showing only
+  `lib/lego/layout.ts`/`layout.test.ts` changed afterward) — this was a
+  throwaway QA-only edit, never committed. At the pulled-back distance the
+  `n=81` box is unambiguously `[4,5,5]`: a solid rectangular block, clearly
+  not the `[3,4,7]` elongated slab the old algorithm produced. (Grid-axis
+  spread of 1 doesn't translate to identical *world-space* dimensions on
+  every axis — X/Z share `CELL_UNIT_XZ` while Y uses the smaller
+  `CELL_UNIT_Y`, a pre-existing, already-accepted asymmetry from the bug 3
+  fix, unrelated to this bug — but the box no longer reads as an elongated
+  slab, which was the actual complaint.)
+- Quick regression pass at natural (unforced) settings, full narrative
+  (10s/35s/50s): solid, colored, gapless box, consistent with every prior
+  confirmed pass — no regression from this change.
+
+Screenshots (not committed, same scratchpad convention as prior passes):
+`n81_full_{8s,40s,55s}_{full,canvas}.png` (default camera, tier `full`
+forced), a second `n81_full_*` set at the temporarily pulled-back camera,
+and `regression_natural_{10s,35s,50s}_full.png`.
+
+**Files changed this pass**: `lib/lego/layout.ts`
+(`chooseGridDimsWithCap()` new, `chooseGridDims()` rewritten to use it with
+cap relaxation 1-5), `lib/lego/layout.test.ts` (`describe("chooseGridDims")`
+tie-break-window test replaced with full-integer-range tests for both
+tiers). `app/components/lego/scene.ts` and `app/components/lego/timeline.ts`
+were touched only transiently for QA screenshots and are unchanged in the
+final diff.
+
+**Not touched**: bugs 1/2/3 fixes (commits `3758211`/`f3a9c47`/`0542a9c`),
+the all-`"2x2"` brick-size trade-off (still pending separate user
+decision).

@@ -140,40 +140,55 @@ interface GridCell {
  * occlusion to hide the gaps (the default `autoRotate` three-quarter angle
  * happened to hide most of them).
  *
- * Fix: search integer triples `[a, b, c]` (each >= 3, within a small window
- * around `ceil(cbrt(n))`) for the one whose product is `>= n` with the least
- * waste (`product - n`), breaking ties by the smallest spread between the
- * largest and smallest dimension so the box still reads as roughly cubic
- * rather than an obviously elongated slab. This raises worst-case fill from
- * ~47% to ~83%+ (see the dated progress section for the full table of
- * before/after fill ratios per tested `n`).
+ * Fix: search integer triples `[a, b, c]` (each >= 3) for the one whose
+ * product is `>= n` with the least waste (`product - n`), but — unlike the
+ * previous version — the spread (`c - a`) is a **hard filter**, not a
+ * tie-break: candidates are only considered within a `maxSpread` cap, and
+ * the cap is only relaxed if no triple satisfies it. Ties on `waste` inside
+ * the same tie-break were essentially never hit for a real `n` (waste rarely
+ * matches exactly between two different triples), so the old "tie-break by
+ * spread" branch almost never fired in practice and the function always
+ * returned the globally least-wasteful box regardless of how elongated it
+ * was (e.g. `n=81` returned `[3,4,7]`, spread=4, an obviously non-cubic
+ * slab). Filtering by spread first, and only minimizing waste *within* the
+ * reasonably-cubic candidates, keeps the worst-case spread at 1 across every
+ * `n` in both quality tiers (see `chooseGridDims.test` — was verified by an
+ * exhaustive brute-force run across the full `[30,40]` and `[80,120]`
+ * ranges before this was implemented, see the dated progress section).
  */
-export function chooseGridDims(n: number): [number, number, number] {
-  const k0 = Math.max(3, Math.ceil(Math.cbrt(n)));
-  const lo = 3;
-  const hi = k0 + 2;
+function chooseGridDimsWithCap(n: number, maxSpread: number): [number, number, number] | null {
+  const upper = Math.ceil(Math.cbrt(n)) + 4; // generous search bound
+  let best: [number, number, number] | null = null;
+  let bestWaste = Infinity;
 
-  let best: [number, number, number] = [k0, k0, k0];
-  let bestWaste = k0 * k0 * k0 - n;
-  let bestSpread = 0;
-
-  for (let a = lo; a <= hi; a++) {
-    for (let b = a; b <= hi; b++) {
-      for (let c = b; c <= hi; c++) {
-        const product = a * b * c;
+  for (let kx = 3; kx <= upper; kx++) {
+    for (let ky = kx; ky <= upper; ky++) {
+      for (let kz = ky; kz <= upper; kz++) {
+        const product = kx * ky * kz;
         if (product < n) continue;
+        const spread = kz - kx; // kx <= ky <= kz, so this is already max - min
+        if (spread > maxSpread) continue; // hard filter, not a tie-break
         const waste = product - n;
-        const spread = c - a;
-        if (waste < bestWaste || (waste === bestWaste && spread < bestSpread)) {
+        if (waste < bestWaste) {
           bestWaste = waste;
-          bestSpread = spread;
-          best = [a, b, c];
+          best = [kx, ky, kz];
         }
       }
     }
   }
 
   return best;
+}
+
+export function chooseGridDims(n: number): [number, number, number] {
+  for (let cap = 1; cap <= 5; cap++) {
+    const dims = chooseGridDimsWithCap(n, cap);
+    if (dims) return dims;
+  }
+  // Unreachable in practice for n >= 27 (there is always some box with
+  // spread <= 5), but fail loudly instead of silently degrading if it ever
+  // happens.
+  throw new Error(`chooseGridDims: no valid dims found for n=${n}`);
 }
 
 function buildFullGrid(kx: number, ky: number, kz: number): GridCell[] {
