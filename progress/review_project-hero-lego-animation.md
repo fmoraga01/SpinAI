@@ -171,3 +171,283 @@ la pieza verificada end-to-end en producción" — mismo patrón que
 `project-crud`/`weekly-update-entry`. Esto no bloquea el pase a `done` en
 sí (el trabajo de código/spec está completo y trazable), pero deja
 constancia de que la validación visual real todavía no ocurrió.
+
+---
+
+# Segunda pasada (2026-08-06, reapertura post-`done`)
+
+**Veredicto: RECHAZADO.**
+
+Sesión independiente de la que implementó el fix de esta reapertura (no
+escribí `3758211` ni `f3a9c47`). Confirmé con navegador real propio
+(Playwright + Chromium preinstalado, mismo método que
+`progress/impl_project-hero-lego-animation.md` documenta en su sección
+"Post-`done` bugfixes") en vez de creerle a las capturas que dejó
+`implementer` — y encontré un problema real que esas capturas ya mostraban
+pero que el reporte del `implementer` interpretó mal como "limpio".
+
+## Resumen ejecutivo
+
+- **Bug 1 (studs faltantes)**: confirmado arreglado. Ver detalle abajo.
+- **Bug 2 tal como fue diagnosticado (solapamiento de piezas por footprint
+  variable)**: confirmado arreglado para el caso denso (narrativa completa
+  en desktop, tier alto). El test de no-solape en `layout.test.ts` pasa y
+  mi propia sesión de navegador no encontró superposición en ningún
+  screenshot.
+- **Pero encontré un defecto nuevo, real y reproducible, emparentado con el
+  mismo bug reportado por el usuario ("el cubo final ensamblado NO es un
+  cubo")**: en la ruta obligatoria `prefers-reduced-motion` (R18) y en el
+  extremo bajo del rango de piezas de cualquier tier, el cubo ensamblado
+  queda visiblemente incompleto — no por solapamiento sino por relleno
+  insuficiente de la rejilla (huecos grandes, clusters desconectados) —
+  ver "Hallazgo nuevo" abajo. Esto no es un caso límite raro: es el
+  comportamiento **garantizado** de la rama `reducedMotion` (código
+  obligatorio de accesibilidad, no opcional) combinado con una cámara fija
+  casi alineada a un eje que expone los huecos.
+
+## Checkpoints — `Before in_review` (segunda pasada)
+
+| # | Checkpoint | Resultado |
+|---|---|---|
+| 1 | Toda tarea de `tasks.md` marcada `[x]` | **PASS** — 37/37 `[x]`, 0 `[ ]` (`grep -c` verificado). |
+| 2 | `npm run verify` pasa | **PASS** — corrido por mí de forma independiente: `lint` limpio, `build` compila (26 rutas, sin errores SSR), `test` → **7 archivos, 72 tests, todos verdes** (subió de 67 a 72: el test nuevo de no-solape en `layout.test.ts` agrega 5 casos vía `it.each`), `check-sdd-state` OK ("single active feature: project-hero-lego-animation (in_review)"). |
+| 3 | Cambios en `lib/` con test Vitest real | **PASS** — `lib/lego/layout.test.ts` ganó el bloque `it.each([80,100,120,30,40])("never overlaps the axis-aligned bounding box of any two assigned pieces...")` (líneas 97-114), calcula el AABB real con los half-extents de `2x2` y verifica que ningún par de celdas se solape, para ambos tiers. Es un test honesto: cubre exactamente el mecanismo del bug original (footprint invadiendo al vecino), no un test cosmético. |
+| 4 | `progress/impl_<feature>.md` con verificación por cada `R<n>` | **PASS con nota** — la tabla R1-R21 original (líneas 207-303) no fue re-escrita tras el bugfix de esta reapertura, así que R7/R15/R16 siguen describiendo el comportamiento pre-fix (mezcla de tamaños) sin una nota cruzada hacia la sección "Post-`done` bugfixes" que si documenta el cambio a tamaño único en detalle. No es un hueco de trazabilidad grave (la sección de bugfix sí cubre el detalle técnico exhaustivamente) pero sería más prolijo si la tabla R1-R21 tuviera una línea "ver sección post-`done` bugfixes" en R15/R16. No bloqueante por sí solo. |
+| 5 | `design-check` si cambió `app/components/*.tsx` | **N/A, correctamente no re-ejecutado** — confirmé `git diff --stat c2e33d7 f3a9c47 -- app/components lib/lego`: solo tocó `app/components/lego/bricks.ts` (no es `.tsx`, es un módulo `.ts` fuera del alcance textual del skill, tal como ya había quedado establecido en la primera revisión) y `lib/lego/layout.ts`/`layout.test.ts`. Ningún `.tsx` cambió en esta reapertura. |
+| 6 | `feature_list.json` con una sola feature activa | **PASS** — confirmado por `check-sdd-state` y por inspección directa: solo `project-hero-lego-animation` en `in_review`. |
+
+## Bug 1 — studs faltantes (commit `3758211`)
+
+Confirmado arreglado, con navegador propio. `app/components/lego/bricks.ts`
+ahora llama `.toNonIndexed()` tanto en el cuerpo (`RoundedBoxGeometry`) como
+en cada stud (`CylinderGeometry`) antes de `mergeGeometries`. En mis propias
+capturas (`reviewer_normal_canvas.png`, `reviewer_reducedmotion_canvas.png`,
+`reviewer_mobile_canvas.png` — ver rutas abajo) **todas las piezas, en las
+3 rutas que probé, muestran tacos visibles** en la cara superior. Sin
+errores de consola de tipo "All geometries must have compatible
+attributes" (revisé el log completo de consola en mis 3 sesiones — el único
+error de consola presente en las 3 es un 401 esperado del `PinGate` antes
+de loguearme, más un 500 no relacionado de un panel "Equipo" que no toca
+esta feature). Bug 1 sigue arreglado, no se rompió con el fix del Bug 2.
+
+## Bug 2 tal como fue diagnosticado — solapamiento por footprint variable
+
+Confirmado arreglado **para el caso que motivó el reporte original**:
+narrativa completa, desktop, tier denso. Mi captura
+`reviewer_normal_canvas.png` (65s de espera, mismo método que
+`implementer`) muestra un bloque sólido, sin piezas invadiendo a sus
+vecinas, tacos alineados, gaps chicos y parejos — visualmente indistinguible
+de `after_normal_60s.png` que dejó `implementer`. El test Vitest de AABB
+confirma esto también a nivel de lógica pura para `n` en {30,40,80,100,120}.
+Coincido con la conclusión del `implementer` en este punto específico.
+
+## Hallazgo nuevo — el cubo queda incompleto (no solapado, pero tampoco "limpio") en `prefers-reduced-motion` y en el extremo bajo de cada tier
+
+Se me pidió explícitamente no darle crédito ciego a las capturas ya
+tomadas y levantar el navegador yo mismo — hacerlo reveló un problema real
+que las propias capturas de `implementer` ya mostraban.
+
+**Lo que vi con navegador propio**: mi captura
+`reviewer_reducedmotion_canvas.png` (mismo `PIN` de prueba, viewport
+desktop 1440×900, `reducedMotion: "reduce"` en el contexto de Playwright,
+4s de espera — suficiente porque esta rama renderiza una sola vez sin
+timeline) muestra una estructura partida en dos mitades visiblemente
+separadas por un hueco central, más dos piezas de esquina completamente
+aisladas flotando por debajo, sin contacto visible con el resto — **no es
+un cubo reconocible, es un cluster fragmentado**. No es una casualidad de
+un solo frame: la rama `reducedMotion` en
+`app/components/LegoHeroScene.tsx` (líneas 76-88) hace un único
+`renderer.render()` inicial y solo vuelve a renderizar en el evento
+`"change"` de `controls` — no hay animación en curso que pueda "asentarse"
+después. Es el estado final, determinístico salvo por el `n`/seed elegidos
+al azar en cada carga de página.
+
+**Confirmé la causa raíz de forma cuantitativa**, corriendo
+`generateCubePositions(n)` directamente (no solo mirando pantallas):
+
+```
+n=30  k=4 grid=64  filled=30  fillRatio=46.9%
+n=35  k=4 grid=64  filled=35  fillRatio=54.7%
+n=40  k=4 grid=64  filled=40  fillRatio=62.5%   (tier "reduced", rango completo)
+n=80  k=5 grid=125 filled=80  fillRatio=64.0%
+n=100 k=5 grid=125 filled=100 fillRatio=80.0%
+n=120 k=5 grid=125 filled=120 fillRatio=96.0%   (tier "full", rango completo)
+```
+
+`generateCubePositions()` recorta la rejilla `k³` a exactamente `n` piezas
+vía `strideSample` (documentado como decisión intencional en `design.md`:
+"el cubo final no necesariamente usa todas las piezas en una rejilla
+completa uniforme... priorizando mantener simetría visual antes que llenar
+cada celda") — pero en la práctica, en el extremo bajo de cada tier (`n=30`
+del tier `reduced`, el que corresponde a viewports angostos/hardware
+limitado — condición real, no de laboratorio) **casi la mitad de la
+rejilla queda vacía**. Con una cámara fija casi alineada a un eje
+(`camera.position.set(0, 3.4, 11)`, línea 80 de `LegoHeroScene.tsx`) eso se
+ve como huecos estructurales y piezas sueltas, no como "gaps chicos y
+parejos" (R15).
+
+**Esto ya estaba en las propias capturas de `implementer`, mal
+caracterizado**: revisé
+`after_reduced-motion_8s.png` (ruta completa) y
+`after_mobile_canvas_25s.png`/`after_mobile_canvas_35s.png` en
+`/tmp/claude-0/.../scratchpad/shots/` — ambas muestran exactamente el mismo
+patrón que reproduje yo: una mitad separada de la otra por un hueco
+vertical visible, piezas sueltas sin contacto con la masa principal. El
+texto de `impl_project-hero-lego-animation.md` (líneas 435-452) describe
+esas mismas capturas como "same clean non-overlapping grid" / "clean
+non-overlapping grid with the same small gaps, confirming the mobile/reduced
+tier also assembles a clean cube, not just 'fewer overlapping pieces'" —
+una lectura que no sostiene un vistazo de cerca. No hay solapamiento, es
+cierto (en eso el `implementer` tiene razón), pero tampoco es un cubo
+"limpio y reconocible" — es un cubo con boquetes. El problema original que
+reportó el usuario ("el cubo final ensamblado NO es un cubo... piezas
+superpuestas/desordenadas") queda resuelto en su mecanismo de
+*solapamiento*, pero reaparece por un mecanismo distinto (*faltante de
+piezas*) exactamente en la ruta de accesibilidad obligatoria (R18, no es
+opcional) y en el extremo bajo de cualquier tier — condiciones alcanzables
+por usuarios reales, no solo por este sandbox.
+
+**Por qué la narrativa completa en desktop (mi `reviewer_normal_canvas.png`
+y la de `implementer`) sí se ve bien pese a compartir la misma función**:
+la cámara al final de la narrativa completa queda controlada por
+`OrbitControls` en `autoRotate` desde un ángulo de tres cuartos, que oculta
+buena parte de los huecos interiores por oclusión (las piezas del frente
+tapan los huecos de atrás desde ese ángulo). La rama `reducedMotion` usa un
+ángulo fijo mucho más frontal/axial que no tiene esa suerte. Es decir: el
+mismo cubo "hueco" se ve aceptable desde un ángulo y roto desde otro — un
+problema de fondo (relleno insuficiente de la rejilla) que la elección de
+cámara de la narrativa completa maquilla parcialmente, pero que
+`prefers-reduced-motion` expone sin filtro.
+
+**Capturas propias** (no comprometidas al repo, evidencia de sesión, mismo
+patrón que `implementer`):
+`/tmp/claude-0/-home-user-SpinAI/3fafdfcd-94fd-50ca-8e5b-15291cdf5252/scratchpad/myshots/reviewer_normal_full.png`,
+`reviewer_normal_canvas.png` (limpio, confirma Bug 1 + Bug 2 diagnosticado),
+`reviewer_reducedmotion_full.png`, `reviewer_reducedmotion_canvas.png`
+(fragmentado — el hallazgo nuevo), `reviewer_mobile_full.png`,
+`reviewer_mobile_canvas.png`.
+
+Script usado: `/tmp/claude-0/.../scratchpad/qa2.cjs` (Playwright, mismo PIN
+de prueba efímero solo-local, mismo binario de Chromium preinstalado que
+documenta `impl_*.md`). Señales de hardware en este sandbox:
+`hardwareConcurrency=4`, `deviceMemory=8` — con el criterio de
+`lib/lego/quality.ts` (`LOW_CORE_COUNT_THRESHOLD=4`, condición
+`hardwareConcurrency <= 4`), **esto dispara tier `reduced` incluso en
+viewport de escritorio ancho**, algo que ni `implementer` ni yo notamos
+hasta este momento — vale la pena que quede documentado para la próxima
+sesión en este entorno: cualquier QA visual hecha acá corre casi siempre en
+tier `reduced` sin que el ancho del viewport lo sugiera.
+
+## Trade-off: pérdida de variedad de tamaño de pieza (`pickBrickSize()` fijo a `"2x2"`)
+
+Se me pidió dar un veredicto técnico, no decidir por el usuario. Mi
+lectura:
+
+- **No hay ningún `R<n>` en `requirements.md` que exija variedad de
+  tamaño de pieza explícitamente.** Confirmé con grep — cero matches de
+  "tamañ"/"variedad"/"2x4"/"2x2"/"1x2"/"plate" en `requirements.md`. La
+  variedad de tamaño vivía únicamente en `design.md` ("80–120 piezas con
+  3–4 variantes de tamaño... capa 2 sesgada 70% a `2x4` para masa visual").
+- **`design.md` marca explícitamente solo dos decisiones como
+  "definitivas, no a criterio de `implementer`"**: `RoundedBoxGeometry`
+  para los bevels (línea 256) y los valores de material (línea 272) — ambas
+  siguen intactas, no las tocó este fix. La frase de variedad de tamaño
+  (línea 237) **no** lleva esa etiqueta explícita en el texto — a
+  diferencia de lo que se me indicó en el encargo de esta revisión, no es
+  literalmente una "decisión definitiva" marcada como tal en el documento,
+  aunque sí es un detalle concreto y no ambiguo del diseño aprobado.
+- **El ajuste de alcance de una sola fase (commit `f674e72`, el que el
+  usuario pidió antes de aprobar)** se refería específicamente a: no
+  diferir timing/easing/materiales/`RoomEnvironment` a una "Fase 2", fondo
+  transparente en vez de panel claro, e interactividad fuera de
+  `OrbitControls` fuera de alcance a secas. No menciona variedad de tamaño
+  de pieza como parte de ese acuerdo explícito. Dicho esto, el espíritu de
+  "una sola fase completa, sin recortes" sí aplica en un sentido más amplio,
+  y perder por completo una característica visual que `design.md` describía
+  con un peso concreto (70/25/5/0) es, en los hechos, un recorte de alcance
+  real frente a lo que se implementó y aprobó en la primera pasada — no
+  estoy de acuerdo con minimizarlo solo porque no tiene su propio `R<n>`.
+- **Sobre si `implementer` "se lo tomó en serio" antes de descartar la
+  variedad**: el propio texto de `impl_*.md` (líneas 361-374) describe solo
+  2 opciones consideradas, y la opción 1 ("non-uniform per-axis cell
+  spacing only") es una versión bastante superficial de "la otra
+  dirección" — sigue usando una única constante de espaciado por eje, no
+  una rejilla consciente del tamaño real de cada celda (empaquetado tipo
+  vóxel/stud-resolution, que es lo que haría falta para preservar variedad
+  sin solapamiento). No encontré evidencia de que se haya intentado en
+  serio esa alternativa más difícil (ni un experimento fallido documentado,
+  ni una estimación de esfuerzo) — se pasó directo a la opción simple. Esto
+  no lo hace una mala decisión técnica (es honesta, está bien documentada,
+  y de hecho resuelve el bug), pero tampoco puedo confirmar que fue "la
+  única forma razonable" — fue la forma más simple, elegida sin agotar la
+  alternativa más fiel al diseño aprobado.
+- **Resultado visual**: para el caso denso (desktop, narrativa completa),
+  el resultado con tamaño único se ve genuinamente limpio y "producto
+  fotografiado" — no luce pobre ni genérico en las capturas que revisé. La
+  pérdida es de variedad/riqueza visual (bloques grandes de "masa
+  estructural"), no de calidad de render.
+
+**Mi veredicto técnico en este punto** (no la decisión final, que es del
+usuario): el trade-off es una simplificación de alcance real y
+documentada, razonada y no perezosa en su ejecución, pero tampoco un
+intento serio de la alternativa más difícil que preserva variedad. Si el
+usuario valora "cumplir al pie de la letra la decisión de una sola fase sin
+recortes" por encima de "shipeado y sin overlap", debería pedir que se
+intente la rejilla consciente de tamaño por celda (empaquetado real, no
+solo espaciado por eje) antes de aceptar esto. Si prioriza corrección
+visual inmediata sobre fidelidad al detalle de `design.md`, el resultado
+actual es aceptable **una vez resuelto el hallazgo nuevo de huecos en
+`prefers-reduced-motion`/tier bajo** de la sección anterior.
+
+## Veredicto final (segunda pasada)
+
+**RECHAZADO.** Motivo de rechazo explícito, no relacionado con el
+trade-off de tamaño (que dejo a decisión del usuario/`leader`): el fix del
+Bug 2 corrige el mecanismo de solapamiento reportado, pero **no corrige,
+y de hecho nunca detectó, un mecanismo hermano del mismo bug** (relleno
+insuficiente de la rejilla del cubo) que deja el cubo visiblemente
+incompleto en la ruta `prefers-reduced-motion` (R18, obligatoria, no
+opcional) y en el extremo bajo del rango de piezas de cualquier tier
+(`n=30` en tier `reduced` → 46.9% de relleno). Esto es reproducible de
+forma determinística (no es un frame transitorio) y ya estaba presente,
+sin detectar, en las propias capturas que `implementer` incluyó como
+evidencia de "after" — el texto que las acompaña las describe como "cubo
+limpio" cuando no lo son.
+
+Qué necesito ver antes de aprobar:
+1. Una revisión de `generateCubePositions()` (o de cómo se elige `n`/`k`,
+   o de cómo se recortan las celdas al trimear a `n`) que garantice un
+   relleno visualmente sólido incluso en `n=30` del tier `reduced` — no
+   necesariamente 100%, pero no ~47%. Alternativas razonables: elegir `k`
+   más chico para que `n` quede más cerca de `k³` (menos celda vacías en
+   términos relativos) en vez de siempre tomar el `k` mínimo que alcanza;
+   o no recortar de forma dispersa sino formar un cubo más chico pero
+   completo.
+2. Confirmación con navegador real (no solo capturas ya tomadas) de que
+   `prefers-reduced-motion` y el tier `reduced` en su extremo bajo (`n`
+   cercano a 30) se ven como un cubo reconocible, no un cluster
+   fragmentado — para las 3 rutas: narrativa completa, `reducedMotion`, y
+   mobile/`reduced` tier.
+3. Corrección de la caracterización en `impl_project-hero-lego-animation.md`
+   (líneas 435-452) para que no describa las capturas de
+   `reduced-motion`/mobile como "clean" cuando muestran huecos — o, si tras
+   el fix del punto 1 realmente quedan limpias, capturas nuevas que lo
+   confirmen.
+
+No bloqueante, aparte, ya mencionado por `implementer`: encuadre de cámara
+recorta el cubo por los bordes del canvas en algunos frames (`scene.ts`,
+FOV/framing) — lo confirmo también en mis propias capturas (bordes del
+cubo tocan/superan el borde del `<canvas>` en varios ángulos), pero coincido
+en que es una observación de pulido aparte, no parte de lo que hay que
+aprobar/rechazar en esta pasada.
+
+## `npm run verify` — resultado (corrido por mí, independiente)
+
+```
+lint            → limpio, sin errores
+build           → ✓ Compiled successfully, 26 rutas generadas, sin errores SSR
+test (vitest)   → 7 archivos, 72 tests, todos verdes
+check-sdd-state → ✓ single active feature: project-hero-lego-animation (in_review)
+                  ✓ all spec_ready+ features have requirements/design/tasks on disk
+                  ✓ feature_list.json is consistent with docs/specs.md
+```
