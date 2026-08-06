@@ -451,3 +451,203 @@ check-sdd-state → ✓ single active feature: project-hero-lego-animation (in_r
                   ✓ all spec_ready+ features have requirements/design/tasks on disk
                   ✓ feature_list.json is consistent with docs/specs.md
 ```
+
+# Tercera pasada (2026-08-06, tercera reapertura — fix de `chooseGridDims()`)
+
+**Veredicto: RECHAZADO** — el bug 3 reportado (cubo fragmentado en
+`prefers-reduced-motion` con `n` bajo) está genuinamente corregido y lo
+confirmé yo mismo con navegador real, pero el fix introduce un problema
+nuevo, real y visible en el tier `full` (no cubierto por el QA del
+`implementer` ni por el test nuevo): para aproximadamente la mitad del
+rango `n∈[80,120]` la caja elegida por `chooseGridDims()` es una losa
+claramente alargada (ej. `n=81` → `[3,4,7]`, spread 4), no algo que se lea
+como "cubo". Revisado por una sesión independiente de la que implementó.
+Commits revisados: `0542a9c`, `78a0f17`.
+
+## Checkpoints — `Before in_review` (tercera pasada)
+
+| # | Checkpoint | Resultado |
+|---|---|---|
+| 1 | Toda tarea de `tasks.md` marcada `[x]` | **PASS** — `grep -c "^- \[x\]"` = 37, `grep -c "^- \[ \]"` = 0. |
+| 2 | `npm run lint` pasa | **PASS** — corrido por mí, limpio. |
+| 3 | `npm run build` pasa | **PASS** — corrido por mí, `✓ Compiled successfully`, 26 rutas generadas, sin errores SSR. |
+| 4 | `progress/impl_<feature>.md` tiene entrada de verificación para cada `R<n>` | **PASS** — sección "Requirement-by-requirement verification (R1-R21)" cubre R1 a R21 sin huecos (confirmé contra los 21 `**R<n>**` de `requirements.md`). |
+| 5 | Si cambió `app/components/*.tsx`, `design-check` corrido | **N/A, justificado** — `git show --stat 0542a9c` confirma que esta pasada solo tocó `lib/lego/layout.ts`, `lib/lego/layout.test.ts`, `progress/current.md`, `progress/impl_project-hero-lego-animation.md`. Cero `.tsx` tocados. |
+| 6 | `feature_list.json` con una sola feature activa | **PASS** — único elemento con status `in_progress`/`in_review` en todo el archivo es `project-hero-lego-animation` (`in_review`). |
+| — | `npm run verify` completo (lint+build+test+check-sdd-state) | **PASS** — corrido por mí de forma independiente: lint limpio, build limpio, **90/90 tests** (incluye el `describe("chooseGridDims")` nuevo), `check-sdd-state` OK. Ver salida completa al final de esta sección. |
+
+## Verificación con navegador real, hecha por mí (no solo el reporte del `implementer`)
+
+Levanté `npm run dev` yo mismo (`PIN`/`JWT_SECRET` locales, efímeros, nunca
+commiteados) y Playwright + Chromium preinstalado
+(`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`,
+`--use-gl=swiftshader`), siguiendo la mecánica documentada en
+`progress/impl_project-hero-lego-animation.md` ("Bug 3" y la nota de QA de
+`progress/current.md`). Script propio, no reutilicé el del `implementer`.
+
+**Ruta 1 (la obligatoria, la que expuso el bug original) —
+`prefers-reduced-motion`, desktop, `n=30` forzado
+(`page.addInitScript("Math.random = () => 0")` tras loguear, luego
+`reload()`):** capturas propias
+`review_A_reducedmotion_n30_8s_canvas.png` / `_14s_canvas.png` (scratchpad
+de esta sesión) — cubo sólido, denso, sin fragmentación en dos mitades, sin
+esquinas sueltas, studs visibles en cada pieza. Idéntico entre 8s y 14s
+(asentado, como corresponde a la cámara fija de esta rama). **Confirmo
+independientemente que el bug 3 original está arreglado en su ruta más
+crítica.**
+
+**Ruta adicional que yo agregué — tier `full` forzado
+(`hardwareConcurrency`/`deviceMemory` sobreescritos a 16 vía
+`addInitScript`, ya que este sandbox con `hardwareConcurrency=4` cae
+siempre en tier `reduced` y por eso el `implementer` nunca ejerció el tier
+`full` con navegador real) + `n=81` forzado
+(`Math.random = () => 0.025` → `pickBrickCount()` = `round(80+0.025*40)` =
+`81`), `prefers-reduced-motion` para tener cámara estática:** captura
+`review_C_n81_reducedmotion_canvas_8s.png` / `_full.png` — la forma
+ensamblada se lee como **tres filas largas alejándose de la cámara**, no
+como un cubo: es visiblemente una losa alargada, no un cubo. Esto no es un
+artefacto de cámara — coincide exactamente con lo que predice el análisis
+de código de abajo.
+
+**Regresión bugs 1/2 (spot-check, tier `full` forzado, `n=120`,
+`prefers-reduced-motion`):** `review_D_n120_reducedmotion_canvas_8s.png` —
+studs visibles en cada pieza (bug 1 sigue arreglado), piezas alineadas en
+grilla uniforme sin solape visible, gaps chicos y parejos (bug 2 sigue
+arreglado). La línea negra vertical centrada es el gap real entre las dos
+columnas centrales de una grilla de eje par (`kx=4`) vista con la cámara
+perfectamente frontal — no es un bug nuevo, es el mismo tipo de artefacto
+que ya existía con cualquier `k` par en la implementación cúbica anterior.
+
+## Revisión de código — `chooseGridDims()` (checkpoint pedido explícitamente: ¿la lógica tiene sentido, no solo los números reportados?)
+
+Leí `lib/lego/layout.ts` línea por línea (`chooseGridDims`, `buildFullGrid`,
+`interiorLayerOf` vía `generateCubePositions`, `selectFinalLockCorners`) y
+además **ejecuté la función fuera del repo** (Node standalone) contra
+**todo** el rango real de `n` de ambos tiers (`30..40` y `80..120`), no
+solo los 6 valores que el `implementer` reportó en su tabla
+(`30,35,40,80,100,120`) — esos 6 son precisamente los que menos exponen el
+problema.
+
+**Hallazgo — el desempate por "spread" casi nunca se activa en la
+práctica:** el bucle de `chooseGridDims()` prioriza minimizar `waste`
+(`product - n`) de forma estricta y solo usa `spread` (`c - a`) como
+desempate cuando `waste` es **exactamente igual** entre dos candidatos. En
+la práctica, para la mayoría de los `n`, hay un único candidato con el
+`waste` mínimo absoluto, así que el desempate por spread nunca llega a
+ejecutarse — el resultado es simplemente "la caja de menor desperdicio",
+sin importar cuán alargada sea, aunque el comentario del propio código dice
+que el desempate existe "so the box still reads as roughly cubic rather
+than an obviously elongated slab".
+
+Verificación cuantitativa (script Node, ver comandos corridos en esta
+sesión): de los 41 valores enteros de `n` en `[80,120]` (tier `full`),
+**22 (~54%)** producen una caja con `spread = max(dims) - min(dims) >= 3`
+— ej.:
+
+```
+n=81  → [3,4,7]  spread=4  fill=96.4%
+n=85  → [3,5,6]  spread=3  fill=94.4%
+n=101 → [3,5,7]  spread=4  fill=96.2%
+n=109 → [4,4,7]  spread=3  fill=97.3%
+```
+
+Es decir: el fill ratio es excelente (94-100%, la caja está llena, no
+fragmentada — bug 3 en su forma original no reaparece), pero la **forma**
+de la caja es una losa/ladrillo claramente no-cúbico, lo cual contradice
+directamente:
+
+- El comentario del propio `chooseGridDims()` ("breaking ties by the
+  smallest spread... so the box still reads as roughly cubic rather than
+  an obviously elongated slab").
+- La metáfora central de `requirements.md` línea 10: "bloques [...] terminan
+  ensamblándose en **un cubo perfecto** — metáfora de 'orden emergiendo de
+  colaboración coordinada'".
+
+El tier `reduced` (`n` 30-40, la ruta que expuso el bug original y la más
+exigida por las instrucciones de esta pasada) **no tiene este problema**:
+verifiqué los 11 valores enteros de ese rango y ninguno supera
+`spread=2`. El problema es específico del tier `full` — que es,
+justamente, el tier que **este sandbox nunca ejercita de forma natural**
+(`navigator.hardwareConcurrency=4` fuerza `reduced` siempre, incluso en
+desktop — documentado ya por el propio `implementer`), lo cual explica por
+qué ni el QA manual ni el test nuevo lo agarraron: el `implementer` nunca
+pudo probar el tier `full` con navegador real en este entorno, y el test
+`describe("chooseGridDims")` solo cubre `n=80,100,120` — los 3 valores del
+tier `full` que, por coincidencia, **sí** dan spread bajo (`[4,4,5]`
+spread 1, `[4,5,5]` spread 1, `[4,5,6]` spread 2). El test pasa en verde
+mientras esconde el problema en el resto del rango — mismo patrón de
+"solo se prueban los casos fáciles" que esta pasada pedía explícitamente no
+repetir, solo que esta vez apareció en el tier `full` en lugar de en la
+cámara de desktop.
+
+**Nota menor, no bloqueante:** `chooseGridDims()` siempre devuelve
+`[a,b,c]` ordenado ascendente y `generateCubePositions()` los asigna
+posicionalmente `[kx,ky,kz]` — es decir, el eje X siempre recibe la
+dimensión más chica y el eje Z siempre la más grande, de forma
+determinística (no aleatoria). No es un bug en sí mismo, pero significa que
+cuando sí hay spread alto, siempre se alarga en la misma dirección (Z,
+profundidad) — algo a tener en cuenta si se ajusta el criterio de
+desempate.
+
+## `selectFinalLockCorners()` con caja no-cúbica (checkpoint 3)
+
+Confirmado por lectura de código (no hacía falta test adicional): los 8
+corners siguen siendo exactamente las 8 esquinas de la caja
+(`extremeCount === 3` en los 3 ejes, sin importar si `kx≠ky≠kz`), y la
+selección de 4 por paridad
+(`(x>cx)+(y>cy)+(z>cz)` par) es una propiedad combinatoria de cualquier
+caja rectangular con centroide bien definido, no depende de que los 3 ejes
+sean iguales — sigue siendo, geométricamente, siempre exactamente 4 de los
+8 esquinas, formando un subconjunto tipo tetraedro regular (ninguna
+comparte arista con otra) incluso cuando la caja está alargada. El Final
+Lock no se rompió con este cambio.
+
+## `npm run verify` — resultado (corrido por mí, independiente)
+
+```
+> npm run lint    → limpio, sin errores
+> npm run build   → ✓ Compiled successfully, 26 rutas generadas, sin errores SSR
+> npm run test    → 7 archivos de test, 90 tests, todos verdes
+> check-sdd-state → ✓ single active feature: project-hero-lego-animation (in_review)
+                    ✓ all spec_ready+ features have requirements/design/tasks on disk
+                    ✓ feature_list.json is consistent with docs/specs.md
+```
+
+## Corrección de documentación (checkpoint 6 de la tarea)
+
+Confirmé con `git diff 830327a 0542a9c -- progress/impl_project-hero-lego-animation.md`
+que la corrección de las líneas que antes decían "same clean non-overlapping
+grid" **sí quedó escrita en el archivo real** (no solo mencionada en el
+mensaje del commit) — se agregaron dos bloques `**Correction (2026-08-06,
+3rd reopen...)**` inline sobre los bullets de `prefers-reduced-motion` y
+"Mobile/reduced tier" que aclaran explícitamente que "no overlap" y
+"fullness" son propiedades distintas y que la caracterización anterior
+estaba incompleta — sin borrar el texto original (consistente con la
+convención de este repo de dejar historial).
+
+## Motivo del rechazo (resumen para el `implementer`)
+
+1. **No es un rechazo del bug 3 original** — esa ruta (`prefers-reduced-motion`,
+   `n` bajo del tier `reduced`) está arreglada y la verifiqué yo mismo con
+   navegador real.
+2. **Es un rechazo por un problema nuevo, real, introducido por este mismo
+   fix**: para ~54% del rango `n∈[80,120]` (tier `full`), `chooseGridDims()`
+   elige una caja claramente alargada (spread 3-4, ej. `[3,4,7]` para
+   `n=81`) porque el desempate por spread solo actúa en empates exactos de
+   `waste`, que casi nunca ocurren. Confirmado con screenshot propio
+   (`review_C_n81_reducedmotion_canvas_8s.png`): la forma se lee como
+   filas/losa, no como cubo — contradice la metáfora central de la feature
+   ("un cubo perfecto", `requirements.md` línea 10).
+3. **El test nuevo no protege contra esto** porque solo prueba 3 valores del
+   tier `full` (`80,100,120`) que, por coincidencia, no caen en el rango
+   degenerado. Sugerencia (no obligatoria, a criterio del `implementer`):
+   o bien cambiar el criterio de selección para ponderar `waste` y `spread`
+   juntos (no como desempate estricto), o ampliar el test a
+   `it.each` sobre **todo** el rango entero de cada tier
+   (`30..40` y `80..120`) afirmando `spread <= 2` (o el umbral visual que
+   se decida) para cada uno, no solo 6 valores sueltos.
+4. Todo lo demás de esta pasada (checkpoints 1-6 de `CHECKPOINTS.md`,
+   `npm run verify`, corrección de documentación, Final Lock, regresión de
+   bugs 1/2) está en orden — no hace falta repetir ese trabajo, solo
+   corregir el criterio de `chooseGridDims()` para el tier `full` y ampliar
+   la cobertura de test antes de la próxima pasada.
