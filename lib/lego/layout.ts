@@ -124,18 +124,76 @@ interface GridCell {
   extremeCount: number;
 }
 
-function buildFullGrid(k: number): GridCell[] {
-  const center = (k - 1) / 2;
+/**
+ * Picks the 3 integer grid dimensions `[kx, ky, kz]` (each >= 3) used as the
+ * base box for `buildFullGrid()`.
+ *
+ * **Bugfix (post-`done` reopen, 3rd pass — see
+ * progress/impl_project-hero-lego-animation.md dated section for the full
+ * writeup):** this used to be a single `k = max(3, ceil(cbrt(n)))`, forcing
+ * a perfectly cubic `k*k*k` grid. For most `n` in either quality tier there
+ * is no `k` whose cube lands close to `n` (e.g. `n=30`: `k=3` -> 27 cells,
+ * too few; `k=4` -> 64 cells, 46.9% of which stay empty after trimming),
+ * so the assembled shape looked like a fragmented cluster with loose corner
+ * pieces rather than a solid cube — most visible on the
+ * `prefers-reduced-motion` path, whose fixed frontal camera has no
+ * occlusion to hide the gaps (the default `autoRotate` three-quarter angle
+ * happened to hide most of them).
+ *
+ * Fix: search integer triples `[a, b, c]` (each >= 3, within a small window
+ * around `ceil(cbrt(n))`) for the one whose product is `>= n` with the least
+ * waste (`product - n`), breaking ties by the smallest spread between the
+ * largest and smallest dimension so the box still reads as roughly cubic
+ * rather than an obviously elongated slab. This raises worst-case fill from
+ * ~47% to ~83%+ (see the dated progress section for the full table of
+ * before/after fill ratios per tested `n`).
+ */
+export function chooseGridDims(n: number): [number, number, number] {
+  const k0 = Math.max(3, Math.ceil(Math.cbrt(n)));
+  const lo = 3;
+  const hi = k0 + 2;
+
+  let best: [number, number, number] = [k0, k0, k0];
+  let bestWaste = k0 * k0 * k0 - n;
+  let bestSpread = 0;
+
+  for (let a = lo; a <= hi; a++) {
+    for (let b = a; b <= hi; b++) {
+      for (let c = b; c <= hi; c++) {
+        const product = a * b * c;
+        if (product < n) continue;
+        const waste = product - n;
+        const spread = c - a;
+        if (waste < bestWaste || (waste === bestWaste && spread < bestSpread)) {
+          bestWaste = waste;
+          bestSpread = spread;
+          best = [a, b, c];
+        }
+      }
+    }
+  }
+
+  return best;
+}
+
+function buildFullGrid(kx: number, ky: number, kz: number): GridCell[] {
+  const centerX = (kx - 1) / 2;
+  const centerY = (ky - 1) / 2;
+  const centerZ = (kz - 1) / 2;
   const cells: GridCell[] = [];
-  for (let x = 0; x < k; x++) {
-    for (let y = 0; y < k; y++) {
-      for (let z = 0; z < k; z++) {
-        const extremeCount = [x, y, z].filter((c) => c === 0 || c === k - 1).length;
+  for (let x = 0; x < kx; x++) {
+    for (let y = 0; y < ky; y++) {
+      for (let z = 0; z < kz; z++) {
+        const extremeCount = [
+          x === 0 || x === kx - 1,
+          y === 0 || y === ky - 1,
+          z === 0 || z === kz - 1,
+        ].filter(Boolean).length;
         cells.push({
           position: [
-            (x - center) * CELL_UNIT_XZ,
-            (y - center) * CELL_UNIT_Y,
-            (z - center) * CELL_UNIT_XZ,
+            (x - centerX) * CELL_UNIT_XZ,
+            (y - centerY) * CELL_UNIT_Y,
+            (z - centerZ) * CELL_UNIT_XZ,
           ],
           coords: [x, y, z],
           extremeCount,
@@ -159,23 +217,27 @@ function strideSample<T>(pool: T[], count: number): T[] {
 
 /**
  * Generates the assembled-cube positions (R7 grouping into 6 hierarchical
- * layers). `k` (grid side) is derived from `n` as the smallest cube grid
- * that can hold at least `n` cells (`k = ceil(cbrt(n))`, minimum 3) — see
- * design.md: neither `k=4` (64) nor `k=5` (125) lands exactly inside the
- * 80-120 range for the full tier, so **the grid is built at the smallest
- * fitting `k` and trimmed down to exactly `n` cells**, not the other way
- * around. The trim always keeps all 8 corners (`layer 5`, required
- * unconditionally by the Final Lock, R11-R14, in every quality tier) and
- * distributes the remaining budget proportionally across the other 5
- * layers using an evenly-spread stride sample, so no layer collapses to
- * zero unless `n` is smaller than the cell count already claimed by the
- * corners plus a fair share of the other layers (documented decision — see
+ * layers). The base box dimensions `[kx, ky, kz]` (each >= 3) are derived
+ * from `n` by `chooseGridDims()` as the near-cubic box with the least wasted
+ * cells that still holds at least `n` cells (see that function's own
+ * comment for the bugfix history — this used to force a perfectly cubic
+ * `k*k*k` grid, which left up to ~53% of cells empty for `n` values that
+ * don't land near a perfect cube). **The grid is built at those dimensions
+ * and trimmed down to exactly `n` cells**, not the other way around. The
+ * trim always keeps all 8 corners (`layer 5`, required unconditionally by
+ * the Final Lock, R11-R14, in every quality tier) and distributes the
+ * remaining budget proportionally across the other 5 layers using an
+ * evenly-spread stride sample, so no layer collapses to zero unless `n` is
+ * smaller than the cell count already claimed by the corners plus a fair
+ * share of the other layers (documented decision — see
  * progress/impl_project-hero-lego-animation.md for the exact rationale).
  */
 export function generateCubePositions(n: number): CubeCell[] {
-  const k = Math.max(3, Math.ceil(Math.cbrt(n)));
-  const grid = buildFullGrid(k);
-  const center = (k - 1) / 2;
+  const [kx, ky, kz] = chooseGridDims(n);
+  const grid = buildFullGrid(kx, ky, kz);
+  const centerX = (kx - 1) / 2;
+  const centerY = (ky - 1) / 2;
+  const centerZ = (kz - 1) / 2;
 
   const corners = grid.filter((c) => c.extremeCount === 3); // always exactly 8
   const edges = grid.filter((c) => c.extremeCount === 2);
@@ -184,20 +246,23 @@ export function generateCubePositions(n: number): CubeCell[] {
 
   // Interior cells are further split into 3 sub-layers (core / inner layers
   // / structural) by Chebyshev distance-to-center rank, see design.md. At
-  // small `k` several interior cells share the exact same distance value
-  // (e.g. k=5's 26 non-center interior cells are all at distance 1), so the
-  // split is done by *rank* among cells sorted by distance (ties broken by
-  // build order, deterministic) rather than by distinct distance value —
-  // that guarantees ~evenly-sized buckets (so every sub-layer has some
-  // presence for the assembly narrative, R7) instead of collapsing to zero
-  // whenever there are fewer than 3 distinct distance values.
+  // small grid sizes several interior cells share the exact same distance
+  // value, so the split is done by *rank* among cells sorted by distance
+  // (ties broken by build order, deterministic) rather than by distinct
+  // distance value — that guarantees ~evenly-sized buckets (so every
+  // sub-layer has some presence for the assembly narrative, R7) instead of
+  // collapsing to zero whenever there are fewer than 3 distinct distance
+  // values. Distance is Chebyshev over the per-axis center offsets — with
+  // `kx`/`ky`/`kz` no longer necessarily equal (see `chooseGridDims()`),
+  // this is no longer perfectly rotationally symmetric, but it only needs
+  // to produce a reasonable, deterministic layering, not an exact one.
   const interiorSorted = interior
     .map((c) => ({
       cell: c,
       dist: Math.max(
-        Math.abs(c.coords[0] - center),
-        Math.abs(c.coords[1] - center),
-        Math.abs(c.coords[2] - center)
+        Math.abs(c.coords[0] - centerX),
+        Math.abs(c.coords[1] - centerY),
+        Math.abs(c.coords[2] - centerZ)
       ),
     }))
     .sort((a, b) => a.dist - b.dist);

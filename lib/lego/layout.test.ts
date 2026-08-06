@@ -5,6 +5,7 @@ import {
   generateFloatingPositions,
   generateCubePositions,
   selectFinalLockCorners,
+  chooseGridDims,
 } from "./layout";
 
 describe("generateFloatingPositions", () => {
@@ -113,6 +114,41 @@ describe("generateCubePositions", () => {
           expect(overlaps).toBe(false);
         }
       }
+    }
+  );
+});
+
+describe("chooseGridDims", () => {
+  // Regression guard (3rd reopen — see progress/current.md and
+  // progress/impl_project-hero-lego-animation.md dated section): a single
+  // forced-cubic `k*k*k` grid left as little as 46.9% of cells filled for
+  // `n=30`, which read as a fragmented cluster instead of a solid cube,
+  // most visibly on the `prefers-reduced-motion` path. Every `n` tested
+  // across both quality tiers (reduced: 30-40, full: 80-120) must now clear
+  // a much higher floor.
+  it.each([30, 35, 40, 80, 100, 120])(
+    "keeps grid fill ratio for n=%i above 80%%",
+    (n) => {
+      const [kx, ky, kz] = chooseGridDims(n);
+      const gridSize = kx * ky * kz;
+      expect(gridSize).toBeGreaterThanOrEqual(n);
+      expect(n / gridSize).toBeGreaterThan(0.8);
+    }
+  );
+
+  it.each([30, 35, 40, 80, 100, 120])(
+    "keeps every dimension >= 3 for n=%i",
+    (n) => {
+      const dims = chooseGridDims(n);
+      for (const d of dims) expect(d).toBeGreaterThanOrEqual(3);
+    }
+  );
+
+  it.each([30, 35, 40, 80, 100, 120])(
+    "keeps dimensions close to each other (roughly cubic, not a slab) for n=%i",
+    (n) => {
+      const dims = chooseGridDims(n);
+      expect(Math.max(...dims) - Math.min(...dims)).toBeLessThanOrEqual(2);
     }
   );
 });

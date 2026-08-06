@@ -435,9 +435,19 @@ worth a maintainer knowing next time).
 - **`prefers-reduced-motion`** (same `generateCubePositions()`, places
   pieces directly in final position, no narrative):
   `shots/after_reduced-motion_8s.png`,
-  `shots/after_reducedmotion_canvas_5s.png` (canvas-only crop) — same clean
-  non-overlapping grid, confirms the fix benefits this code path too since
-  it shares the same layout function.
+  `shots/after_reducedmotion_canvas_5s.png` (canvas-only crop) — no
+  overlap anywhere (that is what this pass's fix and regression test
+  actually targeted, and it holds up). **Correction (2026-08-06, 3rd
+  reopen — see the dated "Bug 3" section below):** the "same clean
+  non-overlapping grid" characterization here was incomplete/misleading —
+  these same screenshots, re-examined during the 3rd reopen, actually show
+  a cube fragmented into two separated halves with loose corner pieces,
+  because `k×k×k` grid trimming (a *different* bug from the overlap one
+  fixed in this section) left ~53% of the grid empty at low `n`. The
+  no-overlap claim above is still correct; the implicit "so it looks like a
+  solid cube" conclusion was not — non-overlap and full-ness are separate
+  properties, and this file previously conflated them. See "Bug 3" below
+  for the actual fix and its own screenshot evidence.
 - **Mobile/reduced tier** (390px viewport, triggers `getQualityTier() ===
   "reduced"`, fewer pieces, `k=4` grid, but the **same full narrative**, not
   a shortened one — R19): initial `shots/after_mobile_8s.png` used too
@@ -446,10 +456,15 @@ worth a maintainer knowing next time).
   pieces) and only shows scene mid-assembly. Corrected with canvas-only
   crops at `shots/after_mobile_canvas_25s.png` and
   `shots/after_mobile_canvas_35s.png` (both after the full ~25s+ narrative
-  duration) — visually identical between the two timestamps (settled),
-  clean non-overlapping grid with the same small gaps, confirming the
-  mobile/reduced tier also assembles a clean cube, not just "fewer
-  overlapping pieces".
+  duration) — visually identical between the two timestamps (settled), no
+  overlap, same small gaps. **Correction (2026-08-06, 3rd reopen):** same
+  caveat as above — no-overlap was correctly confirmed, but at this low
+  `n` the same underlying grid-fill bug (see "Bug 3" below) meant the
+  shape was not actually a solid, fully-read cube. Superseded by the "Bug
+  3" fix and its own verification below; not re-verified again here since
+  the underlying `generateCubePositions()` fix is viewport-independent
+  (confirmed instead via the sandbox's naturally-triggered `reduced` tier
+  at desktop width, see "Bug 3").
 
 All screenshots referenced above live under this session's scratchpad
 directory (not committed — throwaway QA evidence, per the instruction to
@@ -483,3 +498,119 @@ run dev` wrapper's own `kill`) before a fresh dev server could bind port
 via `git diff` showing no changes to that file). `curl` against
 `/state-of-ai` while running the dev server returned the page successfully
 (200).
+
+## Bug 3 (2026-08-06, 3rd reopen) — cube fragmented/incomplete at low `n`
+
+**Symptom** (found by `reviewer` during the 2nd-reopen review pass, after
+bugs 1 and 2 above were already fixed and verified — see
+`progress/review_project-hero-lego-animation.md`): with bugs 1 and 2 fixed,
+pieces no longer overlapped, but the assembled shape still didn't read as a
+solid cube for low `n` (worst case: `n=30`, the minimum of the `reduced`
+tier's `[30, 40]` range) — it looked like two separated clusters with loose
+corner pieces, most visible on the `prefers-reduced-motion` path (fixed,
+frontal camera, no occlusion) and easy to miss on the full desktop
+narrative (the `autoRotate` three-quarter camera angle occludes most of the
+gaps with front-row pieces).
+
+**Root cause**: `generateCubePositions()` forced a perfectly cubic grid,
+`k = max(3, ceil(cbrt(n)))`, then trimmed it down to `n` cells. For most `n`
+there is no `k` whose cube lands close to `n` — e.g. `n=30`: `k=3` → 27
+cells (too few), `k=4` → 64 cells, of which only 30 (46.9%) end up filled
+after trimming. Regardless of how smart the trim's cell-selection criterion
+is (bug 2's fix didn't touch this), that little raw material can't produce
+a shape that reads as solid.
+
+**Fix**: added `chooseGridDims(n)` (`lib/lego/layout.ts`), which replaces
+the single `k` with three independent integer dimensions `[kx, ky, kz]`
+(each `>= 3`). It searches a small window of triples around
+`ceil(cbrt(n))` for the one whose product is `>= n` with the least wasted
+cells (`product - n`), breaking ties by the smallest spread between the
+largest and smallest dimension (keeps the box reading as roughly cubic, not
+an obviously elongated slab). `buildFullGrid()` now takes `(kx, ky, kz)`
+and computes per-axis centers/extents instead of a single shared `k`/
+`center`; `generateCubePositions()`'s interior-layer ranking (`core`/
+`innerLayers`/`structural`) now uses per-axis Chebyshev distance to
+`(centerX, centerY, centerZ)` instead of a single scalar center — this is
+no longer perfectly rotationally symmetric when the box isn't a literal
+cube, but it only needs to produce a reasonable, deterministic layering for
+the assembly narrative, not an exact one. The 8 corners are still exactly
+the box's 8 corners (`extremeCount === 3` on all 3 axes), so
+`selectFinalLockCorners()` needed no changes.
+
+Fill ratio before/after for every tested `n` (both quality tiers):
+
+| n   | before (`k³` grid) | after (`kx×ky×kz`) | fill before | fill after |
+|-----|---------------------|----------------------|-------------|------------|
+| 30  | 4×4×4=64            | 3×3×4=36              | 46.9%       | 83.3%      |
+| 35  | 4×4×4=64            | 3×3×4=36              | 54.7%       | 97.2%      |
+| 40  | 4×4×4=64            | 3×3×5=45              | 62.5%       | 88.9%      |
+| 80  | 5×5×5=125           | 4×4×5=80               | 64.0%       | 100.0%     |
+| 100 | 5×5×5=125           | 4×5×5=100              | 80.0%       | 100.0%     |
+| 120 | 5×5×5=125           | 4×5×6=120              | 96.0%       | 100.0%     |
+
+**New Vitest coverage** (`lib/lego/layout.test.ts`, `describe("chooseGridDims")`):
+for `n` in `[30, 35, 40, 80, 100, 120]` — asserts fill ratio `> 0.8`
+(regression guard so a future session can't silently reintroduce the ~47%
+worst case), every dimension `>= 3`, and `max(dims) - min(dims) <= 2` (box
+stays roughly cubic, not an obviously elongated slab). All existing
+`generateCubePositions`/`selectFinalLockCorners` tests (corner count,
+no-duplicate-positions, no-AABB-overlap, corner symmetry, Final Lock corner
+selection) still pass unmodified — a rectangular (not just cubic) box's 8
+corners are still all equidistant from its centroid, so the "symmetric"
+corner test needed no changes. `npm run verify` (lint + build + vitest +
+`check-sdd-state`) is green.
+
+**Real-browser QA** (Chromium + Playwright, same mechanics as "How QA was
+done" above — this time with an explicit fix for a Playwright login race
+this session ran into: `PinGate` renders nothing until its
+`/api/auth/check` fetch resolves, so a short fixed `waitForTimeout` after
+`page.goto()` before locating the PIN input was flaky/racy; switched to
+explicitly `waitFor`-ing the PIN input or the hero heading before
+proceeding). To deterministically hit the worst-case `n=30` instead of
+relying on the `[30, 40]` random range, `page.addInitScript("Math.random =
+() => 0")` was registered (which forces `pickBrickCount()` to return the
+tier minimum) — but only *after* logging in and *before* a `page.reload()`,
+since registering it before the first navigation silently breaks the
+PIN-gate's click handler (confirmed: with the override active from the
+first load, the `Entrar` click never fires the `POST /api/auth`; harmless
+for this feature's own code, just a quirk of this QA harness worth a
+maintainer knowing).
+
+- **Primary case — `prefers-reduced-motion`, desktop viewport, `n=30`
+  (worst case, forced)**: `shots/fix3_A_reducedmotion_n30_8s_canvas.png` and
+  `_14s_canvas.png` (canvas-only crops), plus the `_full.png` full-page
+  versions — a clearly solid, dense, cube-ish block, no split-in-half
+  cluster, no loose floating corner pieces. Pixel-identical between 8s and
+  14s (this path uses a static camera and places pieces directly in their
+  final position, so it should be and is fully settled by 8s). This is the
+  exact path that exposed the bug and the most important of the 3 required
+  checks — confirmed fixed.
+- **Low-`n` edge of the `reduced` tier, normal motion (full narrative),
+  `n=30` forced, desktop viewport**: `shots/fix3_B_normal_n30_35s_canvas.png`
+  and `_50s_canvas.png` — solid, dense box from the `autoRotate`
+  three-quarter angle, no visible holes, consistent between the two
+  timestamps (camera keeps auto-rotating post-settle per R14, so frames
+  aren't pixel-identical, but the assembled shape itself is the same solid
+  block at both times).
+- **Full narrative, desktop viewport, natural (unforced) `n`**: this
+  sandbox's `navigator.hardwareConcurrency=4` triggers `getQualityTier() ===
+  "reduced"` even at 1440px width (per `lib/lego/quality.ts`), so this is
+  still exercising the `reduced` tier's `n` range, just not forced to the
+  exact minimum — `shots/fix3_C_desktop_natural_35s_canvas.png` and
+  `_50s_canvas.png` (+ `_full.png`) — same solid, gapless-looking result.
+  Confirms the fix didn't regress the tier/`n` this sandbox naturally lands
+  on.
+
+All 3 required verification routes from the reopening instructions were
+checked with real screenshots; all show a solid, recognizable cube/box, not
+a fragmented cluster. Screenshots live under this session's scratchpad
+(not committed, same convention as the rest of this file).
+
+**Files changed this pass**: `lib/lego/layout.ts` (`chooseGridDims()` new,
+`buildFullGrid()` and `generateCubePositions()` updated to use 3
+dimensions instead of 1), `lib/lego/layout.test.ts` (new
+`describe("chooseGridDims")` block).
+
+**Not touched, per the reopening instructions**: the bug 1/bug 2 fixes
+(commits `3758211`/`f3a9c47`), the all-`"2x2"` brick-size trade-off (still
+pending a separate user decision, unrelated to this bug).

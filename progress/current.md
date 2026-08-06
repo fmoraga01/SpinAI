@@ -1,22 +1,19 @@
 # Current session state
 
-- **Feature:** project-hero-lego-animation (REABIERTA por segunda vez —
-  llegó a `done`, el usuario reportó que se veía mal, se reabrió, se
-  corrigieron 2 bugs, `reviewer` RECHAZÓ la segunda pasada por un tercer
-  bug — ver `progress/review_project-hero-lego-animation.md`, sección
-  "Segunda pasada (2026-08-06, reapertura post-`done`)", especialmente
-  "Hallazgo nuevo — el cubo queda incompleto...")
+- **Feature:** project-hero-lego-animation (REABIERTA por tercera vez —
+  bugs 1 y 2 ya corregidos y verificados, `reviewer` había rechazado la
+  segunda pasada por un tercer bug de relleno de grilla incompleto — ver
+  `progress/review_project-hero-lego-animation.md`. En esta tercera pasada
+  el `implementer` corrigió el bug 3, verificado con navegador real en las
+  3 rutas obligatorias.)
 - **Status:** in_progress
 - **Started:** 2026-08-06
-- **Role active:** implementer (invocado para el bug 3 abajo)
-- **Next step:** implementer corrige el bug 3, verifica con navegador real
-  específicamente en `prefers-reduced-motion` Y en el extremo bajo de cada
-  tier (no solo la narrativa completa en desktop, que es donde la cámara
-  disimula el problema por oclusión — ver por qué abajo), deja capturas de
-  evidencia, corrige la caracterización incorrecta en
-  `progress/impl_project-hero-lego-animation.md` (líneas ~435-452 decían
-  "clean" sobre capturas que en realidad mostraban huecos). Luego: leader
-  mueve a `in_review`, reviewer valida de nuevo (tercera pasada).
+- **Role active:** ninguno — implementer terminó su parte, listo para que
+  `leader` mueva a `in_review` e invoque a `reviewer` (tercera pasada).
+- **Next step:** `leader` mueve `project-hero-lego-animation` a `in_review`
+  y despacha `reviewer` para validar el fix del bug 3 con navegador real
+  (no confiar solo en lo escrito acá — ver instrucción de "no repetir el
+  patrón" abajo).
 
 ## Bugs 1 y 2 — YA CORREGIDOS, no los toques
 
@@ -24,115 +21,74 @@ Ver commits `3758211` (studs faltantes por mergeGeometries no-indexado) y
 `f3a9c47` (solapamiento por CELL_UNIT uniforme + tamaño de pieza variable —
 el implementer lo resolvió fijando todas las piezas a `"2x2"`). Ambos
 verificados visualmente y confirmados por `reviewer` en su segunda pasada.
-El trade-off de perder variedad de tamaño de pieza (todas `"2x2"` ahora)
-queda pendiente de una decisión del usuario aparte — no es parte de esta
-reapertura, no lo reviertas ni lo "arregles" por tu cuenta.
 
-## Bug 3 (NUEVO) — el cubo queda incompleto/fragmentado en `n` bajo de cada tier
+## Bug 3 — CORREGIDO esta pasada (2026-08-06, tercera reapertura)
 
-El fix del bug 2 elimina el solapamiento, pero `generateCubePositions()` en
-`lib/lego/layout.ts` tiene un problema estructural distinto que nunca se
-detectó hasta la revisión del reviewer: usa `k = Math.max(3,
-Math.ceil(Math.cbrt(n)))` para elegir el lado de una grilla **cúbica
-perfecta** (`k×k×k`), y luego recorta esa grilla a exactamente `n` celdas.
-El problema es matemático, no de la lógica de recorte en sí: para `n=30`
-(el extremo bajo del tier `reduced`, que es exactamente lo que dispara
-`prefers-reduced-motion` — ver nota de hardware abajo), no existe un `k`
-entero tal que `k³` esté cerca de 30: `k=3` da 27 (insuficiente, hace falta
-al menos 30), así que hay que usar `k=4` (64) — y quedan **34 celdas vacías
-de 64 (53% vacío)**. El reviewer confirmó cuantitativamente:
+**Causa raíz** (diagnóstico completo del `reviewer` en la pasada anterior,
+confirmado): `generateCubePositions()` en `lib/lego/layout.ts` forzaba una
+grilla cúbica perfecta `k×k×k` (`k = max(3, ceil(cbrt(n)))`) y la recortaba
+a `n` celdas. Para `n=30` (extremo bajo del tier `reduced`, que es
+exactamente lo que dispara `prefers-reduced-motion` en este sandbox, ya que
+`navigator.hardwareConcurrency=4` activa tier `reduced` incluso en viewport
+ancho de escritorio) no había `k` entero cuyo cubo estuviera cerca de 30:
+`k=3`→27 (insuficiente), `k=4`→64 (46.9% de relleno tras recortar a 30). El
+cubo se veía fragmentado en dos mitades con esquinas sueltas — más visible
+en la rama `prefers-reduced-motion` (cámara fija, frontal, sin oclusión) que
+en la narrativa completa de desktop (cámara `autoRotate` de tres cuartos
+oculta los huecos por oclusión).
+
+**Fix implementado**: nueva función `chooseGridDims(n)` en
+`lib/lego/layout.ts` reemplaza el único `k` por 3 dimensiones enteras
+`[kx, ky, kz]` (cada una `>= 3`), buscando la combinación con producto
+`>= n` y menor desperdicio (`product - n`), desempatando por menor
+diferencia entre la dimensión más grande y la más chica (para que siga
+leyéndose como cubo, no como caja alargada). `buildFullGrid()` y la
+clasificación de capas interiores (`interiorLayerOf`) se actualizaron para
+usar centros por eje en vez de un único centro escalar. Los 8 corners siguen
+siendo las 8 esquinas de la caja — `selectFinalLockCorners()` no necesitó
+cambios.
+
+Fill ratios antes/después (ver tabla completa y detalle en
+`progress/impl_project-hero-lego-animation.md`, sección "Bug 3"):
 
 ```
-n=30  k=4 grid=64  filled=30  fillRatio=46.9%   ← el peor caso, tier reduced
-n=35  k=4 grid=64  filled=35  fillRatio=54.7%
-n=40  k=4 grid=64  filled=40  fillRatio=62.5%
-n=80  k=5 grid=125 filled=80  fillRatio=64.0%
-n=100 k=5 grid=125 filled=100 fillRatio=80.0%
-n=120 k=5 grid=125 filled=120 fillRatio=96.0%
+n=30  antes 46.9% (4×4×4=64)  → después 83.3% (3×3×4=36)
+n=35  antes 54.7%              → después 97.2% (3×3×4=36)
+n=40  antes 62.5%              → después 88.9% (3×3×5=45)
+n=80  antes 64.0%              → después 100.0% (4×4×5=80)
+n=100 antes 80.0%              → después 100.0% (4×5×5=100)
+n=120 antes 96.0%              → después 100.0% (4×5×6=120)
 ```
 
-Con tan poco relleno, no importa qué tan inteligente sea el criterio de
-qué celdas exactas se recortan (el bug 2 ya mejoró eso) — la forma
-resultante se ve fragmentada: el reviewer vio (y yo confirmé mirando
-`after_reduced-motion_8s.png`, que ya existía como evidencia de la pasada
-anterior sin que nadie notara el problema) una estructura partida en dos
-mitades separadas por un hueco central, con piezas de esquina sueltas
-flotando sin contacto visible. Esto pasa en la rama `prefers-reduced-motion`
-(coloca las piezas directo en la posición final, cámara fija — R18,
-**obligatoria**, no un caso opcional) y en el tier mobile/reducido.
+**Verificación con navegador real** (Playwright + Chromium, PIN gate
+bypasseado con env vars locales, mecánica completa documentada en
+`progress/impl_project-hero-lego-animation.md`), las 3 rutas obligatorias:
 
-**Por qué la narrativa completa en desktop se ve bien pese a compartir la
-misma función**: al terminar, la cámara queda en `autoRotate` desde un
-ángulo de tres cuartos que oculta buena parte de los huecos interiores por
-oclusión (las piezas del frente tapan los huecos de atrás). La rama
-`reducedMotion` usa un ángulo fijo mucho más frontal que expone el problema
-sin filtro. Por eso el QA anterior (incluido el mío) no lo detectó — solo
-se había mirado la narrativa completa en desktop.
+1. `prefers-reduced-motion` activado, desktop, `n=30` forzado (worst case,
+   vía `Math.random` sobreescrito a 0 después del login) — cubo sólido y
+   reconocible, sin fragmentación, sin esquinas sueltas. Idéntico entre 8s y
+   14s (asentado). Esta era la prueba más importante, la que expuso el bug
+   — confirmada arreglada.
+2. Extremo bajo del tier `reduced` (`n=30` forzado), narrativa completa
+   normal, desktop — caja sólida y densa desde la cámara `autoRotate`, sin
+   huecos visibles, consistente entre 35s y 50s.
+3. Narrativa completa desktop, `n` natural (sin forzar) — este sandbox cae
+   naturalmente en tier `reduced` por `hardwareConcurrency=4` — resultado
+   igual de sólido, sin regresión.
 
-**Dirección de fix recomendada** (a criterio de `implementer`, documentar
-el enfoque elegido y por qué en `progress/impl_project-hero-lego-animation.md`,
-sección nueva fechada): **dejar de exigir una grilla perfectamente cúbica
-(`k×k×k`) como base**. En vez de eso, buscar las 3 dimensiones enteras
-`(kx, ky, kz)`, cada una ≥ 3, cuyo producto sea ≥ `n` y lo más cercano
-posible a `n` (minimizar el desperdicio), con una restricción de que las 3
-dimensiones no difieran demasiado entre sí (para que siga leyéndose como un
-cubo, no como una caja obviamente alargada — p. ej. que ninguna dimensión
-difiera de otra en más de 1 o 2). Ejemplos concretos que resuelven los
-casos límite de arriba con relleno cercano al 100%:
-- `n=30` → `3×3×4=36` (83% relleno, muy por encima del 46.9% actual)
-- `n=35` → `3×3×4=36` (97%)
-- `n=40` → `3×4×4=48` (83%) o `3×3×5=45` (89%) — el que se vea mejor
-- `n=80` → `4×4×5=80` (100%, exacto)
-- `n=100` → `4×5×5=100` (100%, exacto)
-- `n=120` → `4×5×6=120` (100%, exacto) o `5×5×5=125` recortado a 120 (96%)
+**Tests**: `lib/lego/layout.test.ts` ganó un `describe("chooseGridDims")`
+con guardas de regresión (fill ratio `> 80%`, dimensiones `>= 3`, spread
+`<= 2` entre dimensiones) para `n` en `[30, 35, 40, 80, 100, 120]`, además
+de los tests preexistentes de bug 1/2 (no-overlap, corners, etc.) que
+siguen pasando sin cambios. `npm run verify` (lint + build + vitest 90 tests
++ check-sdd-state) en verde.
 
-Esto es un cambio estructural en `buildFullGrid()`/`generateCubePositions()`
-(pasar de un solo `k` a `kx`/`ky`/`kz`), no un ajuste de una constante — va
-a tocar también `interiorLayerOf` (el centro ya no es `(k-1)/2` único, son 3
-centros por eje) y la clasificación de capas por `extremeCount`. Los 8
-"corners" siguen siendo las 8 esquinas de la caja (sea cúbica o no), así que
-el Final Lock no debería verse afectado en su lógica, solo en las
-coordenadas concretas.
-
-**Alternativa que NO recomiendo pero dejo mencionada por si la de arriba
-resulta más difícil de lo esperado**: en vez de cambiar la forma de la
-grilla base, cambiar el criterio de qué celdas se recortan de la grilla
-`k×k×k` ya sobredimensionada (ej. "las N-8 celdas más cercanas al centro,
-más las 8 esquinas siempre"), pero el reviewer y yo coincidimos en que esto
-no ataca la causa raíz (con solo 47% de relleno disponible, cualquier
-selección va a dejar mucho vacío) — solo lo vale intentar si la opción de
-caja no-cúbica resulta inviable por algún motivo que no anticipamos.
-
-**Requisito de aceptación no negociable**: no alcanza con arreglar el caso
-de desktop/narrativa completa (ese ya se veía bien, por la oclusión de
-cámara). Verificar con navegador real, específicamente:
-1. `prefers-reduced-motion` activado (viewport desktop) — esto es lo que
-   expuso el bug, es la prueba más importante.
-2. El extremo bajo del tier `reduced` (`n` cerca de 30 — recordá que en
-   este sandbox el propio Chromium reporta `hardwareConcurrency=4`, lo que
-   dispara tier `reduced` incluso en viewport ancho de escritorio, ver nota
-   abajo — no hace falta simular mobile para ver el tier reducido acá).
-3. La narrativa completa en desktop sigue viéndose bien (no debería
-   romperse, pero confirmalo).
-
-Sacá capturas de las 3 rutas y guardalas en tu scratchpad (no las
-commitees). Corregí también la caracterización incorrecta en
-`progress/impl_project-hero-lego-animation.md` (líneas ~435-452 describían
-capturas con huecos visibles como "clean non-overlapping grid" — o dejalas
-corregidas si las nuevas capturas post-fix sí lo confirman).
-
-## Nota de entorno para QA visual (para vos y para sesiones futuras)
-
-Instrucciones completas de cómo levantar un navegador real acá (Playwright
-+ Chromium preinstalado, cómo esquivar el `PinGate` con un PIN de prueba
-solo-local, cuidado con el puerto 3000 fantasma) siguen documentadas en
-`progress/impl_project-hero-lego-animation.md`. Dato nuevo que aportó
-`reviewer`: este sandbox reporta `navigator.hardwareConcurrency=4` y
-`navigator.deviceMemory=8` — con el criterio de `lib/lego/quality.ts`
-(`hardwareConcurrency <= 4` dispara tier `reduced`), **cualquier QA visual
-hecho en este entorno corre en tier `reduced` aunque el viewport sea ancho
-de escritorio**. Tenelo en cuenta al interpretar lo que ves — no asumas que
-estás viendo el tier `full` solo porque el viewport es de 1440px.
+**Corrección de documentación**: se corrigió la caracterización incorrecta
+en `progress/impl_project-hero-lego-animation.md` (antes decía "clean
+non-overlapping grid" sobre capturas que en realidad mostraban el cubo
+fragmentado — el problema era que "sin solape" y "relleno completo" son
+propiedades distintas y se habían conflado). Ver esa sección para el texto
+corregido y la nueva sección fechada "Bug 3" con el detalle completo.
 
 ## Trade-off pendiente de decisión del usuario (no lo resuelvas vos)
 
@@ -141,6 +97,22 @@ El fix del bug 2 (commit `f3a9c47`) unificó todas las piezas a tamaño
 había fijado como decisión definitiva. `reviewer` dio su opinión técnica
 (el resultado visual es limpio, es una simplificación honesta y bien
 documentada, pero es una reducción real de fidelidad frente a lo aprobado)
-sin tomar la decisión. Esto se lo voy a presentar al usuario junto con el
-resultado final de esta reapertura — no es parte de lo que tenés que
-resolver en esta pasada, y no lo relaciones con el bug 3.
+sin tomar la decisión. Esto se le va a presentar al usuario junto con el
+resultado final de esta reapertura — no es parte de lo que hay que
+resolver acá, y no se relaciona con el bug 3.
+
+## Nota de entorno para QA visual (para vos y para sesiones futuras)
+
+Instrucciones completas de cómo levantar un navegador real (Playwright +
+Chromium preinstalado, cómo esquivar el `PinGate` con un PIN de prueba
+solo-local, cuidado con el puerto 3000 fantasma) siguen documentadas en
+`progress/impl_project-hero-lego-animation.md`. Dato nuevo de esta pasada:
+`PinGate` no renderiza nada hasta que resuelve su fetch a
+`/api/auth/check` — un `waitForTimeout` fijo corto después de `page.goto()`
+antes de buscar el input del PIN es propenso a race conditions; mejor usar
+`waitFor({ state: "visible" })` explícito sobre el input o sobre contenido
+ya autenticado. También: sobreescribir `Math.random` vía
+`page.addInitScript()` *antes* del primer login rompe el click del botón
+"Entrar" (el POST a `/api/auth` nunca se dispara) — hay que loguearse
+primero sin el override, y recién después registrar el override y hacer
+`page.reload()` (la cookie de sesión sobrevive el reload).
