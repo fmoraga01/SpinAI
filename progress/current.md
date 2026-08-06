@@ -1,118 +1,151 @@
 # Current session state
 
-- **Feature:** project-hero-lego-animation (REABIERTA por tercera vez —
-  bugs 1 y 2 ya corregidos y verificados, `reviewer` había rechazado la
-  segunda pasada por un tercer bug de relleno de grilla incompleto — ver
-  `progress/review_project-hero-lego-animation.md`. En esta tercera pasada
-  el `implementer` corrigió el bug 3, verificado con navegador real en las
-  3 rutas obligatorias.)
+- **Feature:** project-hero-lego-animation (REABIERTA por cuarta vez — bugs
+  1, 2 y "el caso peor de bug 3" (`n=30`, `prefers-reduced-motion`) ya
+  corregidos y confirmados por navegador real en 2 pasadas de `reviewer`
+  distintas. `reviewer` rechazó la tercera pasada por un caso de borde
+  específico de `chooseGridDims()` que **no** afecta la ruta crítica que
+  originó el bug, pero sí una porción grande del tier `full` — ver
+  `progress/review_project-hero-lego-animation.md`, tercera sección
+  fechada.)
 - **Status:** in_progress
 - **Started:** 2026-08-06
-- **Role active:** ninguno — implementer terminó su parte, listo para que
-  `leader` mueva a `in_review` e invoque a `reviewer` (tercera pasada).
-- **Next step:** `leader` mueve `project-hero-lego-animation` a `in_review`
-  y despacha `reviewer` para validar el fix del bug 3 con navegador real
-  (no confiar solo en lo escrito acá — ver instrucción de "no repetir el
-  patrón" abajo).
+- **Role active:** implementer (invocado para el bug 4 abajo)
+- **Next step:** implementer aplica el algoritmo YA ESPECIFICADO abajo
+  (no hace falta redisear nada, ya está prototipado y verificado por fuerza
+  bruta en este mismo mensaje), agrega el test de regresión de rango
+  completo que pide el reviewer, verifica con navegador el caso `n=81`
+  específico que encontró el reviewer, y listo — no debería hacer falta
+  otra iteración de diseño. Luego: leader mueve a `in_review`, reviewer
+  valida (cuarta pasada, debería ser la última).
 
-## Bugs 1 y 2 — YA CORREGIDOS, no los toques
+## Bugs 1, 2 y 3 (caso crítico) — YA CORREGIDOS, no los toques
 
-Ver commits `3758211` (studs faltantes por mergeGeometries no-indexado) y
-`f3a9c47` (solapamiento por CELL_UNIT uniforme + tamaño de pieza variable —
-el implementer lo resolvió fijando todas las piezas a `"2x2"`). Ambos
-verificados visualmente y confirmados por `reviewer` en su segunda pasada.
+- Bug 1 (studs faltantes): commit `3758211`.
+- Bug 2 (solapamiento, piezas unificadas a `"2x2"`): commit `f3a9c47`.
+- Bug 3, caso crítico (`n=30` + `prefers-reduced-motion` fragmentado):
+  commit `0542a9c`, introduce `chooseGridDims()` en `lib/lego/layout.ts`.
+  **Este mecanismo general es el correcto** — el problema no es el enfoque,
+  es un detalle de la función de selección (ver abajo). Confirmado en
+  navegador real, de forma independiente, por 2 pasadas de `reviewer`
+  distintas (la del rechazo anterior Y esta última) que la ruta
+  `prefers-reduced-motion` con `n=30` ya se ve sólida, sin fragmentación.
 
-## Bug 3 — CORREGIDO esta pasada (2026-08-06, tercera reapertura)
+## Bug 4 (NUEVO, acotado) — `chooseGridDims()` degenera para ~54% del rango del tier `full`
 
-**Causa raíz** (diagnóstico completo del `reviewer` en la pasada anterior,
-confirmado): `generateCubePositions()` en `lib/lego/layout.ts` forzaba una
-grilla cúbica perfecta `k×k×k` (`k = max(3, ceil(cbrt(n)))`) y la recortaba
-a `n` celdas. Para `n=30` (extremo bajo del tier `reduced`, que es
-exactamente lo que dispara `prefers-reduced-motion` en este sandbox, ya que
-`navigator.hardwareConcurrency=4` activa tier `reduced` incluso en viewport
-ancho de escritorio) no había `k` entero cuyo cubo estuviera cerca de 30:
-`k=3`→27 (insuficiente), `k=4`→64 (46.9% de relleno tras recortar a 30). El
-cubo se veía fragmentado en dos mitades con esquinas sueltas — más visible
-en la rama `prefers-reduced-motion` (cámara fija, frontal, sin oclusión) que
-en la narrativa completa de desktop (cámara `autoRotate` de tres cuartos
-oculta los huecos por oclusión).
+**Causa raíz exacta** (diagnóstico del `reviewer`, ya verificado por mí con
+un script standalone — ver más abajo, no hace falta redescubrirlo):
+`chooseGridDims()` actual usa el "spread" (diferencia entre la dimensión
+más grande y la más chica) solo como **desempate** cuando el desperdicio
+(`waste = product - n`) da EXACTAMENTE igual entre dos combinaciones — pero
+eso casi nunca pasa para un `n` real, así que en la práctica el desempate
+nunca se activa y la función siempre devuelve la caja de desperdicio mínimo
+sin importar qué tan alargada quede. Ejemplo confirmado con navegador real
+por el reviewer: `n=81` (dentro del rango 80-120 del tier `full`) da
+`[3,4,7]` (spread=4, una caja claramente alargada, no un cubo) en vez de
+algo razonablemente cúbico. El reviewer verificó por fuerza bruta que esto
+pasa en **22 de los 41 valores enteros** de `n` en `[80,120]` — no es un
+caso aislado.
 
-**Fix implementado**: nueva función `chooseGridDims(n)` en
-`lib/lego/layout.ts` reemplaza el único `k` por 3 dimensiones enteras
-`[kx, ky, kz]` (cada una `>= 3`), buscando la combinación con producto
-`>= n` y menor desperdicio (`product - n`), desempatando por menor
-diferencia entre la dimensión más grande y la más chica (para que siga
-leyéndose como cubo, no como caja alargada). `buildFullGrid()` y la
-clasificación de capas interiores (`interiorLayerOf`) se actualizaron para
-usar centros por eje en vez de un único centro escalar. Los 8 corners siguen
-siendo las 8 esquinas de la caja — `selectFinalLockCorners()` no necesitó
-cambios.
+**Fix — algoritmo exacto a implementar** (ya prototipado y verificado por
+fuerza bruta en este mismo diagnóstico, no hace falta diseñar nada nuevo,
+solo transcribirlo a `lib/lego/layout.ts` reemplazando la lógica actual de
+`chooseGridDims`):
 
-Fill ratios antes/después (ver tabla completa y detalle en
-`progress/impl_project-hero-lego-animation.md`, sección "Bug 3"):
+```js
+function chooseGridDimsWithCap(n, maxSpread) {
+  let best = null, bestWaste = Infinity;
+  const upper = Math.ceil(Math.cbrt(n)) + 4; // cota superior de búsqueda, generosa
+  for (let kx = 3; kx <= upper; kx++) {
+    for (let ky = kx; ky <= upper; ky++) {       // ky >= kx evita permutaciones duplicadas
+      for (let kz = ky; kz <= upper; kz++) {     // kz >= ky
+        const product = kx * ky * kz;
+        if (product < n) continue;
+        const spread = kz - kx;                  // kx <= ky <= kz, así que esto ya es max-min
+        if (spread > maxSpread) continue;         // FILTRO DURO, no desempate
+        const waste = product - n;
+        if (waste < bestWaste) { bestWaste = waste; best = [kx, ky, kz]; }
+      }
+    }
+  }
+  return best;
+}
+
+export function chooseGridDims(n) {
+  for (let cap = 1; cap <= 5; cap++) {             // relaja el spread solo si hace falta
+    const dims = chooseGridDimsWithCap(n, cap);
+    if (dims) return dims;
+  }
+  // inalcanzable en la práctica para n >= 27 (siempre hay alguna caja con
+  // spread <= 5), pero por completitud:
+  throw new Error(`chooseGridDims: no valid dims found for n=${n}`);
+}
+```
+
+La diferencia clave con la versión actual: el `spread` es un **filtro
+duro** (candidatos con spread mayor al cap actual se descartan
+directamente, no se los compara), y solo si NINGÚN candidato cumple el cap
+actual se relaja el cap e intenta de nuevo — así el desperdicio mínimo se
+minimiza *dentro* del conjunto de cajas razonablemente cúbicas, no en el
+conjunto de todas las cajas posibles.
+
+**Verificado por fuerza bruta** (corrido ahora mismo, antes de reabrir la
+feature, para no mandar a `implementer` a redescubrir esto):
 
 ```
-n=30  antes 46.9% (4×4×4=64)  → después 83.3% (3×3×4=36)
-n=35  antes 54.7%              → después 97.2% (3×3×4=36)
-n=40  antes 62.5%              → después 88.9% (3×3×5=45)
-n=80  antes 64.0%              → después 100.0% (4×4×5=80)
-n=100 antes 80.0%              → después 100.0% (4×5×5=100)
-n=120 antes 96.0%              → después 100.0% (4×5×6=120)
+n=30  → [3,3,4] waste=6  spread=1 fill=83.3%
+n=35  → [3,3,4] waste=1  spread=1 fill=97.2%
+n=40  → [3,4,4] waste=8  spread=1 fill=83.3%
+n=80  → [4,4,5] waste=0  spread=1 fill=100%
+n=81  → [4,5,5] waste=19 spread=1 fill=81.0%   ← el caso que rompía antes, ahora spread=1
+n=100 → [4,5,5] waste=0  spread=1 fill=100%
+n=120 → [5,5,5] waste=5  spread=0 fill=96.0%
+
+peor spread en TODO n de [80,120]: 1
+peor spread en TODO n de [30,40]: 1
+peor fill en TODO n de [80,120]: 80.8% (n=101)
+peor fill en TODO n de [30,40]: 77.1% (n=37)
 ```
 
-**Verificación con navegador real** (Playwright + Chromium, PIN gate
-bypasseado con env vars locales, mecánica completa documentada en
-`progress/impl_project-hero-lego-animation.md`), las 3 rutas obligatorias:
+Con este algoritmo, el spread nunca pasa de 1 en ningún `n` de cualquiera
+de los 2 tiers (`[30,40]` reduced, `[80,120]` full) — muy por debajo del
+`spread=4` que rompía el caso `n=81` con el algoritmo anterior.
 
-1. `prefers-reduced-motion` activado, desktop, `n=30` forzado (worst case,
-   vía `Math.random` sobreescrito a 0 después del login) — cubo sólido y
-   reconocible, sin fragmentación, sin esquinas sueltas. Idéntico entre 8s y
-   14s (asentado). Esta era la prueba más importante, la que expuso el bug
-   — confirmada arreglada.
-2. Extremo bajo del tier `reduced` (`n=30` forzado), narrativa completa
-   normal, desktop — caja sólida y densa desde la cámara `autoRotate`, sin
-   huecos visibles, consistente entre 35s y 50s.
-3. Narrativa completa desktop, `n` natural (sin forzar) — este sandbox cae
-   naturalmente en tier `reduced` por `hardwareConcurrency=4` — resultado
-   igual de sólido, sin regresión.
+**Requisito de test (esto fue lo que faltó la vez pasada — no repetirlo)**:
+el test de regresión anterior solo cubría `n ∈ {30,35,40,80,100,120}`
+(6 valores puntuales, justo los que el reviewer notó que "esquivaban" el
+bug por casualidad). Esta vez el test tiene que iterar **todo el rango
+entero** de cada tier, no una muestra: `for (let n = 30; n <= 40; n++)` y
+`for (let n = 80; n <= 120; n++)`, afirmando para cada uno que
+`spread <= 1` (o el bound que quede tras implementar el algoritmo de
+arriba) y `fill >= 0.75` (holgado respecto al 77.1% peor caso medido
+arriba, para no ser frágil ante redondeos). Sin este test de rango
+completo, un caso de borde como `n=81` puede volver a pasar
+desapercibido — exactamente lo que pasó en la pasada anterior.
 
-**Tests**: `lib/lego/layout.test.ts` ganó un `describe("chooseGridDims")`
-con guardas de regresión (fill ratio `> 80%`, dimensiones `>= 3`, spread
-`<= 2` entre dimensiones) para `n` en `[30, 35, 40, 80, 100, 120]`, además
-de los tests preexistentes de bug 1/2 (no-overlap, corners, etc.) que
-siguen pasando sin cambios. `npm run verify` (lint + build + vitest 90 tests
-+ check-sdd-state) en verde.
+**Verificación con navegador real, requisito no negociable**: probar
+específicamente `n=81` (el caso concreto que encontró el reviewer, forzado
+en tier `full` — instrucciones de cómo forzar `n`/tier y esquivar el
+`PinGate` ya documentadas en `progress/impl_project-hero-lego-animation.md`)
+y confirmar que ya no se ve como una caja alargada. No hace falta repetir
+todo el QA de las 3 pasadas anteriores (`prefers-reduced-motion` en `n=30`
+ya está confirmado 2 veces por reviewers independientes) — alcanza con
+confirmar este caso puntual más una mirada rápida a la narrativa completa
+normal para descartar regresión.
 
-**Corrección de documentación**: se corrigió la caracterización incorrecta
-en `progress/impl_project-hero-lego-animation.md` (antes decía "clean
-non-overlapping grid" sobre capturas que en realidad mostraban el cubo
-fragmentado — el problema era que "sin solape" y "relleno completo" son
-propiedades distintas y se habían conflado). Ver esa sección para el texto
-corregido y la nueva sección fechada "Bug 3" con el detalle completo.
-
-## Trade-off pendiente de decisión del usuario (no lo resuelvas vos)
+## Trade-off pendiente de decisión del usuario (no lo resuelvas vos, no relacionado a este bug)
 
 El fix del bug 2 (commit `f3a9c47`) unificó todas las piezas a tamaño
 `"2x2"`, perdiendo la variedad (`2x4`/`1x2`/`plate1x1`) que `design.md`
-había fijado como decisión definitiva. `reviewer` dio su opinión técnica
-(el resultado visual es limpio, es una simplificación honesta y bien
-documentada, pero es una reducción real de fidelidad frente a lo aprobado)
-sin tomar la decisión. Esto se le va a presentar al usuario junto con el
-resultado final de esta reapertura — no es parte de lo que hay que
-resolver acá, y no se relaciona con el bug 3.
+había fijado como decisión definitiva. Pendiente de presentárselo al
+usuario junto con el resultado final, una vez que esta feature quede
+técnicamente aprobada.
 
-## Nota de entorno para QA visual (para vos y para sesiones futuras)
+## Nota de entorno para QA visual
 
-Instrucciones completas de cómo levantar un navegador real (Playwright +
-Chromium preinstalado, cómo esquivar el `PinGate` con un PIN de prueba
-solo-local, cuidado con el puerto 3000 fantasma) siguen documentadas en
-`progress/impl_project-hero-lego-animation.md`. Dato nuevo de esta pasada:
-`PinGate` no renderiza nada hasta que resuelve su fetch a
-`/api/auth/check` — un `waitForTimeout` fijo corto después de `page.goto()`
-antes de buscar el input del PIN es propenso a race conditions; mejor usar
-`waitFor({ state: "visible" })` explícito sobre el input o sobre contenido
-ya autenticado. También: sobreescribir `Math.random` vía
-`page.addInitScript()` *antes* del primer login rompe el click del botón
-"Entrar" (el POST a `/api/auth` nunca se dispara) — hay que loguearse
-primero sin el override, y recién después registrar el override y hacer
-`page.reload()` (la cookie de sesión sobrevive el reload).
+Instrucciones completas (Playwright + Chromium preinstalado, cómo esquivar
+`PinGate`, cómo forzar `n`/tier, cuidado con el puerto 3000 fantasma) están
+en `progress/impl_project-hero-lego-animation.md`. Este sandbox reporta
+`navigator.hardwareConcurrency=4`, que dispara tier `reduced` incluso en
+viewport de escritorio ancho — para probar el tier `full` hace falta forzar
+`hardwareConcurrency`/`deviceMemory` vía `addInitScript` (ya documentado).
