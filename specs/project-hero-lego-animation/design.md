@@ -1,20 +1,23 @@
 # Design — Escena 3D cinemática de bloques LEGO en el hero de la home
 
-## Alcance de esta spec (Fase 1) vs. Fase 2
+## Alcance
 
-Esta spec cubre **Fase 1**: layout correcto (texto izquierda / escena
-derecha, responsive), la narrativa completa de 3 escenas (flotando → señal
-→ ensamblaje) de punta a punta con una coreografía de cámara/iluminación
-creíble, usando `InstancedMesh` + GSAP + splines Catmull-Rom, y el Final
-Lock de las 4 esquinas como clímax emocional explícito (no es opcional:
-sin él la pieza no se siente terminada). Se permite simplificar detalles
-finos de pulido cinematográfico — en particular, el HDRI es un
-`RoomEnvironment` / environment map genérico de Three.js, no uno de
-estudio custom-producido.
-
-**Fase 2 (fuera de alcance de esta spec, feature futura separada)**:
-afinar timing exacto, materiales/reflejos más ricos, pulido de curvas de
-easing más allá de los presets estándar de GSAP.
+Esta spec se implementa completa, de punta a punta, en una sola pasada —
+no hay una fase futura separada. Cubre: layout correcto (texto izquierda /
+escena derecha, responsive), la narrativa completa de 3 escenas (flotando
+→ señal → ensamblaje) con una coreografía de cámara/iluminación creíble,
+usando `InstancedMesh` + GSAP + splines Catmull-Rom, y el Final Lock de
+las 4 esquinas como clímax emocional explícito (no es opcional: sin él la
+pieza no se siente terminada). Los valores concretos de timing/easing
+(duraciones, `power2.inOut`, `back.out(1.4)`, etc.) especificados en
+"GSAP timeline maestro" más abajo **son** la implementación final, no un
+borrador a afinar después; donde queda un rango explícito (p. ej.
+"1.2–2.2s"), elegir un valor concreto dentro de ese rango es una decisión
+normal de `implementer` durante esta misma pasada, no trabajo diferido.
+El único punto genuinamente fuera de lo pedido es interactividad más allá
+de `OrbitControls` (ver "Fuera de alcance" en `requirements.md`) — eso no
+se construye porque el brief nunca lo pidió, no porque se haya recortado
+de esta spec.
 
 ## Nuevas dependencias
 
@@ -47,31 +50,59 @@ parcialmente) y `gsap` core (~30KB min) se cargan **solo** en la home, vía
 `next/dynamic({ ssr: false })` (ver "Arquitectura de módulos"), nunca en
 el bundle compartido ni en otras páginas — costo acotado a una sola ruta.
 
-## Conflicto de tema dark/light — resuelto
+## Fondo de la escena: transparente sobre el dark theme existente
 
 El resto del sitio usa dark theme (`--color-bg: #08090f`,
 `--color-text-primary: #FFFFFF`, etc., definidos en `app/globals.css`). El
-brief pide un fondo de estudio infinito muy claro (`#F6F7F9`). Aplicar eso
-a toda la sección `<section>` rompería el dark theme de `Nav` y de la
-columna de texto.
+brief original pegado en `requirements.md` pide un "infinite seamless
+studio background... very light gray (#F6F7F9)". Una primera versión de
+esta spec resolvía esto conteniendo ese fondo claro dentro de un
+"marco de vitrina" alrededor del canvas. **El usuario reemplazó
+explícitamente esa decisión** tras revisar la spec: pidió que el fondo de
+la animación sea transparente, no un panel claro.
 
-**Decisión**: el fondo claro de estudio vive únicamente dentro del propio
-lienzo de la escena 3D — el `<canvas>` de Three.js y un contenedor
-(`LegoHeroScene` wrapper `<div>`) con `border-radius`/`border` a modo de
-"marco de vitrina", usando `var(--color-surface-elevated)` /
-`var(--color-border)` para el marco (consistente con el resto del sitio)
-y `#F6F7F9` como `scene.background` / color del `renderer.setClearColor`
-**dentro del canvas únicamente**. El `<section>` que contiene todo sigue
-en `var(--color-bg)`; la columna de texto sigue en blanco/gris claro sobre
-fondo oscuro, sin cambios. Esto se lee como una "vitrina de producto" flotando
-sobre fondo oscuro — coherente con "premium studio" del brief sin romper
-el tema del sitio.
+**Decisión vigente**: `WebGLRenderer` se crea con `alpha: true`, y se
+limpia con `renderer.setClearColor(0x000000, 0)` (equivalente a
+`scene.background = null`) — el `<canvas>` queda genuinamente
+transparente, sin ningún color de fondo propio. Las piezas LEGO (blancas,
+gris claro, gris oscuro, azul, amarillo — R16) flotan y se ensamblan
+directamente sobre `var(--color-bg)`, el fondo oscuro ya existente de la
+sección hero. `LegoHeroScene.tsx` ya no simula una "vitrina clara": el
+contenedor puede mantener, a criterio de `implementer`, un `border`/
+`border-radius` sutil (`var(--color-border)`) puramente como marco de
+composición, pero sin ningún `background` propio — no hay ningún fondo
+claro en ningún punto de la jerarquía DOM/WebGL de la escena, así que ya
+no hay conflicto de tema que resolver: todo vive sobre el dark theme
+existente del sitio, sin excepción.
 
-**Alternativa descartada**: cambiar el fondo de toda la sección hero a
-claro — descartado porque rompe la identidad visual de `Nav` (que no
-cambia entre páginas) y de el resto de la home más abajo si se agregara
-contenido después; el brief pide "infinite studio background" para la
-escena, no para el sitio entero.
+Esto además calza mejor con la "Visual Direction" que el propio brief cita
+como referencia (Apple keynote / Nothing product reveals), que
+típicamente usan fondos oscuros con objetos claros e iluminados — no es
+solo un cambio forzado por el pedido del usuario, también es una mejora
+de fidelidad a esa referencia visual.
+
+**Sin conflicto técnico con el environment map**: `scene.environment`
+(usado para reflejos PBR vía `RoomEnvironment` + `PMREMGenerator`, ver
+"Iluminación y cámara" más abajo) es independiente de
+`scene.background`/clear color — se puede tener reflejos de estudio en el
+material de las piezas sin que el canvas tenga ningún color de fondo
+visible. Sin cambios ahí.
+
+**Placeholder de carga (`next/dynamic`)**: el `loading: () => <div
+style={{ ... }} />` de `app/page.tsx` (ver "Arquitectura de módulos") ya
+no usa `#F6F7F9` — usa `var(--color-surface)` (o directamente
+`transparent`) para no destellar un panel claro mientras el bundle de
+Three.js carga, consistente con el resto de esta decisión.
+
+**Alternativa descartada**: mantener el fondo claro de estudio contenido
+en el canvas (decisión previa de esta spec, antes de la corrección del
+usuario) — descartado por instrucción explícita del usuario; documentado
+acá por transparencia de proceso, no porque quede como opción vigente.
+**Alternativa descartada** (seguía vigente desde la primera versión):
+cambiar el fondo de toda la sección hero a claro — descartado porque
+rompe la identidad visual de `Nav` (que no cambia entre páginas) y de el
+resto de la home; con fondo transparente este punto queda doblemente
+resuelto, ya que ni siquiera hay un panel claro del que hablar.
 
 ## Arquitectura de módulos
 
@@ -109,7 +140,7 @@ app/components/
 ```tsx
 const LegoHeroScene = dynamic(() => import("./components/LegoHeroScene"), {
   ssr: false,
-  loading: () => <div style={{ /* placeholder del mismo tamaño, fondo #F6F7F9 */ }} />,
+  loading: () => <div style={{ /* placeholder del mismo tamaño; fondo var(--color-surface) o transparent — nunca un panel claro, ver "Fondo de la escena" */ }} />,
 });
 ```
 
@@ -219,42 +250,66 @@ ocurre una vez al construir la escena y se guarda en un array paralelo de
 "estado de pieza" (posición actual, posición objetivo, curva, progreso
 0–1) que el loop de animación de GSAP actualiza.
 
-**Geometría del brick**: una función `buildBrickGeometry(size)` que
-combina un `THREE.BoxGeometry` (con bevels vía `THREE.BoxGeometry` +
-ligera normal-smoothing, o `RoundedBoxGeometry` de
-`three/examples/jsm/geometries/RoundedBoxGeometry.js` si el bundle lo
-justifica — decisión de `implementer`, documentar cuál se usó) para el
-cuerpo, más `THREE.CylinderGeometry` de baja resolución (8–12 segmentos,
-no 32 — no se necesita más para el tamaño en pantalla) para los studs
-superiores, fusionados en un único `BufferGeometry` por tamaño (usando
-`BufferGeometryUtils.mergeGeometries`) para que cada `InstancedMesh` siga
-siendo una sola geometría con una sola llamada de instancia por objeto.
+**Geometría del brick**: una función `buildBrickGeometry(size)` que usa
+`RoundedBoxGeometry` de
+`three/examples/jsm/geometries/RoundedBoxGeometry.js` (no
+`THREE.BoxGeometry` liso) para el cuerpo — decisión definitiva, no a
+criterio de `implementer`: el brief pide explícitamente "rounded LEGO
+geometry, smooth bevels", y `BoxGeometry` no tiene bevel real (aristas
+perfectamente rectas, se ven plásticas/genéricas, no como una pieza LEGO
+de fábrica). `RoundedBoxGeometry(width, height, depth, segments=2,
+radius≈0.05–0.08 relativo al tamaño de la pieza)` — `segments` bajo (2,
+no el default más alto) porque el bevel de un LEGO real es sutil, no
+necesita más resolución de la que se percibe a la escala en pantalla de
+la escena. Más `THREE.CylinderGeometry` de baja resolución (8–12
+segmentos, no 32 — no se necesita más para el tamaño en pantalla) para
+los studs superiores, fusionados en un único `BufferGeometry` por tamaño
+(usando `BufferGeometryUtils.mergeGeometries`) para que cada
+`InstancedMesh` siga siendo una sola geometría con una sola llamada de
+instancia por objeto.
 
-**Material**: `THREE.MeshPhysicalMaterial` (PBR) con `roughness` bajo
-(~0.25–0.35), `clearcoat` leve para el brillo de plástico ABS, sin
-`map`/texturas de suciedad (R15). Un `Map<string, MeshPhysicalMaterial>`
-por color, reusado entre `InstancedMesh` de distinto tamaño pero mismo
-color.
+**Material**: `THREE.MeshPhysicalMaterial` (PBR) con valores concretos y
+definitivos, no un rango a discreción de `implementer`: `roughness: 0.3`,
+`metalness: 0` (es plástico, no metal), `clearcoat: 0.6`,
+`clearcoatRoughness: 0.15` (capa de barniz sutil que da el brillo
+"factory-new" de ABS sin verse como vidrio — `clearcoat` en 0 se
+descartó explícitamente: sin él las piezas se ven mate/plásticas baratas,
+no premium), `envMapIntensity: 1` (para que el `RoomEnvironment` de
+abajo se note en los reflejos), sin `map`/texturas de suciedad (R15). Un
+`Map<string, MeshPhysicalMaterial>` por color, reusado entre
+`InstancedMesh` de distinto tamaño pero mismo color.
 
 ## Iluminación y cámara — `scene.ts`
 
 - Key light: `THREE.DirectionalLight` intensidad alta, posición
   elevada-lateral, `castShadow` con `PCFSoftShadowMap` (sombra de
   contacto suave, sin piso visible — la sombra cae sobre un
-  `THREE.ShadowMaterial` transparente o se omite del todo si el costo no
-  se justifica en Fase 1; decisión de `implementer`, con nota si se
-  simplifica).
+  `THREE.ShadowMaterial` transparente, consistente con el fondo
+  transparente del canvas; se implementa, no se omite, ya que sin
+  sombras de contacto el "product photography lens feeling" del brief se
+  pierde y las piezas se sienten planas).
 - Fill light: `THREE.DirectionalLight` intensidad baja, lado opuesto.
 - Rim light: `THREE.DirectionalLight` o `THREE.SpotLight` intensidad baja
-  desde atrás/arriba, para separar el cubo del fondo claro.
+  desde atrás/arriba, para separar visualmente el cubo del fondo oscuro
+  de la sección (`var(--color-bg)`) — con fondo transparente, el rim
+  light es lo que evita que las piezas oscuras/grises se fundan
+  visualmente con el fondo detrás.
 - Ambient: `THREE.AmbientLight` o `THREE.HemisphereLight` intensidad baja.
 - Environment map: `RoomEnvironment` de
   `three/examples/jsm/environments/RoomEnvironment.js` +
-  `PMREMGenerator`, asignado a `scene.environment` (no a
-  `scene.background`, que se mantiene en el color de estudio plano
-  `#F6F7F9`) — este es el sustituto simplificado del "HDRI de estudio
-  custom" que el brief pide y que Fase 1 explícitamente no produce a
-  medida (ver "Alcance").
+  `PMREMGenerator`, asignado a `scene.environment` (independiente de
+  `scene.background`, que queda transparente — ver "Fondo de la escena"
+  más arriba). Esta es una decisión técnica permanente, no un recorte
+  temporal: un HDRI de estudio custom-fotografiado requeriría producir,
+  licenciar y alojar un asset externo (`.hdr`/`.exr`) que este repo no
+  tiene y que agregaría una dependencia de infraestructura (dónde vive el
+  archivo, cómo se versiona, peso de descarga adicional en el cliente);
+  `RoomEnvironment` es procedural (generado en runtime por Three.js, sin
+  red ni licencia) y da reflejos de "estudio" plausibles para PBR sin ese
+  costo — la ganancia visual de un HDRI custom no justifica la
+  complejidad operativa que agrega, dado que el objetivo son reflejos
+  creíbles de plástico, no una escena fotorrealista de producto para
+  e-commerce.
 - `THREE.PerspectiveCamera(fov≈35–40, aspect, near, far)`, posición
   inicial elevada (`y > 0`) mirando al origen, controlada por GSAP durante
   las Escenas 1–3 (`camera.position` animado en un timeline de órbita
@@ -421,7 +476,7 @@ En tier `reduced`:
   narrativa de 3 escenas + Final Lock se mantiene intacta (brief: "misma
   narrativa, más liviana", no una versión distinta).
 - `renderer.shadowMap.enabled = false` (sin sombras de contacto).
-- Sin `clearcoat` en el material (o valor 0) y `roughness` levemente más
+- `clearcoat: 0` (vs. `0.6` en tier `full`) y `roughness` levemente más
   alta — reduce el costo de reflejos.
 - `renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))` en vez
   de sin cap (evita renderizar a densidad de retina completa en pantallas
@@ -432,11 +487,12 @@ En tier `reduced`:
   pixel, no crítico para la narrativa pero sí para FPS en gama baja.
 
 `getQualityTier` se reevalúa solo al montar (no reactivamente en cada
-resize) — cambiar de tier a mitad de animación no es un caso soportado en
-Fase 1 (si alguien redimensiona la ventana de desktop a un ancho angosto
-a mitad de la animación, la escena sigue en el tier con el que arrancó;
-suficiente para Fase 1, un resize dinámico completo de calidad queda como
-posible ítem de Fase 2 si se vuelve un problema real).
+resize) — cambiar de tier a mitad de animación no es un caso que esta
+spec cubra (si alguien redimensiona la ventana de desktop a un ancho
+angosto a mitad de la animación, la escena sigue en el tier con el que
+arrancó); esto es intencional y no un recorte de alcance: la narrativa
+completa (R4-R14) dura unos segundos y el caso de redimensionar la
+ventana de escritorio activamente durante esos segundos es marginal.
 
 ## Ciclo de vida / cleanup (R20)
 
@@ -468,29 +524,37 @@ garbage collector para recursos de WebGL, que no se liberan solos).
   spline — inviable con transforms CSS a ese nivel de fidelidad y
   cantidad de objetos sin herramientas 3D reales.
 - **React Three Fiber (`@react-three/fiber` + `@react-three/drei`) en vez
-  de Three.js "vanilla" + GSAP** — descartado para Fase 1: R3F es
-  idiomático en React pero agrega una capa de abstracción/dependencias
-  extra (`@react-three/fiber`, `@react-three/drei`, más su propio modelo
-  de reconciliación) sobre un problema que es, en esencia, imperativo
-  (una escena con un timeline GSAP maestro, no un árbol de componentes
-  React que re-renderiza). Vanilla Three.js dentro de un único
-  `useEffect` (mismo patrón que `AnimatedGrid.tsx` ya usa para su canvas
-  2D) mantiene el codebase consistente con el precedente existente y evita
-  dos dependencias adicionales. Puede reconsiderarse en Fase 2 si la
-  escena crece en interactividad.
-  y complejidad de composición.
+  de Three.js "vanilla" + GSAP** — descartado: R3F es idiomático en React
+  pero agrega una capa de abstracción/dependencias extra
+  (`@react-three/fiber`, `@react-three/drei`, más su propio modelo de
+  reconciliación) sobre un problema que es, en esencia, imperativo (una
+  escena con un timeline GSAP maestro, no un árbol de componentes React
+  que re-renderiza). Vanilla Three.js dentro de un único `useEffect`
+  (mismo patrón que `AnimatedGrid.tsx` ya usa para su canvas 2D) mantiene
+  el codebase consistente con el precedente existente y evita dos
+  dependencias adicionales y complejidad de composición innecesaria para
+  el alcance de esta feature (sin interactividad más allá de
+  `OrbitControls`, ver "Fuera de alcance" en `requirements.md`).
 - **Física real (`cannon-es`/`rapier`) para las colisiones/drift de la
   Escena 1** — descartado: el brief pide movimiento "elegante", no
   físicamente simulado; un rechazo por distancia mínima (Poisson-disc) +
   drift sinusoidal por pieza logra "no colisionan, se sienten ingrávidas"
   sin el costo de un motor de física completo.
-- **HDRI de estudio custom-producido** — descartado para Fase 1 (ver
-  "Alcance"): `RoomEnvironment` genérico de Three.js da reflejos
-  plausibles de "estudio" sin necesidad de producir/alojar un archivo
-  `.hdr` propio; queda como mejora de Fase 2.
+- **HDRI de estudio custom-producido** en vez de `RoomEnvironment`
+  procedural — descartado de forma permanente (ver justificación completa
+  en "Iluminación y cámara" arriba): agrega una dependencia de asset
+  externo (licencia, hosting, peso de descarga) por una ganancia visual
+  marginal frente a un environment map procedural, dado que el objetivo
+  son reflejos plausibles de plástico, no una escena fotorrealista de
+  producto para e-commerce.
+- **Fondo claro de estudio contenido dentro del canvas** ("vitrina de
+  producto" sobre fondo oscuro) — era la decisión original de esta spec;
+  descartada por instrucción explícita del usuario a favor de un fondo
+  transparente (ver "Fondo de la escena" arriba).
 - **Cambiar el fondo de toda la sección hero (o de toda la home) a claro**
-  para calzar con el brief al pie de la letra — descartado, ver
-  "Conflicto de tema dark/light" arriba.
+  para calzar con el brief al pie de la letra — descartado: rompería la
+  identidad visual de `Nav` y del resto de la home; con el fondo
+  transparente vigente este punto queda doblemente resuelto.
 - **Imagen estática o video pre-renderizado como fallback mobile** en vez
   de una escena Three.js simplificada — descartado explícitamente por
   decisión de alcance ya comunicada: mantener la misma narrativa

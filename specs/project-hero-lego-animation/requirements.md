@@ -28,11 +28,18 @@ Solo se retira su uso (`<AnimatedGrid />`, variant `"hero"` por defecto) de
 - **R2**: WHEN el viewport es angosto (<768px, breakpoint `md:`) THEN el
   sistema SHALL apilar el bloque de texto y la escena 3D en una sola
   columna (texto arriba, escena abajo), sin solaparse ni recortar contenido.
-- **R3**: WHILE la escena 3D está montada THEN el sistema SHALL mantener el
-  resto de la página (`Nav`, columna de texto, fondo de la sección) en el
-  dark theme existente (`--color-bg: #08090f`, etc.) — el fondo claro de
-  estudio que pide el brief (`#F6F7F9`) SHALL quedar contenido únicamente
-  dentro del lienzo/marco de la escena 3D, no en el `<section>` completo.
+- **R3**: WHILE la escena 3D está montada THEN el sistema SHALL renderizar
+  el `<canvas>` de la escena con fondo transparente (`alpha: true` en el
+  `WebGLRenderer`, sin `scene.background` propio), de forma que las piezas
+  LEGO floten y se ensamblen directamente sobre el fondo oscuro existente
+  de la sección hero (`var(--color-bg)`), y el resto de la página (`Nav`,
+  columna de texto) SHALL mantenerse en el dark theme existente sin
+  cambios. **Nota**: el brief original pegado abajo pide un "infinite
+  seamless studio background... very light gray (#F6F7F9)" — ese punto
+  específico del brief fue reemplazado explícitamente por el usuario tras
+  una primera versión de esta spec (que sí lo implementaba contenido
+  dentro del canvas); R3 refleja la decisión vigente, no el texto literal
+  del brief en ese punto puntual.
 
 ### Narrativa (3 escenas)
 
@@ -131,16 +138,15 @@ Solo se retira su uso (`<AnimatedGrid />`, variant `"hero"` por defecto) de
   SHALL ser client-only, cargado de forma que Three.js nunca se evalúe en
   el servidor).
 
-## Fuera de alcance (Fase 2, feature futura separada)
+## Fuera de alcance
 
-- Afinar el timing exacto de cada micro-transición más allá de lo
-  perceptible/creíble descrito arriba.
-- Materiales/reflejos más ricos que un environment map genérico (HDRI de
-  estudio custom-producido).
-- Pulido fino de curvas de easing más allá de usar los easings estándar
-  de GSAP (`power2`, `back`, etc.) de forma razonable.
+Esta feature se implementa completa, de punta a punta, en una sola
+pasada — no hay una fase futura separada. Lo que sigue nunca formó parte
+de lo pedido (ni por el brief original ni por decisión posterior del
+usuario), no es una simplificación de alcance:
+
 - Interactividad más allá de `OrbitControls` post-ensamblaje (p. ej. click
-  en una pieza, tooltips, sonido).
+  en una pieza, tooltips, sonido) — el brief no lo pide.
 - Tocar `AnimatedGrid.tsx` o su uso en `app/state-of-ai/page.tsx`.
 
 ## Verificación

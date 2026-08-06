@@ -35,9 +35,10 @@ de cada decisión referenciada acá.
 
 ## 2. Escena base (sin animación todavía)
 
-- [ ] 2.1 `bricks.ts`: geometría de brick (cuerpo + studs, `RoundedBoxGeometry`
-      o `BoxGeometry`, decisión documentada), 3–4 tamaños, fusionada por
-      tamaño con `BufferGeometryUtils.mergeGeometries`.
+- [ ] 2.1 `bricks.ts`: geometría de brick (cuerpo con `RoundedBoxGeometry`
+      + studs con `CylinderGeometry`, ver "InstancedMesh — bricks.ts" en
+      `design.md` para los parámetros concretos), 3–4 tamaños, fusionada
+      por tamaño con `BufferGeometryUtils.mergeGeometries`.
 - [ ] 2.2 `bricks.ts`: paleta de `MeshPhysicalMaterial` por color (blanco,
       gris claro, gris oscuro, azul `var(--color-primary)`/`#2C40FF`,
       amarillo), pesos 65/20/5/8/2% al asignar color por pieza (R16).
@@ -45,15 +46,18 @@ de cada decisión referenciada acá.
       (tamaño, color) y asignación pieza→(mesh, índice) (R15, "InstancedMesh"
       en `design.md`).
 - [ ] 2.4 `scene.ts`: `Scene`, `PerspectiveCamera`, `WebGLRenderer`
-      (`ACESFilmicToneMapping`, `SRGBColorSpace`), 4 luces (key/fill/rim/
-      ambient), `RoomEnvironment` + `PMREMGenerator`, `scene.background =
-      #F6F7F9` (dentro del canvas solamente — R3). `OrbitControls`
+      (`alpha: true`, `ACESFilmicToneMapping`, `SRGBColorSpace`), 4 luces
+      (key/fill/rim/ambient), `RoomEnvironment` + `PMREMGenerator` asignado
+      a `scene.environment`, `renderer.setClearColor(0x000000, 0)` /
+      `scene.background = null` (fondo transparente — R3). `OrbitControls`
       instanciado con `enabled = false`.
-- [ ] 2.5 `LegoHeroScene.tsx`: wrapper `"use client"`, monta canvas +
-      marco visual (`var(--color-surface-elevated)`/`var(--color-border)`),
+- [ ] 2.5 `LegoHeroScene.tsx`: wrapper `"use client"`, monta canvas
+      transparente (sin `background` propio; `border`/`border-radius`
+      sutil opcional a criterio de `implementer`, documentado si se usa),
       `ResizeObserver` para tamaño responsive del renderer, coloca todas
       las piezas en sus posiciones flotantes iniciales (`generateFloatingPositions`)
-      y renderiza un frame estático. Cleanup completo al desmontar (R20).
+      y renderiza un frame estático sobre el fondo oscuro existente de la
+      sección hero. Cleanup completo al desmontar (R20).
 - [ ] 2.6 `app/page.tsx`: retirar `<AnimatedGrid />`, cambiar el layout a
       grid 2 columnas (`grid-cols-1 md:grid-cols-2`), texto a la izquierda
       sin cambios internos, `<LegoHeroScene />` a la derecha vía
@@ -66,7 +70,8 @@ de cada decisión referenciada acá.
 - [ ] 2.8 Manual QA: abrir la home en desktop y en un viewport angosto
       (DevTools responsive, <768px) — layout correcto en ambos (R1, R2),
       resto de la página en dark theme intacto (R3), piezas visibles
-      flotando estáticas con el fondo claro contenido en el canvas.
+      flotando estáticas con el canvas transparente sobre el fondo oscuro
+      existente de la sección.
 
 ## 3. Escena 1 — Flotando
 
@@ -161,7 +166,7 @@ de cada decisión referenciada acá.
       mostrando `AnimatedGrid` sin cambios (regresión de la única otra
       consumidora del componente que se está retirando de la home).
 - [ ] 9.5 Documentar en `progress/impl_project-hero-lego-animation.md`:
-      decisiones de `implementer` dejadas abiertas en `design.md` (qué
-      geometría de bevel se usó, dónde quedó `dispose()` de sombras,
-      criterio exacto de recorte del cubo a N piezas, resultado de cada
-      manual QA de las secciones 2–8) y el resultado de `npm run verify`.
+      decisiones de `implementer` dejadas abiertas en `design.md` (criterio
+      exacto de recorte del cubo a N piezas, valores concretos elegidos
+      dentro de los rangos de duración del timeline GSAP, resultado de
+      cada manual QA de las secciones 2–8) y el resultado de `npm run verify`.
