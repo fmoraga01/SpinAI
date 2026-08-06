@@ -1,13 +1,13 @@
 # Current session state
 
 - **Feature:** project-hero-lego-animation
-- **Status:** spec_ready
+- **Status:** in_progress
 - **Started:** 2026-08-06
-- **Role active:** none — waiting on human approval
-- **Next step:** Human review/approval of `specs/project-hero-lego-animation/`
-  (requirements.md, design.md, tasks.md). Once approved explicitly, `leader`
-  sets status to `in_progress` and invokes `implementer`. Do not start
-  implementation without that explicit approval.
+- **Role active:** implementer (just invoked)
+- **Next step:** human approved the revised spec ("ok, vamos con la
+  implementacion") on 2026-08-06. implementer is executing
+  specs/project-hero-lego-animation/tasks.md top to bottom (9 sections).
+  Once it finishes: move to in_review and invoke reviewer.
 
 ## Resumen para quien apruebe
 

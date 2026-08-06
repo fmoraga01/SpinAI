@@ -102,7 +102,7 @@
     {
       "id": "project-hero-lego-animation",
       "title": "Reemplazar la animación del hero de la home por una escena 3D cinemática (Three.js) de bloques LEGO ensamblándose en un cubo — texto a la izquierda, escena a la derecha",
-      "status": "spec_ready",
+      "status": "in_progress",
       "created": "2026-08-06",
       "spec_dir": "specs/project-hero-lego-animation/"
     }
