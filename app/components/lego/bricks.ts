@@ -85,6 +85,12 @@ export function buildBrickGeometry(sizeId: BrickSizeId): THREE.BufferGeometry {
 
   const body = new RoundedBoxGeometry(width, height, depth, BEVEL_SEGMENTS, bevelRadius);
 
+  // RoundedBoxGeometry sets `this.index = null` internally (it's built
+  // non-indexed, unlike plain BoxGeometry/CylinderGeometry) — mergeGeometries
+  // requires every input to agree on indexed vs. non-indexed, so the studs
+  // must be de-indexed too or the merge silently fails and studs disappear.
+  const bodyNonIndexed = body.index ? body.toNonIndexed() : body;
+
   const studGeometries: THREE.BufferGeometry[] = [];
   for (let sx = 0; sx < studsX; sx++) {
     for (let sz = 0; sz < studsZ; sz++) {
@@ -93,7 +99,7 @@ export function buildBrickGeometry(sizeId: BrickSizeId): THREE.BufferGeometry {
         STUD_RADIUS,
         STUD_HEIGHT,
         STUD_SEGMENTS
-      );
+      ).toNonIndexed();
       const x = (sx - (studsX - 1) / 2) * STUD_UNIT;
       const z = (sz - (studsZ - 1) / 2) * STUD_UNIT;
       const y = height / 2 + STUD_HEIGHT / 2;
@@ -102,12 +108,13 @@ export function buildBrickGeometry(sizeId: BrickSizeId): THREE.BufferGeometry {
     }
   }
 
-  const merged = mergeGeometries([body, ...studGeometries], false);
+  const merged = mergeGeometries([bodyNonIndexed, ...studGeometries], false);
   if (!merged) {
-    // mergeGeometries only returns null on incompatible attributes, which
-    // can't happen here (body + studs are both plain indexed geometries) —
-    // this branch exists only to satisfy the nullable return type.
-    return body;
+    // Should be unreachable now that every input geometry is non-indexed
+    // with the same (position, normal, uv) attribute set — kept as a
+    // defensive fallback so a brick still renders (without studs) instead
+    // of throwing if a future three.js version changes this shape again.
+    return bodyNonIndexed;
   }
   return merged;
 }
