@@ -651,3 +651,180 @@ convención de este repo de dejar historial).
    bugs 1/2) está en orden — no hace falta repetir ese trabajo, solo
    corregir el criterio de `chooseGridDims()` para el tier `full` y ampliar
    la cobertura de test antes de la próxima pasada.
+
+---
+
+# Cuarta pasada (2026-08-06) — verificación del fix de Bug 4 (`chooseGridDims` hard-filter de spread)
+
+**VEREDICTO: APROBADO**
+
+Contexto: pasada anterior (tercera, ver sección de arriba) rechazó por un
+problema acotado — el desempate por spread en `chooseGridDims()` casi nunca
+se activaba, dejando cajas alargadas (ej. `n=81` → `[3,4,7]`, spread=4) en
+~54% del rango `n∈[80,120]` del tier `full`. El `implementer` reemplazó el
+desempate por un filtro duro (`chooseGridDimsWithCap(n, maxSpread)` +
+relajación de cap 1→5 en `chooseGridDims()`), commit `d80fc3c`. Esta pasada
+verifica ese fix de forma independiente (no confié en el reporte del
+`implementer` para ningún punto).
+
+## Checklist (`CHECKPOINTS.md` — "Before `in_review`")
+
+1. **Todas las tareas de `tasks.md` marcadas** — PASA. `grep -c "^\- \[ \]"
+   specs/project-hero-lego-animation/tasks.md` = 0 sin marcar,
+   `grep -c "^\- \[x\]"` = 37 marcadas.
+2. **`npm run lint` pasa** — PASA (corrido yo mismo, sin errores, dentro de
+   `npm run verify`).
+3. **`npm run build` pasa** — PASA (corrido yo mismo: `✓ Compiled
+   successfully`, TypeScript ok, 26 páginas generadas).
+4. **`progress/impl_project-hero-lego-animation.md` tiene entrada de
+   verificación para cada `R<n>`** — PASA. Ya confirmado en pasadas
+   anteriores (R1-R21 todos tienen entrada); esta pasada no tocó
+   requirements nuevos, solo un bugfix interno de `layout.ts` que no crea
+   ni cambia ningún `R<n>`.
+5. **`design-check` si cambió `app/components/*.tsx`** — N/A, justificado:
+   esta pasada (diff `0542a9c..d80fc3c`) no tocó ningún `.tsx`, solo
+   `lib/lego/layout.ts` + `lib/lego/layout.test.ts` (confirmado por
+   `git diff --stat 0542a9c d80fc3c`, ver más abajo).
+6. **Solo una feature `in_progress`/`in_review`** — PASA.
+   `project-hero-lego-animation` es la única en `feature_list.json` con
+   status `in_progress` o `in_review`.
+
+## Punto 1 — Revisión de código (`chooseGridDimsWithCap`/`chooseGridDims`, `lib/lego/layout.ts:159-192`)
+
+Confirmé que la implementación coincide exactamente con lo descrito:
+
+- `chooseGridDimsWithCap(n, maxSpread)`: recorre `kx<=ky<=kz` en
+  `[3, ceil(cbrt(n))+4]`, descarta cualquier candidato con
+  `product < n` o `spread(=kz-kx) > maxSpread` **antes** de comparar
+  waste (línea 170: `if (spread > maxSpread) continue;` — es un filtro
+  duro, no un desempate; confirmado leyendo el código, no solo el
+  comentario). Entre los que pasan el filtro, se queda con el de menor
+  `waste`.
+- `chooseGridDims(n)`: prueba `cap` de 1 a 5, devuelve el primer resultado
+  no-null; si ninguno converge en cap<=5, lanza `Error` explícito (no hay
+  degradación silenciosa).
+- **Convergencia**: no encontré ningún caso donde la relajación de cap
+  1→5 no converja. Con un script standalone (ver Punto 2) que reimplementa
+  el algoritmo exacto y prueba `n` de 3 a 500, el cap=1 basta siempre —
+  nunca hace falta relajar a 2+. El `throw` de "unreachable" es
+  efectivamente inalcanzable en la práctica para cualquier `n` que la app
+  pueda producir.
+- **Rango de `n` fuera de los 2 tiers**: tracé los llamadores con
+  `graphify query` — el único caller de `generateCubePositions()` (que
+  llama a `chooseGridDims()`) es `LegoHeroScene()`
+  (`app/components/LegoHeroScene.tsx`), y el único `n` que le llega viene
+  de `pickBrickCount(tier)` (`lib/lego/quality.ts`), cuyo rango está
+  hardcodeado a `BRICK_COUNT_RANGE = { full: [80,120], reduced: [30,40] }`
+  con `Math.round(min + rng()*(max-min))` — no hay ninguna otra ruta de
+  llamada ni ningún `n` fuera de esos dos rangos enteros en la app real. No
+  encontré ningún caller adicional ni ninguna forma de que `n` llegue
+  fraccionario o fuera de rango.
+
+No encontré ningún bug sutil adicional en esta lógica.
+
+## Punto 2 — Tests corridos yo mismo
+
+- `npx vitest run lib/lego/layout.test.ts` → **35/35 tests verdes**,
+  incluyendo los 2 tests nuevos de rango completo
+  (`n=30..40` y `n=80..120`, `spread<=1 && fill>=0.75` para cada entero).
+- Script standalone (`/tmp/.../scratchpad/check_grid.mjs`, reimplementación
+  literal del algoritmo de `layout.ts`) iterando `n` de 3 a 150 (más amplio
+  que los rangos reales de la app, a propósito):
+  - `n=81 → dims=[4,5,5], spread=1, fill=0.810` — coincide exactamente con
+    lo que reportó el `implementer`.
+  - **`worstSpread` en todo el rango 3-150 = 1** (no solo dentro de los
+    tiers) — no encontré ningún caso degenerado ni siquiera fuera del
+    rango que la app usa.
+  - El único fill bajo notable fuera de los tiers es `n=3` (fill=0.111,
+    caja mínima `3×3×3=27`), esperable y sin relevancia — la app nunca
+    llama con `n<30`.
+  - Script adicional (`check_cap.mjs`) confirmó que para `n` de 3 a 500 el
+    cap=1 siempre alcanza en el primer intento (498/498 casos), sin
+    necesidad de relajar el cap — no hay riesgo de no-convergencia dentro
+    de ningún rango razonable.
+- `npm run verify` completo (lint + build + 86 tests vitest +
+  check-sdd-state) — **verde**, corrido yo mismo desde cero.
+
+## Punto 3 — Verificación con navegador real (por mi cuenta, no reutilicé nada del `implementer`)
+
+Levanté `npm run dev` con `PIN`/`JWT_SECRET` locales al proceso (no
+committeados), usé Chromium+Playwright preinstalados
+(`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`,
+`/opt/node22/lib/node_modules/playwright`), inicié sesión vía el PIN gate,
+y forcé tier `full` + `n=81` con `page.addInitScript` (
+`navigator.hardwareConcurrency=16`, `navigator.deviceMemory=16`,
+`Math.random=()=>0.025` → `pickBrickCount("full")=round(80+0.025*40)=81`
+exacto). Confirmé por `page.evaluate` que los valores forzados
+efectivamente tomaron.
+
+- A la cámara por defecto (`CAMERA_RADIUS=11`), el cubo ensamblado se ve
+  sólido, sin piezas superpuestas, mismo encuadre "producto" que en pasadas
+  anteriores confirmadas — sin regresión.
+- Para juzgar la silueta completa (el encuadre por defecto está demasiado
+  cerca para eso), bumpeé temporalmente `CAMERA_RADIUS`/`CAMERA_HEIGHT` en
+  **ambas** copias (`app/components/lego/scene.ts` y
+  `app/components/lego/timeline.ts`, de `11/3.4` a `24/7`), tomé
+  screenshots, y **revertí con `git checkout --`** antes de seguir —
+  confirmado con `git status --short`/`git diff --stat` (ambos vacíos)
+  después de revertir, así que no quedó ningún cambio transitorio sin
+  deshacer.
+- Con la cámara alejada, el `n=81` se ve como un **bloque rectangular
+  sólido y razonablemente cúbico** (visualmente compatible con `[4,5,5]`:
+  ancho y profundidad similares, algo menos alto) — nada parecido a la losa
+  alargada `[3,4,7]` del bug original. Screenshots:
+  `n81_full_pullback_1.png`, `n81_full_pullback_2.png` (no committeados,
+  scratchpad).
+- Pasada de regresión rápida con ajustes naturales (sin forzar nada),
+  ~10s/45s/60s de narrativa: caja sólida, coloreada, sin huecos,
+  consistente con toda pasada previa confirmada — sin regresión general.
+  Screenshots: `regr_10s.png`, `regr_45s.png`, `regr_60s.png`.
+- No repetí `n=30` + `prefers-reduced-motion` (ya confirmado con evidencia
+  sólida en la pasada anterior, sin cambios en ese camino desde entonces).
+
+## Punto 4 — Diff entre commits (`0542a9c` bug 3 → `d80fc3c` bug 4)
+
+```
+git diff --stat 0542a9c d80fc3c
+ lib/lego/layout.test.ts                        |  34 ++++-
+ lib/lego/layout.ts                             |  61 +++++---
+ progress/current.md                            | 178 ++++++++--------------
+ progress/impl_project-hero-lego-animation.md   |  97 ++++++++++++
+ progress/review_project-hero-lego-animation.md | 200 +++++++++++++++++++++++++
+ 5 files changed, 428 insertions(+), 142 deletions(-)
+```
+
+`git diff --stat 0542a9c d80fc3c -- app/components/lego/scene.ts
+app/components/lego/timeline.ts` → **vacío**. Confirmado: ningún cambio
+transitorio de `scene.ts`/`timeline.ts` quedó sin revertir en el commit —
+coincide exactamente con lo que dijo el `implementer`.
+
+## Punto 5 — `npm run verify`
+
+Corrido yo mismo, de forma independiente, desde un working tree limpio:
+`lint` OK, `build` OK (`✓ Compiled successfully`, 26 rutas generadas),
+`test` OK (**86/86 tests, 7 archivos**), `check-sdd-state` OK (una sola
+feature activa, specs consistentes). Verde de punta a punta.
+
+## Conclusión
+
+Los 6 checkpoints de "Before `in_review`" pasan. El bug 4 reportado por mí
+mismo en la pasada anterior (cajas alargadas para ~54% del rango `n` del
+tier `full`) está corregido de raíz (filtro duro, no desempate), verificado
+por: lectura de código, 35 tests de Vitest (incluyendo cobertura de rango
+completo en ambos tiers, corridos por mí), un script standalone
+independiente que reimplementa el algoritmo y no encuentra ningún caso
+degenerado ni siquiera en un rango mucho más amplio que el que usa la app
+(`n` 3-150, y control de convergencia hasta `n=500`), y verificación visual
+propia con navegador real para el caso concreto `n=81` que motivó el
+rechazo anterior. No quedó ningún cambio transitorio sin revertir en
+`scene.ts`/`timeline.ts`. `npm run verify` verde de punta a punta, corrido
+por mí.
+
+**La feature queda técnicamente completa.** El único punto pendiente es el
+trade-off de tamaño de pieza único (`"2x2"` en vez de variedad) — ya
+marcado como decisión pendiente del usuario en pasadas anteriores, no algo
+que el `reviewer` deba resolver; no se reevalúa en esta pasada por no haber
+cambiado nada al respecto.
+
+No cambio `feature_list.json` — reporto el veredicto (**APROBADO**) al
+`leader` para que mueva la feature a `done`.
