@@ -1,21 +1,19 @@
 # Current session state
 
 - **Feature:** project-hero-lego-animation
-- **Status:** in_progress (implementer finished, awaiting leader to move to
-  in_review and invoke reviewer)
+- **Status:** in_review
 - **Started:** 2026-08-06
-- **Role active:** implementer — done. All 9 sections of
-  `specs/project-hero-lego-animation/tasks.md` checked off.
-  `npm run verify` green (lint/build/67 Vitest tests/check-sdd-state).
-  Full detail, deviations, and requirement-by-requirement verification in
-  `progress/impl_project-hero-lego-animation.md` — **read the "Environment
-  limitation" section at the top first**: this sandbox has no browser/
-  display, so WebGL rendering, animation pacing/feel, and `OrbitControls`
-  interaction were verified by code review + Vitest + `npm run build`, not
-  by looking at it in an actual browser. A real-browser pass at
-  `localhost:3000` is still recommended before this goes further.
-- **Next step:** leader reviews the report, moves status to `in_review`,
-  invokes reviewer.
+- **Role active:** reviewer (just invoked)
+- **Next step:** implementer finished all 9 sections of tasks.md,
+  `npm run verify` green, committed/pushed to `origin/dev` (`a4f7e32`).
+  reviewer is now validating independently against `CHECKPOINTS.md` and
+  requirement traceability — pay special attention to the "Environment
+  limitation" flagged in `progress/impl_project-hero-lego-animation.md`
+  (no browser/display in this sandbox; WebGL rendering/animation feel was
+  verified by code review only, not visually) and confirm whether that's
+  acceptable to reach `done`, or whether it should stay open pending a
+  real-browser QA pass. Once reviewer reports: set status to `done` (or
+  back to `in_progress` if findings require a fix).
 
 ## Resumen para quien apruebe
 
