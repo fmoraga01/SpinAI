@@ -14,6 +14,14 @@ Entry format:
 - Merged to dev: <date/commit> · Promoted to main: <date/commit, or "pending">
 ```
 
+## project-hero-lego-animation — done 2026-08-06 (segunda vez, tras reapertura por 4 bugs visuales)
+
+- Ver la entrada anterior de este mismo feature-id más abajo para el resumen original de la feature (no editada, registro histórico de la primera vez que llegó a `done`).
+- Qué pasó: el usuario probó la implementación real y reportó "se ve mal la implementacion". La sesión que la había aprobado no tenía navegador/GPU disponible y validó todo por lectura de código; en la sesión de reapertura sí fue posible levantar Chromium real (Playwright preinstalado) y autenticar contra el `PinGate` con un PIN de prueba efímero solo-local (nunca commiteado). Eso permitió encontrar y corregir 4 bugs reales en 4 pasadas de implementer+reviewer independientes: (1) studs de LEGO faltantes en todas las piezas (mergeGeometries fallaba por mezcla de geometría indexada/no-indexada); (2) cubo final con piezas masivamente superpuestas (CELL_UNIT uniforme no acomodaba huellas de pieza variables — resuelto unificando todas las piezas a tamaño 2x2, con la variedad de tamaños original perdida como trade-off pendiente de decisión del usuario); (3) cubo fragmentado/con huecos en la cantidad baja de piezas, sobre todo visible en `prefers-reduced-motion` (accesibilidad obligatoria); (4) un caso de borde donde el algoritmo de la grilla degeneraba en cajas alargadas para más de la mitad del rango normal de piezas.
+- Cada bug se corrigió y se verificó con navegador real (no solo lectura de código) antes de que `reviewer` lo aprobara en una pasada separada — 4 ciclos completos de implementer→reviewer en la misma sesión.
+- Merged to dev: commits `3758211`, `f3a9c47`, `0542a9c`, `d80fc3c` (los 4 fixes) · Promoted to main: pending.
+- Pendiente de decisión del usuario (no técnico): aceptar el tamaño de pieza único (`"2x2"`) o pedir una versión con variedad de tamaños preservada.
+
 ## project-hero-lego-animation — done 2026-08-06
 
 - Requirements: R1–R21, see specs/project-hero-lego-animation/requirements.md
