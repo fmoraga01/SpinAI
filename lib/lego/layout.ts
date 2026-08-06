@@ -87,8 +87,36 @@ export function generateFloatingPositions(n: number, seed = 1): Vector3Tuple[] {
 
 // ── Cube (final) positions (R7 grouping) ───────────────────────────────────
 
-/** World-space spacing between adjacent grid cells of the assembled cube. */
-const CELL_UNIT = 1.3;
+/**
+ * World-space spacing between adjacent grid cells of the assembled cube.
+ *
+ * **Bugfix (post-`done` reopen, see progress/impl_project-hero-lego-animation.md
+ * for the dated section with the full writeup):** this used to be a single
+ * `CELL_UNIT = 1.3` shared by all 3 axes, sized independently of the actual
+ * brick footprint being placed. `pickBrickSize()` in
+ * `app/components/lego/bricks.ts` picked a footprint per cell (up to `2x4` =
+ * 4 studs * 0.8 = 3.2 world units wide) with no awareness of how far apart
+ * neighboring cells were — every brick bigger than the cell spacing invaded
+ * its neighbors, so the assembled cube rendered as a pile of overlapping
+ * pieces instead of a clean cube with small, even gaps (R15).
+ *
+ * Fix: `pickBrickSize()` now always returns the single canonical `"2x2"`
+ * footprint for every cube-assigned piece (see that function's own comment
+ * for why), so grid spacing only has to fit *one* known footprint instead of
+ * an unbounded mix. Horizontal (X/Z) and vertical (Y) spacing are still kept
+ * as two separate constants — not because footprint varies anymore, but
+ * because the `2x2` brick's footprint (1.6 world units) and height (0.6
+ * world units) are themselves different, and a single spacing value sized
+ * for one of them would leave the other axis either overlapping or full of
+ * gaps much bigger than the rest. These numbers must stay numerically in
+ * sync with `BRICK_SIZE_DEFS["2x2"]` / `STUD_UNIT` in
+ * `app/components/lego/bricks.ts` if that canonical size ever changes.
+ */
+const BRICK_GAP = 0.12;
+/** `BRICK_SIZE_DEFS["2x2"]` footprint: 2 studs * STUD_UNIT (0.8) = 1.6. */
+const CELL_UNIT_XZ = 1.6 + BRICK_GAP;
+/** `BRICK_SIZE_DEFS["2x2"]` height: 0.6. */
+const CELL_UNIT_Y = 0.6 + BRICK_GAP;
 
 interface GridCell {
   position: Vector3Tuple;
@@ -105,9 +133,9 @@ function buildFullGrid(k: number): GridCell[] {
         const extremeCount = [x, y, z].filter((c) => c === 0 || c === k - 1).length;
         cells.push({
           position: [
-            (x - center) * CELL_UNIT,
-            (y - center) * CELL_UNIT,
-            (z - center) * CELL_UNIT,
+            (x - center) * CELL_UNIT_XZ,
+            (y - center) * CELL_UNIT_Y,
+            (z - center) * CELL_UNIT_XZ,
           ],
           coords: [x, y, z],
           extremeCount,

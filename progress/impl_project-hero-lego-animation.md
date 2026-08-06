@@ -314,6 +314,166 @@ actually fires meaningfully.
 
 Full `npm run verify` run green end-to-end at implementation time.
 
+## Post-`done` bugfixes (2026-08-06 reapertura — real browser QA found genuine bugs)
+
+The feature reached `done` on 2026-08-06, but that pass had **no browser/GPU
+in the sandbox** (see "Environment limitation" above) — all visual
+requirements were verified by code reading only. The user tried the real
+implementation and reported "se ve mal la implementacion". A later session in
+this same environment discovered Chromium + Playwright *are* actually
+available here (see "How QA was done" below) and used them to diagnose real
+bugs with real screenshots, which the original `done` pass could not do.
+Two bugs were found; this section documents both fixes (the original
+sections above are left untouched, per AGENTS.md, since they're what was
+actually implemented in the first pass).
+
+### Bug 1 — studs missing from every brick (fixed, commit `3758211`)
+
+`buildBrickGeometry()` in `app/components/lego/bricks.ts`:
+`THREE.BufferGeometryUtils.mergeGeometries()` failed on **every** brick
+(confirmed via a real browser `console.error`:
+`"All geometries must have compatible attributes; make sure index attribute
+exists among all geometries, or in none of them"`). Root cause:
+`RoundedBoxGeometry` builds itself non-indexed (`this.index = null`,
+confirmed by reading its source in
+`node_modules/three/examples/jsm/geometries/RoundedBoxGeometry.js`), while
+the stud `CylinderGeometry`s are indexed by default — `mergeGeometries`
+requires every input to agree on indexed/non-indexed, so the merge silently
+failed and the `if (!merged) return body` fallback rendered every brick as a
+bare box with no studs. Fixed by calling `.toNonIndexed()` on the body (if
+indexed) and on every stud before merging. Verified visually: studs are
+present on every brick in every screenshot below.
+
+### Bug 2 — assembled cube looked like an overlapping pile, not a cube (this session's task)
+
+**Root cause**: `buildFullGrid()` in `lib/lego/layout.ts` used a single
+`CELL_UNIT = 1.3` for X/Y/Z grid spacing, entirely independent of the
+footprint of the brick actually assigned to a cell. `pickBrickSize()` in
+`app/components/lego/bricks.ts` picked footprints up to `2x4` (4 studs *
+`STUD_UNIT` 0.8 = 3.2 world units wide) with no awareness of the 1.3-unit
+cell spacing or of what size its neighbors got — large pieces routinely
+invaded their neighbors' cells. Confirmed with a real "before" screenshot
+(`shots/before_normal_60s.png` in this session's scratchpad, reproduced by
+`git stash`-ing the fix and re-screenshotting against the exact same running
+dev server): the assembled shape is a staircase-like mass of overlapping
+bricks, not a cube, matching the bug report exactly.
+
+**Approaches considered** (see `progress/current.md`'s reopening note for
+the original framing of these two options):
+
+1. Non-uniform per-axis cell spacing only (keep the existing weighted brick
+   size mix) — rejected on its own: footprint variance is still per-cell and
+   independent of neighbor spacing, so *some* fixed spacing would either
+   overlap the largest pieces or leave huge, visually inconsistent gaps
+   around the smallest ones (`plate1x1` is 0.8 wide vs. `2x4`'s 3.2) —
+   directly contradicts the "gaps chicos y parejos" requirement, not just
+   the "no overlap" one.
+2. Fix the footprint used by every cube-assigned piece to one canonical
+   brick size — chosen. Simpler, and the only option that can satisfy both
+   "no overlap" *and* "small, even gaps" at once, since gap consistency
+   requires every piece to occupy the same fraction of its cell.
+
+**Fix implemented** (combines both directions in the end, once the
+footprint was fixed to a single canonical size — see below for why both
+were still necessary):
+
+- `pickBrickSize()` (`app/components/lego/bricks.ts`) now always returns
+  `"2x2"` for every piece, regardless of `layer`/`rng` (both parameters kept
+  in the signature, `void`-referenced, so the call site and future
+  restoration of variety don't require a signature change). This sacrifices
+  the layer-2 "large `2x4` blocks for structural mass" visual variety
+  design.md described, and the `1x2`/`2x4`/`plate1x1` mix in general — a
+  documented, deliberate trade-off: a piece's geometry/size is fixed for its
+  whole lifetime (it's the same `InstancedMesh` instance floating *and*
+  assembled), so there is no way to have footprint variety during the
+  floating cloud without also having it in the assembled cube, and footprint
+  variety in the assembled cube is exactly what caused the bug.
+- `lib/lego/layout.ts`'s `buildFullGrid()` now uses **two** spacing
+  constants instead of one, because even with a single canonical brick size
+  its footprint (1.6 world units, X/Z) and height (0.6, Y) are themselves
+  different: `CELL_UNIT_XZ = 1.6 + 0.12 = 1.72` (horizontal spacing) and
+  `CELL_UNIT_Y = 0.6 + 0.12 = 0.72` (vertical spacing) — `0.12` is the fixed
+  gap. Reusing one constant for all 3 axes (even sized correctly for the
+  footprint) would have left huge vertical gaps between rows relative to the
+  small horizontal gaps between columns, which would have looked just as
+  broken as the original bug, only vertically instead of via overlap. Both
+  constants are commented as needing to stay numerically in sync with
+  `BRICK_SIZE_DEFS["2x2"]`/`STUD_UNIT` in `bricks.ts` if that canonical size
+  ever changes.
+
+**New regression test**: `lib/lego/layout.test.ts` gained an
+`it.each([80, 100, 120, 30, 40])` case ("never overlaps the axis-aligned
+bounding box of any two assigned pieces") that computes the real AABB (using
+the `2x2` half-extents) of every pair of cells `generateCubePositions()`
+returns and asserts none overlap, for every `n` in both quality tiers. This
+is what the acceptance criteria in `progress/current.md` asked for as
+optional Vitest coverage on top of the mandatory screenshot check — it
+guards the *logic* (would have caught the original bug), but it cannot by
+itself prove what a human eye sees, hence the screenshots below.
+
+**Real-browser QA (mandatory per the reopening instructions, not
+optional)**: Chromium + Playwright *are* available in this sandbox — the
+2026-08-06 `done` pass's "no browser available" conclusion was wrong, not a
+permanent environment limitation (see "How QA was done" below for exact
+mechanics, since this contradicts the note at the top of this file and is
+worth a maintainer knowing next time).
+
+- **Before** (`git stash` applied to revert this fix, same running dev
+  server, same code otherwise): `shots/before_normal_30s.png`,
+  `_45s.png`, `_60s.png` — reproduces the reported bug exactly: an
+  overlapping, staircase-like mass, not a cube, consistent across all 3
+  timestamps (already settled, not still animating).
+- **After** (fix applied, `git stash pop`, same dev server, waited for
+  Turbopack HMR to recompile): `shots/after_normal_30s.png`, `_45s.png`,
+  `_60s.png` — a clearly recognizable cube-shaped grid of uniform bricks,
+  small even gaps visible between every piece, studs visible on top of each
+  piece, no overlap anywhere, all 3 timestamps visually identical (settled).
+  `shots/after_desktop_canvas_60s.png` intended as a canvas-only crop but
+  that particular run hit the shell tool's timeout mid-wait — the full-page
+  `after_normal_*` shots above already give the required evidence, so this
+  wasn't re-run.
+- **`prefers-reduced-motion`** (same `generateCubePositions()`, places
+  pieces directly in final position, no narrative):
+  `shots/after_reduced-motion_8s.png`,
+  `shots/after_reducedmotion_canvas_5s.png` (canvas-only crop) — same clean
+  non-overlapping grid, confirms the fix benefits this code path too since
+  it shares the same layout function.
+- **Mobile/reduced tier** (390px viewport, triggers `getQualityTier() ===
+  "reduced"`, fewer pieces, `k=4` grid, but the **same full narrative**, not
+  a shortened one — R19): initial `shots/after_mobile_8s.png` used too
+  short a wait (mistakenly assumed the reduced tier also meant a shorter
+  narrative; R19 explicitly keeps the same narrative duration, just fewer
+  pieces) and only shows scene mid-assembly. Corrected with canvas-only
+  crops at `shots/after_mobile_canvas_25s.png` and
+  `shots/after_mobile_canvas_35s.png` (both after the full ~25s+ narrative
+  duration) — visually identical between the two timestamps (settled),
+  clean non-overlapping grid with the same small gaps, confirming the
+  mobile/reduced tier also assembles a clean cube, not just "fewer
+  overlapping pieces".
+
+All screenshots referenced above live under this session's scratchpad
+directory (not committed — throwaway QA evidence, per the instruction to
+keep them under the working directory as evidence rather than in the repo).
+
+### How QA was done (correction to "Environment limitation" above)
+
+Chromium + Playwright are preinstalled in this sandbox
+(`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`) but not as an npm dependency
+of this project — imported by absolute path via CommonJS `require("/opt/
+node22/lib/node_modules/playwright")` (ESM `import` does not resolve this
+path). Chromium executable:
+`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, launched with
+`args: ["--no-sandbox", "--use-gl=swiftshader", "--enable-webgl",
+"--ignore-gpu-blocklist"]` for software-rendered WebGL. The site's
+`PinGate` was bypassed for QA only by starting `npm run dev` with
+process-local `PIN`/`JWT_SECRET` env vars (never written to `.env` or
+committed) and having Playwright fill `input[type="password"]` + click
+"Entrar". A stale `next-server` process from an earlier session in this same
+long-lived sandbox was still holding port 3000 (`ps -ef` showed it, `ss`/
+`lsof` oddly didn't — killed by explicit PID, not by relying on the `npm
+run dev` wrapper's own `kill`) before a fresh dev server could bind port
+3000 cleanly; worth remembering for the next session in this environment.
+
 ## Regression check (task 9.4)
 
 `app/state-of-ai/page.tsx` still imports `AnimatedGrid` from

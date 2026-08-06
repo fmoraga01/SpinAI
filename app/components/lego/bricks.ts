@@ -53,21 +53,33 @@ export function pickBrickColor(rng: () => number): ColorName {
   return pickWeighted(COLOR_PALETTE, rng).name;
 }
 
-/** Layer 2 ("bloques estructurales grandes") is deliberately biased toward
- * the largest footprint (`2x4`) for visual "mass" — see design.md. Other
- * layers get a general mix, weighted toward mid-size pieces. */
-export function pickBrickSize(rng: () => number, layer: CubeCell["layer"]): BrickSizeId {
-  const weights: [BrickSizeId, number][] =
-    layer === 2
-      ? [["2x4", 70], ["2x2", 25], ["1x2", 5], ["plate1x1", 0]]
-      : [["2x2", 40], ["1x2", 25], ["2x4", 20], ["plate1x1", 15]];
-  const total = weights.reduce((s, [, w]) => s + w, 0);
-  let roll = rng() * total;
-  for (const [id, w] of weights) {
-    roll -= w;
-    if (roll <= 0) return id;
-  }
-  return weights[0][0];
+/**
+ * All cube-assigned pieces now use a single canonical footprint (`"2x2"`).
+ *
+ * **Bugfix (post-`done` reopen — see progress/impl_project-hero-lego-animation.md,
+ * dated bugfix section, for the full writeup and the visual evidence).**
+ * This originally picked per-layer weighted mix of `2x2`/`2x4`/`1x2`/
+ * `plate1x1` (layer 2 biased 70% toward `2x4` for visual "mass" — see
+ * design.md), but `generateCubePositions()` in `lib/lego/layout.ts` places
+ * pieces on a uniform grid with no awareness of which footprint a given
+ * cell would end up with — a `2x4` (3.2 world units wide) assigned next to
+ * a `plate1x1` (0.8 wide) neighbor massively overlapped it, and the
+ * assembled cube looked like a pile of overlapping pieces instead of a
+ * clean cube with small, even gaps (R15). Forcing every piece to the same
+ * footprint lets `layout.ts` use a single, correct grid spacing (see its
+ * `CELL_UNIT_XZ`/`CELL_UNIT_Y` comment) and guarantees no two neighboring
+ * pieces can overlap, at the documented cost of losing the layer-2
+ * "large block" visual variety and the `1x2`/`2x4`/`plate1x1` mix during
+ * the floating cloud (a piece's geometry/size is fixed for its whole
+ * lifetime — it can't be one size while floating and another once
+ * assembled). `rng`/`layer` are kept as parameters (unused for now) so the
+ * call site and function signature don't need to change if per-layer
+ * variety is reintroduced later behind a size-aware grid.
+ */
+export function pickBrickSize(_rng: () => number, _layer: CubeCell["layer"]): BrickSizeId {
+  void _rng;
+  void _layer;
+  return "2x2";
 }
 
 /**

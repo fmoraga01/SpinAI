@@ -82,6 +82,39 @@ describe("generateCubePositions", () => {
     const first = dists[0];
     for (const d of dists) expect(d).toBeCloseTo(first, 6);
   });
+
+  // Bugfix regression (post-`done` reopen — see
+  // progress/impl_project-hero-lego-animation.md, dated bugfix section): the
+  // assembled cube used to render as a pile of overlapping pieces because
+  // grid spacing (`CELL_UNIT`) was independent of the footprint actually
+  // assigned to each cell. Every cube-assigned piece is now a fixed `"2x2"`
+  // brick (`app/components/lego/bricks.ts`'s `pickBrickSize`): footprint
+  // 1.6 x 1.6 world units (X/Z), height 0.6 (Y) — these half-extents must
+  // stay in sync with `BRICK_SIZE_DEFS["2x2"]` / `STUD_UNIT` there. This
+  // test asserts the real axis-aligned bounding boxes of every pair of
+  // assigned cells never overlap, which is what an eyeballed screenshot
+  // can't prove on its own for every one of the ~100 pieces.
+  it.each([80, 100, 120, 30, 40])(
+    "never overlaps the axis-aligned bounding box of any two assigned pieces (n=%i)",
+    (n) => {
+      const halfX = 0.8;
+      const halfY = 0.3;
+      const halfZ = 0.8;
+      const epsilon = 1e-9;
+      const cells = generateCubePositions(n);
+      for (let i = 0; i < cells.length; i++) {
+        for (let j = i + 1; j < cells.length; j++) {
+          const [ax, ay, az] = cells[i].position;
+          const [bx, by, bz] = cells[j].position;
+          const overlapsX = Math.abs(ax - bx) < 2 * halfX - epsilon;
+          const overlapsY = Math.abs(ay - by) < 2 * halfY - epsilon;
+          const overlapsZ = Math.abs(az - bz) < 2 * halfZ - epsilon;
+          const overlaps = overlapsX && overlapsY && overlapsZ;
+          expect(overlaps).toBe(false);
+        }
+      }
+    }
+  );
 });
 
 describe("selectFinalLockCorners", () => {
