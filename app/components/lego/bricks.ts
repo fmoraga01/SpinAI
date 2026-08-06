@@ -1,0 +1,224 @@
+// LEGO-brick geometry, materials and InstancedMesh construction — see
+// design.md "InstancedMesh — bricks.ts". Imports `three` directly (unlike
+// `lib/lego/*`, which stays framework-agnostic).
+import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import type { CubeCell, Vector3Tuple } from "@/lib/lego/layout";
+import type { QualityTier } from "@/lib/lego/quality";
+
+export type BrickSizeId = "2x2" | "2x4" | "1x2" | "plate1x1";
+export type ColorName = "white" | "lightGray" | "darkGray" | "blue" | "yellow";
+
+const STUD_UNIT = 0.8; // world-space size of one "stud" footprint cell
+const STUD_RADIUS = 0.16;
+const STUD_HEIGHT = 0.12;
+const STUD_SEGMENTS = 10; // 8-12 per design.md, low-res is enough at this scale
+const BEVEL_SEGMENTS = 2; // low, per design.md — LEGO bevels are subtle
+
+interface BrickSizeDef {
+  studsX: number;
+  studsZ: number;
+  height: number;
+}
+
+export const BRICK_SIZE_DEFS: Record<BrickSizeId, BrickSizeDef> = {
+  "2x2": { studsX: 2, studsZ: 2, height: 0.6 },
+  "2x4": { studsX: 4, studsZ: 2, height: 0.6 },
+  "1x2": { studsX: 2, studsZ: 1, height: 0.6 },
+  plate1x1: { studsX: 1, studsZ: 1, height: 0.22 },
+};
+
+/** R16: white/light-gray/dark-gray dominate, blue (`--color-primary`) and
+ * yellow are a deliberate low-volume, high-contrast accent. */
+export const COLOR_PALETTE: { name: ColorName; hex: number; weight: number }[] = [
+  { name: "white", hex: 0xf4f5f7, weight: 65 },
+  { name: "lightGray", hex: 0xb9bec9, weight: 20 },
+  { name: "darkGray", hex: 0x3d4150, weight: 5 },
+  { name: "blue", hex: 0x2c40ff, weight: 8 }, // var(--color-primary)
+  { name: "yellow", hex: 0xffc93c, weight: 2 },
+];
+
+function pickWeighted<T extends { weight: number }>(items: T[], rng: () => number): T {
+  const total = items.reduce((sum, item) => sum + item.weight, 0);
+  let roll = rng() * total;
+  for (const item of items) {
+    roll -= item.weight;
+    if (roll <= 0) return item;
+  }
+  return items[items.length - 1];
+}
+
+export function pickBrickColor(rng: () => number): ColorName {
+  return pickWeighted(COLOR_PALETTE, rng).name;
+}
+
+/** Layer 2 ("bloques estructurales grandes") is deliberately biased toward
+ * the largest footprint (`2x4`) for visual "mass" — see design.md. Other
+ * layers get a general mix, weighted toward mid-size pieces. */
+export function pickBrickSize(rng: () => number, layer: CubeCell["layer"]): BrickSizeId {
+  const weights: [BrickSizeId, number][] =
+    layer === 2
+      ? [["2x4", 70], ["2x2", 25], ["1x2", 5], ["plate1x1", 0]]
+      : [["2x2", 40], ["1x2", 25], ["2x4", 20], ["plate1x1", 15]];
+  const total = weights.reduce((s, [, w]) => s + w, 0);
+  let roll = rng() * total;
+  for (const [id, w] of weights) {
+    roll -= w;
+    if (roll <= 0) return id;
+  }
+  return weights[0][0];
+}
+
+/**
+ * Builds one merged `BufferGeometry` per brick size: a `RoundedBoxGeometry`
+ * body (real bevels, not a plain `BoxGeometry` — see design.md) plus a grid
+ * of low-poly `CylinderGeometry` studs on top, fused with
+ * `mergeGeometries` so each size stays a single geometry (required for
+ * `InstancedMesh`).
+ */
+export function buildBrickGeometry(sizeId: BrickSizeId): THREE.BufferGeometry {
+  const { studsX, studsZ, height } = BRICK_SIZE_DEFS[sizeId];
+  const width = studsX * STUD_UNIT;
+  const depth = studsZ * STUD_UNIT;
+  const bevelRadius = Math.min(0.08, Math.min(width, depth, height) * 0.12);
+
+  const body = new RoundedBoxGeometry(width, height, depth, BEVEL_SEGMENTS, bevelRadius);
+
+  const studGeometries: THREE.BufferGeometry[] = [];
+  for (let sx = 0; sx < studsX; sx++) {
+    for (let sz = 0; sz < studsZ; sz++) {
+      const stud = new THREE.CylinderGeometry(
+        STUD_RADIUS,
+        STUD_RADIUS,
+        STUD_HEIGHT,
+        STUD_SEGMENTS
+      );
+      const x = (sx - (studsX - 1) / 2) * STUD_UNIT;
+      const z = (sz - (studsZ - 1) / 2) * STUD_UNIT;
+      const y = height / 2 + STUD_HEIGHT / 2;
+      stud.translate(x, y, z);
+      studGeometries.push(stud);
+    }
+  }
+
+  const merged = mergeGeometries([body, ...studGeometries], false);
+  if (!merged) {
+    // mergeGeometries only returns null on incompatible attributes, which
+    // can't happen here (body + studs are both plain indexed geometries) —
+    // this branch exists only to satisfy the nullable return type.
+    return body;
+  }
+  return merged;
+}
+
+/**
+ * `roughness`/`clearcoat`/etc. are the definitive values from design.md
+ * ("Material" section), not a range — `tier === "reduced"` only turns off
+ * `clearcoat` (R19 cost reduction), it doesn't change the base look.
+ */
+export function createMaterialPalette(
+  tier: QualityTier
+): Map<ColorName, THREE.MeshPhysicalMaterial> {
+  const materials = new Map<ColorName, THREE.MeshPhysicalMaterial>();
+  for (const { name, hex } of COLOR_PALETTE) {
+    materials.set(
+      name,
+      new THREE.MeshPhysicalMaterial({
+        color: hex,
+        roughness: tier === "full" ? 0.3 : 0.45,
+        metalness: 0,
+        clearcoat: tier === "full" ? 0.6 : 0,
+        clearcoatRoughness: 0.15,
+        envMapIntensity: 1,
+      })
+    );
+  }
+  return materials;
+}
+
+export interface BrickAssignment {
+  size: BrickSizeId;
+  color: ColorName;
+  layer: CubeCell["layer"];
+  floatingPosition: Vector3Tuple;
+  cubePosition: Vector3Tuple;
+  isFinalLockCorner: boolean;
+}
+
+/** Pairs each floating position with its assembled cube destination, and
+ * assigns a (size, color) per piece. `floatingPositions.length` must equal
+ * `cubeCells.length` (both derived from the same `n`). */
+export function buildBrickAssignments(
+  cubeCells: CubeCell[],
+  floatingPositions: Vector3Tuple[],
+  finalLockCorners: Vector3Tuple[],
+  rng: () => number
+): BrickAssignment[] {
+  const finalLockKeys = new Set(finalLockCorners.map((p) => p.join(",")));
+  return cubeCells.map((cell, i) => ({
+    size: pickBrickSize(rng, cell.layer),
+    color: pickBrickColor(rng),
+    layer: cell.layer,
+    floatingPosition: floatingPositions[i % floatingPositions.length],
+    cubePosition: cell.position,
+    isFinalLockCorner: finalLockKeys.has(cell.position.join(",")),
+  }));
+}
+
+export interface PieceRef {
+  mesh: THREE.InstancedMesh;
+  index: number;
+  assignment: BrickAssignment;
+}
+
+/** Groups assignments by (size, color) into one `InstancedMesh` per
+ * combination (up to 20, not 1 draw call per piece — see design.md). */
+export function buildInstancedMeshes(
+  assignments: BrickAssignment[],
+  materials: Map<ColorName, THREE.MeshPhysicalMaterial>,
+  tier: QualityTier
+): { meshes: THREE.InstancedMesh[]; pieces: PieceRef[] } {
+  const geometryCache = new Map<BrickSizeId, THREE.BufferGeometry>();
+  const getGeometry = (size: BrickSizeId) => {
+    let geom = geometryCache.get(size);
+    if (!geom) {
+      geom = buildBrickGeometry(size);
+      geometryCache.set(size, geom);
+    }
+    return geom;
+  };
+
+  const groups = new Map<string, BrickAssignment[]>();
+  for (const a of assignments) {
+    const key = `${a.size}:${a.color}`;
+    const group = groups.get(key);
+    if (group) group.push(a);
+    else groups.set(key, [a]);
+  }
+
+  const meshes: THREE.InstancedMesh[] = [];
+  const pieces: PieceRef[] = [];
+  const matrix = new THREE.Matrix4();
+
+  for (const [key, group] of groups) {
+    const [size, color] = key.split(":") as [BrickSizeId, ColorName];
+    const material = materials.get(color)!;
+    const mesh = new THREE.InstancedMesh(getGeometry(size), material, group.length);
+    mesh.castShadow = tier === "full";
+    mesh.receiveShadow = tier === "full";
+    group.forEach((assignment, index) => {
+      matrix.compose(
+        new THREE.Vector3(...assignment.floatingPosition),
+        new THREE.Quaternion(),
+        new THREE.Vector3(1, 1, 1)
+      );
+      mesh.setMatrixAt(index, matrix);
+      pieces.push({ mesh, index, assignment });
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    meshes.push(mesh);
+  }
+
+  return { meshes, pieces };
+}

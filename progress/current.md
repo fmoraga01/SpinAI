@@ -1,13 +1,21 @@
 # Current session state
 
 - **Feature:** project-hero-lego-animation
-- **Status:** in_progress
+- **Status:** in_progress (implementer finished, awaiting leader to move to
+  in_review and invoke reviewer)
 - **Started:** 2026-08-06
-- **Role active:** implementer (just invoked)
-- **Next step:** human approved the revised spec ("ok, vamos con la
-  implementacion") on 2026-08-06. implementer is executing
-  specs/project-hero-lego-animation/tasks.md top to bottom (9 sections).
-  Once it finishes: move to in_review and invoke reviewer.
+- **Role active:** implementer — done. All 9 sections of
+  `specs/project-hero-lego-animation/tasks.md` checked off.
+  `npm run verify` green (lint/build/67 Vitest tests/check-sdd-state).
+  Full detail, deviations, and requirement-by-requirement verification in
+  `progress/impl_project-hero-lego-animation.md` — **read the "Environment
+  limitation" section at the top first**: this sandbox has no browser/
+  display, so WebGL rendering, animation pacing/feel, and `OrbitControls`
+  interaction were verified by code review + Vitest + `npm run build`, not
+  by looking at it in an actual browser. A real-browser pass at
+  `localhost:3000` is still recommended before this goes further.
+- **Next step:** leader reviews the report, moves status to `in_review`,
+  invokes reviewer.
 
 ## Resumen para quien apruebe
 
