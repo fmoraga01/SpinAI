@@ -1,64 +1,17 @@
 # Current session state
 
-- **Feature:** project-hero-lego-animation
-- **Status:** in_review
-- **Started:** 2026-08-06
-- **Role active:** reviewer (just invoked)
-- **Next step:** implementer finished all 9 sections of tasks.md,
-  `npm run verify` green, committed/pushed to `origin/dev` (`a4f7e32`).
-  reviewer is now validating independently against `CHECKPOINTS.md` and
-  requirement traceability — pay special attention to the "Environment
-  limitation" flagged in `progress/impl_project-hero-lego-animation.md`
-  (no browser/display in this sandbox; WebGL rendering/animation feel was
-  verified by code review only, not visually) and confirm whether that's
-  acceptable to reach `done`, or whether it should stay open pending a
-  real-browser QA pass. Once reviewer reports: set status to `done` (or
-  back to `in_progress` if findings require a fix).
+When `leader` starts a feature, this file gets replaced with:
 
-## Resumen para quien apruebe
+```markdown
+# Current session state
 
-Spec para reemplazar `<AnimatedGrid />` en `app/page.tsx` (hero de la home)
-por una escena 3D en Three.js de bloques LEGO que empiezan flotando
-desconectados y terminan ensamblándose en un cubo perfecto (metáfora de
-orden emergiendo de colaboración coordinada). Layout: texto existente
-(chip/headline/subtítulo/CTAs) a la izquierda, escena 3D a la derecha,
-responsive (apilado en mobile, breakpoint `md:` existente). `AnimatedGrid.tsx`
-no se toca — sigue en uso en `app/state-of-ai/page.tsx`.
+- **Feature:** <feature-id>
+- **Status:** in_progress | in_review
+- **Started:** YYYY-MM-DD
+- **Role active:** spec-author | implementer | reviewer
+- **Next step:** <what happens next and who does it>
+```
 
-**[2026-08-06] Revisión post primera lectura del usuario** — pidió dos
-ajustes antes de aprobar, ya aplicados a los tres documentos:
-
-1. **Una sola fase, no dos**: se eliminó el framing "Fase 1 / Fase 2
-   futura" de los tres archivos. Esta feature se implementa completa en
-   una sola pasada. Lo que estaba en el bucket "Fase 2" se resolvió así:
-   timing/easing de `timeline.ts` ya eran valores concretos (se aclaró que
-   SON la implementación final, no un borrador); materiales/reflejos se
-   comprometieron a valores definitivos (`RoundedBoxGeometry` para bevels
-   reales, `clearcoat: 0.6`/`clearcoatRoughness: 0.15` explícitos, no 0);
-   `RoomEnvironment` genérico (vs. HDRI custom) se reencuadró como
-   decisión técnica permanente y justificada, no un recorte temporal;
-   interactividad más allá de `OrbitControls` queda "fuera de alcance" a
-   secas (nunca estuvo pedida, no es una fase futura).
-2. **Fondo transparente, no "estudio claro contenido en el canvas"**: el
-   usuario reemplazó explícitamente esa parte del brief original. Nueva
-   decisión: `WebGLRenderer({ alpha: true })` +
-   `renderer.setClearColor(0x000000, 0)`, sin `scene.background` propio —
-   las piezas flotan directamente sobre `var(--color-bg)` (fondo oscuro
-   existente de la sección hero), sin ningún panel/marco claro. R3 de
-   `requirements.md` reescrito; `scene.environment` (reflejos PBR) no se
-   ve afectado, es independiente del clear color.
-
-Decisiones que se mantienen sin cambios:
-- Nuevas dependencias: `three` + `@types/three` + `gsap` (justificado:
-  primera vez que se necesita WebGL/3D real en el repo).
-- Narrativa completa de 3 escenas + Final Lock de 4 esquinas (clímax, no
-  opcional), `InstancedMesh`, splines Catmull-Rom.
-- Fallback mobile/gama baja: misma narrativa con menos piezas (30-40 vs
-  80-120) y sin efectos costosos, no imagen estática — criterio en
-  `quality.ts` (viewport <768px, `hardwareConcurrency`, `deviceMemory`).
-- `prefers-reduced-motion`: cubo ya ensamblado, estático, sin órbita
-  automática, `OrbitControls` habilitado de inmediato.
-
-Ver `specs/project-hero-lego-animation/requirements.md` (R1-R21) para el
-detalle completo. Sigue en `spec_ready`, esperando aprobación humana —
-`implementer` no ha sido invocado.
+This file always reflects the *single* active feature (see the one-feature-
+at-a-time rule in `docs/specs.md`). Once a feature reaches `done`, its entry
+is cleared from here and summarized in `progress/history.md`.

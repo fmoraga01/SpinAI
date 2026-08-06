@@ -14,6 +14,13 @@ Entry format:
 - Merged to dev: <date/commit> · Promoted to main: <date/commit, or "pending">
 ```
 
+## project-hero-lego-animation — done 2026-08-06
+
+- Requirements: R1–R21, see specs/project-hero-lego-animation/requirements.md
+- Summary: reemplaza `AnimatedGrid` (canvas 2D) en el hero de la home por una escena 3D cinemática en Three.js + GSAP — bloques tipo LEGO que empiezan flotando desconectados, reciben una "señal" que se propaga desde el centro, y se ensamblan en orden (núcleo → capas → estructural → caras → bordes → Final Lock de 4 esquinas) en un cubo perfecto, metáfora de orden emergiendo de colaboración coordinada. Layout: texto a la izquierda, escena a la derecha, responsive. Primera integración de WebGL/librería 3D del repo. Tras revisión del usuario sobre la primera versión de la spec: se colapsó a una sola fase completa (nada diferido) y el fondo del canvas quedó transparente (sobre el dark theme existente) en vez del panel de estudio claro que pedía el brief original. Respeta `prefers-reduced-motion` (cubo ya armado, estático) y tiene un tier reducido para mobile/gama baja (menos piezas, sin efectos costosos) — misma narrativa completa en ambos casos, nunca una imagen estática.
+- Merged to dev: 2026-08-06, commit a4f7e32 (implementación) · Promoted to main: pending
+- Nota: aprobado por reviewer con QA visual humana en navegador real todavía pendiente (sin browser/GPU en este sandbox) — ver nota completa en feature_list.json.
+
 ## project-detail-content-animation — done 2026-08-04
 
 - Requirements: R1–R10, see specs/project-detail-content-animation/requirements.md
