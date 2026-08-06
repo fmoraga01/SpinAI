@@ -98,6 +98,13 @@
       "created": "2026-08-04",
       "spec_dir": "specs/project-detail-content-animation/",
       "note": "reviewer aprobó de forma independiente (2026-08-04, progress/review_project-detail-content-animation.md): npm run verify corrido de forma independiente (no solo confiando en implementer), diff de 57b5c54 leído línea por línea contra design.md/tasks.md, R1-R10 con trazabilidad específica confirmada en progress/impl_project-detail-content-animation.md, cero cambios fuera de alcance (page.tsx/ProjectForm.tsx/AddUpdateForm.tsx/WeeklyUpdateFields.tsx intactos, hovers/edición inline/confirmación de borrado pre-existentes en ProjectTimeline.tsx sin cambios). Investigación UX/UI (NN/G, Material Design) citada en design.md valida los valores ya usados en las 4 features de animación previas (220ms, ease-in-out, stagger 30ms, cap 8) sin necesidad de un quinto set de números. Pendiente: QA visual humana end-to-end en navegador (abrir detalle de proyecto vacío y con varios avances, activar 'reducir movimiento' del sistema) — no ejercitable en este sandbox por falta de browser/GUI, mismo patrón que las 4 features de animación previas."
+    },
+    {
+      "id": "project-hero-lego-animation",
+      "title": "Reemplazar la animación del hero de la home por una escena 3D cinemática (Three.js) de bloques LEGO ensamblándose en un cubo — texto a la izquierda, escena a la derecha",
+      "status": "spec_ready",
+      "created": "2026-08-06",
+      "spec_dir": "specs/project-hero-lego-animation/"
     }
   ]
 }
