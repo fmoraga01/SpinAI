@@ -1027,3 +1027,236 @@ estándar que los bugs anteriores — no bloquea el pase a `done`.
 
 No cambio `feature_list.json` — reporto el veredicto (**APROBADO**) al
 `leader` para que mueva la feature a `done`.
+
+# Sexta pasada (2026-08-07) — verificación del fix de tamaño de canvas en retina/HiDPI (Bug 6, "la animación se sigue viendo fuera de su canvas, con una especie de zoom")
+
+**VEREDICTO: APROBADO**
+
+Contexto: el usuario probó la quinta pasada (fix de cámara, ya aprobado y
+movido a `done` por tercera vez) en su propio navegador real y mandó una
+**segunda** captura sobre el mismo síntoma reportado ("zoom"): esta vez con
+evidencia clara de que el `<canvas>` mismo — no solo el contenido dentro de
+él — quedaba recortado por el borde inferior/derecho de su contenedor en
+`spinai-dev.vercel.app`. `leader` diagnosticó con medición exacta (no una
+corazonada) y aplicó el fix directamente (commit `a068189`, sin pasar por
+`implementer` dado lo acotado del cambio: un solo booleano). Esta pasada
+verifica ese fix de forma independiente — sesión distinta de la que lo
+escribió, con navegador real propio simulando una pantalla retina
+(`deviceScaleFactor: 2`, la condición específica que ningún QA anterior de
+esta feature había probado), sin confiar en las capturas que `leader` ya
+había tomado y documentado en `progress/current.md`.
+
+## Checklist (`CHECKPOINTS.md` — "Before `in_review`")
+
+1. **Todas las tareas de `tasks.md` marcadas `[x]`** — PASA. Las 9 secciones
+   (0-9) siguen íntegramente `[x]`; esta pasada no agrega tareas nuevas (es
+   un bugfix post-`done`, no una nueva sección de spec).
+2. **`npm run lint` pasa** — PASA. Corrido por mí de forma independiente,
+   limpio, sin errores ni warnings.
+3. **`npm run build` pasa** — PASA. Corrido por mí de forma independiente:
+   `✓ Compiled successfully`, TypeScript sin errores, 26 rutas generadas
+   (incluida `/`), sin errores de SSR relacionados a `three`/`gsap`.
+4. **`progress/impl_project-hero-lego-animation.md` con entrada de
+   verificación para cada `R<n>`** — PASA (verifiqué con un grep de `R1`
+   hasta `R21`, los 21 aparecen). Sin cambios respecto a pasadas anteriores
+   ya confirmadas — esta pasada no agrega ni modifica ningún `R<n>` (el
+   tamaño CSS del canvas no tiene un `R<n>` propio y explícito en
+   `requirements.md`; es una precondición técnica implícita para que R1-R3,
+   R17, etc. se perciban correctamente, no un requisito nuevo). **Hallazgo
+   que se repite de la pasada anterior, esta vez sin corregir**: el detalle
+   completo del bug 6 (causa raíz, medición antes/después, verificación)
+   vive únicamente en `progress/current.md` — no tiene sección propia en
+   `impl_*.md`, igual que le pasó al bug 5 en la pasada anterior, donde
+   señalé exactamente esto como "no bloqueante" pero recomendé corregirlo
+   antes de cerrar sesión. Esta vez no se corrigió ni para el bug 5 (sigue
+   sin verificar si se trasladó — de hecho **sí** se trasladó: confirmé que
+   `impl_*.md` ahora tiene una sección `## Bug 5 (2026-08-06, 5th reopen)`
+   completa) ni se creó la sección equivalente para el bug 6 nuevo. El
+   checkpoint en sí sigue pasando (ningún `R<n>` queda sin entrada de
+   verificación), pero dado que esto es la segunda vez que señalo el mismo
+   patrón de documentación incompleta en esta misma feature, lo marco como
+   **hallazgo no bloqueante pero ahora explícito**: antes de cerrar esta
+   sesión, `leader` debe agregar una sección `## Bug 6` a
+   `impl_project-hero-lego-animation.md` con el contenido que hoy solo vive
+   en `progress/current.md` (que se vacía al cierre de sesión) — la causa
+   raíz y los números de la medición no deberían depender solo del mensaje
+   del commit y el comentario en código para sobrevivir a la sesión.
+5. **`design-check` si cambió `app/components/*.tsx`** — **N/A, correctamente
+   no aplica**. `git diff bba5a2b a068189` confirma que el único archivo de
+   código tocado es `app/components/lego/scene.ts` (un `.ts`, no un
+   `.tsx` bajo `app/components/*.tsx` en el sentido literal del checkpoint)
+   — ningún componente `.tsx` cambió en este pass, así que no corresponde
+   correr el skill.
+6. **`feature_list.json` con una sola feature activa** — PASA. Confirmado
+   por inspección directa (única entrada con `status: "in_review"`,
+   `project-hero-lego-animation`) y coherente con lo que ya reportó
+   `npm run check-sdd-state` en el punto 2 más abajo.
+
+## Revisión del diff real (`git diff bba5a2b a068189`)
+
+Confirmado — el cambio de código es exactamente lo que describe el reporte
+de `leader`, ni una línea más:
+
+```diff
+--- a/app/components/lego/scene.ts
++++ b/app/components/lego/scene.ts
+@@ -136,7 +136,21 @@ export function buildScene(container: HTMLElement, tier: QualityTier): SceneBundle
+     if (width <= 0 || height <= 0) return;
+     camera.aspect = width / height;
+     camera.updateProjectionMatrix();
+-    renderer.setSize(width, height, false);
++    // ...comentario explicando la causa raíz...
++    renderer.setSize(width, height, true);
+   }
+```
+
+`git diff --stat bba5a2b a068189` muestra solo 3 archivos: `scene.ts` (el
+fix), `feature_list.json` (cambio de estado de rutina), y
+`progress/current.md` (bitácora de la sesión) — nada de `lib/lego/layout.ts`,
+`timeline.ts`, `bricks.ts` ni `LegoHeroScene.tsx` fue tocado. Confirmo que
+los bugs 1-5 (commits `3758211`, `f3a9c47`, `0542a9c`, `d80fc3c`, `c37a42b`)
+quedan intactos — este pass no los revierte ni los modifica.
+
+## Verificación con navegador real, hecha por mí, simulando retina
+(`deviceScaleFactor: 2`)
+
+Chromium + Playwright preinstalados en este sandbox
+(`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, `--use-gl=swiftshader`
+para WebGL por software), invocado vía `require()` de ruta absoluta a
+`/opt/node22/lib/node_modules/playwright` (mismo mecanismo que las pasadas
+anteriores). Encontré un `next-server` ya corriendo en el puerto 3000 con
+`PIN=localtest1`/`JWT_SECRET` locales al proceso (heredado de una sesión
+anterior de este mismo sandbox de larga duración) — lo usé tal cual en vez
+de levantar uno nuevo, confirmando antes con `curl` que respondía 200.
+
+Contexto de Playwright: `newContext({ viewport: { width: 1440, height: 900 },
+deviceScaleFactor: 2 })` — el detalle específico que ningún QA anterior de
+esta feature había probado (todas las pasadas previas corrieron a
+`deviceScaleFactor: 1` por defecto). Login vía PIN gate (`input[type="password"]`
++ `fill("localtest1")` + click en "Entrar"), luego `waitForSelector("canvas")`.
+
+**Medición directa (`page.evaluate` con `canvas.getBoundingClientRect()` vs
+`container.getBoundingClientRect()`, no solo capturas)**, en dos momentos
+del ciclo (fase flotando inicial y tras ~45s, con el cubo ya ensamblado —
+tier `reduced` natural de este sandbox, sin forzar `full`, por la
+instrucción explícita de no combinar retina simulada + tier `full` en este
+sandbox de renderizado por software):
+
+```json
+// Fase flotando (t≈1s)
+{
+  "dpr": 2,
+  "canvasRect":    { "width": 530, "height": 530, "right": 1271, "bottom": 746 },
+  "containerRect": { "width": 532, "height": 532, "right": 1272, "bottom": 747 },
+  "canvasAttrWidth": 795, "canvasAttrHeight": 795,
+  "canvasStyleWidth": "530px", "canvasStyleHeight": "530px"
+}
+// Cubo ensamblado (t≈46s)
+{
+  "dpr": 2,
+  "canvasRect":    { "width": 530, "height": 530, "right": 1271, "bottom": 746 },
+  "containerRect": { "width": 532, "height": 532, "right": 1272, "bottom": 747 },
+  "canvasAttrWidth": 795, "canvasAttrHeight": 795,
+  "canvasStyleWidth": "530px", "canvasStyleHeight": "530px"
+}
+```
+
+El canvas mide 530×530 CSS px dentro de un contenedor de 532×532 CSS px en
+ambos momentos — los 2px de diferencia son el `border: 1px` del contenedor
+a cada lado, prácticamente exacto, igual que reportó `leader`. Reproduzco
+también la causa raíz: `canvas.width`/`canvas.height` (atributos HTML,
+resolución interna del buffer de dibujo) son 795×795 — `530 × 1.5 = 795`,
+consistente con `renderer.setPixelRatio(Math.min(window.devicePixelRatio,
+1.5))` en tier `reduced` (`window.devicePixelRatio` reporta `2` en este
+contexto, pero el tier `reduced` lo cappea a `1.5`) — y `canvas.style.width`/
+`height` están explícitamente fijados a `"530px"` (antes del fix, con
+`updateStyle: false`, estos habrían quedado vacíos y el navegador habría
+usado los atributos `795`/`795` como tamaño CSS por defecto — el bug
+reportado). Confirmado: **sin overflow, medido, no solo observado
+visualmente.**
+
+**Confirmación visual** (`page.screenshot()` full-page y crop del propio
+`<canvas>` vía `locator("canvas").screenshot()`):
+`retina_initial_full.png`/`retina_initial_canvas.png` (nube flotando) y
+`retina_assembled_full.png`/`retina_assembled_canvas.png` (cubo final), en
+`/tmp/.../scratchpad/shots/`. En ambas capturas la escena — tanto la nube de
+piezas flotando como el cubo ensamblado — queda completamente contenida
+dentro del borde del contenedor, con margen visible en los 4 lados, sin
+ningún recorte por el borde inferior/derecho (el defecto exacto que mostró
+la segunda captura del usuario). Consistente con la medición numérica de
+arriba.
+
+## Auditoría de high-DPI / `devicePixelRatio` más allá del bug puntual (pedido explícito, dado que este es el sexto bug de la misma feature)
+
+Revisé con esa pregunta en mente (no un audit exhaustivo, un vistazo
+dirigido) `app/components/lego/scene.ts` y `app/components/LegoHeroScene.tsx`
+— los únicos dos lugares donde `resize`/tamaño de canvas/`devicePixelRatio`
+podrían entrar en juego:
+
+- `scene.ts:65-67` — único otro uso de `devicePixelRatio` en toda la
+  feature: `renderer.setPixelRatio(tier === "full" ? window.devicePixelRatio
+  : Math.min(window.devicePixelRatio, 1.5))`. Esto está bien — es
+  exactamente la API correcta para controlar la resolución interna del
+  buffer de dibujo (afecta nitidez, no tamaño CSS), y respeta el DPR real
+  del dispositivo en vez de asumir `1`. No es la fuente del bug 6 (el bug
+  era el tamaño CSS del canvas, no su resolución interna) y sigue
+  funcionando bien tras el fix, confirmado por la medición de arriba
+  (`795 = 530 × 1.5`, cap de tier `reduced` aplicado correctamente).
+- `LegoHeroScene.tsx` — no referencia `devicePixelRatio` en absoluto. El
+  `ResizeObserver` que dispara `resize(container.clientWidth,
+  container.clientHeight)` usa `clientWidth`/`clientHeight`, que ya son
+  valores en CSS px (no en px de dispositivo) — correcto, no hay ningún
+  supuesto implícito de `devicePixelRatio === 1` ahí.
+- No encontré otro `setSize`, otra construcción de `WebGLRenderer`, ni
+  otro cálculo de tamaño de canvas en el resto de `app/components/lego/*`
+  (`bricks.ts`, `timeline.ts`, `paths.ts`) — el único renderer/canvas de
+  toda la feature es el que crea `buildScene()` en `scene.ts`.
+
+No encontré otro punto de la feature que asuma `devicePixelRatio === 1` o
+que le falte manejo de high-DPI. El único lugar que sí tenía el problema
+(el `setSize` de `resize()`) ya está corregido y verificado con medición
+real arriba.
+
+## `npm run verify` — resultado (corrido por mí, independiente)
+
+```
+> npm run lint    → limpio, sin errores
+> npm run build   → ✓ Compiled successfully, 26 rutas generadas, sin errores SSR
+> npm run test    → 7 archivos de test, 86 tests, todos verdes (sin cambios —
+                     este bugfix no toca lógica pura en lib/, no requiere
+                     tests nuevos)
+> check-sdd-state → ✓ single active feature: project-hero-lego-animation (in_review)
+                    ✓ all spec_ready+ features have requirements/design/tasks on disk
+                    ✓ feature_list.json is consistent with docs/specs.md
+```
+
+## Conclusión
+
+Los 6 checkpoints de "Before `in_review`" pasan (uno de ellos, el 5, no
+aplica por no haber cambios en `.tsx`). El diagnóstico de `leader` (el
+tercer parámetro `updateStyle` de `renderer.setSize()` en `false` nunca fija
+`canvas.style.width`/`height`, y sin ninguna regla CSS que lo haga, un
+`<canvas>` usa sus atributos `width`/`height` — que incluyen el
+`devicePixelRatio`, ~1.5-2x más grandes que el tamaño CSS deseado — como su
+tamaño por defecto) se confirma con medición directa e independiente: canvas
+530×530 CSS px dentro de un contenedor de 532×532 CSS px (diferencia = el
+`border` de 1px), en `deviceScaleFactor: 2`, tanto en la fase flotando como
+con el cubo ya ensamblado. Confirmado visualmente en capturas propias: sin
+recorte, con margen en los 4 bordes — el defecto exacto de la segunda
+captura del usuario ya no se reproduce. El diff es exactamente el booleano
+descrito, sin tocar nada de los bugs 1-5. La auditoría dirigida de
+high-DPI no encontró ningún otro punto de la feature con el mismo problema
+o un supuesto implícito de `devicePixelRatio === 1`. `npm run verify` verde
+de punta a punta, corrido por mí.
+
+Único hallazgo, **no bloqueante pero repetido de la pasada anterior**: el
+bug 6 no tiene todavía su propia sección en
+`progress/impl_project-hero-lego-animation.md` (vive solo en
+`progress/current.md`, que se vacía al cierre de sesión) — exactamente el
+mismo patrón que señalé para el bug 5 en la pasada anterior (que sí se
+corrigió después). Recomiendo que `leader` traslade esa sección antes de
+cerrar esta sesión, para no depender solo del mensaje de commit y el
+comentario en código como único registro permanente.
+
+No cambio `feature_list.json` — reporto el veredicto (**APROBADO**) a
+`leader`, que decide si mover la feature a `done`.
