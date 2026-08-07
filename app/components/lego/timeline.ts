@@ -231,51 +231,6 @@ function addPieceTravel(
   return snapStart + SNAP_DURATION;
 }
 
-function addFinalCornerTravel(tl: gsap.core.Timeline, piece: PieceRuntime, startTime: number): number {
-  const approachDuration = 0.5;
-  const alignDuration = 0.8; // "rotación lenta de alineación" (R12)
-  const settleDuration = 0.2;
-
-  tl.to(
-    piece,
-    {
-      progress: 0.85,
-      duration: approachDuration,
-      ease: "power2.inOut",
-      onStart: () => {
-        piece.phase = "traveling";
-      },
-      onUpdate: () => updatePieceFromProgress(piece),
-    },
-    startTime
-  );
-  // Alignment: mostly rotation, "sin traslación grande — ya está cerca".
-  tl.to(
-    piece,
-    { progress: 0.97, duration: alignDuration, ease: "sine.inOut", onUpdate: () => updatePieceFromProgress(piece) },
-    startTime + approachDuration
-  );
-  const settleStart = startTime + approachDuration + alignDuration;
-  tl.to(piece, { progress: 1, duration: settleDuration / 2, ease: "power2.out", onUpdate: () => updatePieceFromProgress(piece) }, settleStart);
-  // "Satisfying magnetic snap" climax: a more pronounced flash than the
-  // regular per-piece snaps (1 -> 1.08 -> 1, per design.md).
-  tl.to(piece, { scale: 1.08, duration: settleDuration / 2, ease: "back.out(2)", onUpdate: () => updateMatrix(piece) }, settleStart + settleDuration / 2);
-  tl.to(
-    piece,
-    {
-      scale: 1,
-      duration: settleDuration / 2,
-      ease: "power1.inOut",
-      onUpdate: () => updateMatrix(piece),
-      onComplete: () => {
-        piece.phase = "settled";
-      },
-    },
-    settleStart + settleDuration
-  );
-  return settleStart + settleDuration * 1.5;
-}
-
 /** Builds (but does not start — `paused: true`) the full narrative timeline
  * for one mount of the scene. All positions in the timeline are computed
  * against an explicit `cursor` (rather than relying on GSAP's implicit
@@ -393,14 +348,25 @@ export function buildMasterTimeline({
     0
   );
 
-  // ── Final Lock (R11-R13): 3 corners in sequence, 4th is the climax.
+  // ── Final Lock (R11-R13, simplified per user request 2026-08-08): used
+  // to be a deliberate suspense build — 3 corners landing one at a time
+  // with pauses between them, then a 4th "climax" corner with its own
+  // slower approach/align/settle sequence (`addFinalCornerTravel`, since
+  // removed). That took ~7s for just 4 pieces while the other ~121 landed
+  // in ~8s combined, and read as disproportionately slow rather than
+  // dramatic. Traded the suspense beat for speed: all 4 corners now
+  // assemble simultaneously with the same `addPieceTravel` every other
+  // piece uses (including its own "magnetic snap" flash, scale 1 -> 1.08
+  // -> 1 — nothing piece-specific left to call out here anymore).
   tl.addLabel("finalLock", cursor);
-  cursor += 0.65; // "dejar flotando, pausar" (0.5-0.8s)
-  for (let i = 0; i < 3; i++) {
-    const end = addPieceTravel(tl, finalLockPieces[i], cursor, 1.0);
-    cursor = end + (i < 2 ? 0.4 : 1.0); // longer pause after the 3rd (R12)
+  cursor += 0.65; // "dejar flotando, pausar" (0.5-0.8s) — kept as a short beat before the final snap
+  const finalLockDuration = 1.0;
+  let finalLockEnd = cursor;
+  for (const piece of finalLockPieces) {
+    const end = addPieceTravel(tl, piece, cursor, finalLockDuration);
+    finalLockEnd = Math.max(finalLockEnd, end);
   }
-  cursor = addFinalCornerTravel(tl, finalLockPieces[3], cursor);
+  cursor = finalLockEnd;
 
   // ── Onda final (R13) + pulso de escala sincronizado — "cube complete"
   // climax. User feedback (2026-08-07): the original ripple alone (0.6s,
@@ -409,10 +375,9 @@ export function buildMasterTimeline({
   // other, both anchored at the same `cursor`:
   //   1. A synchronized scale pulse across every piece at once (no
   //      distance-based stagger, unlike the ripple below) — same
-  //      "magnetic snap" overshoot feel as the individual final-corner
-  //      flash (`addFinalCornerTravel` above, peak 1.08), but hitting the
-  //      whole cube in lockstep so it reads as one unmistakable beat
-  //      instead of a per-piece detail.
+  //      "magnetic snap" overshoot feel every `addPieceTravel` snap already
+  //      has (peak 1.08), but hitting the whole cube in lockstep so it
+  //      reads as one unmistakable beat instead of a per-piece detail.
   //   2. The radial ripple, kept staggered by distance from center so it
   //      still visibly propagates outward — just bigger/slower than
   //      before (amplitude 0.06 -> 0.22, duration 0.6s -> 1.0s).
