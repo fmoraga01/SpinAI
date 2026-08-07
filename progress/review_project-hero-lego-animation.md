@@ -828,3 +828,202 @@ cambiado nada al respecto.
 
 No cambio `feature_list.json` — reporto el veredicto (**APROBADO**) al
 `leader` para que mueva la feature a `done`.
+
+---
+
+# Quinta pasada (2026-08-07) — verificación del fix de cámara (Bug 5, "zoom gigante")
+
+**VEREDICTO: APROBADO**
+
+Contexto: el usuario probó la cuarta pasada (ya aprobada y movida a `done`)
+en su propio navegador real y reportó "se sigue viendo mal, tiene un zoom
+gigante", con captura propia. `leader` diagnosticó y aplicó el fix
+directamente (commit `c37a42b`, sin pasar por `implementer` dado lo acotado
+y ya cuantificado del diagnóstico): `CAMERA_RADIUS` 11→26, `CAMERA_HEIGHT`
+3.4→8, consolidación de 3 copias independientes de esas constantes en una
+sola fuente exportada desde `scene.ts`, y reescalado de
+`controls.minDistance`/`maxDistance` (6/18 → 14/42). Esta pasada verifica
+ese fix de forma independiente — sesión distinta de la que lo escribió
+(`leader`), con navegador real propio, sin confiar en las capturas que
+`leader` ya había tomado y documentado en `progress/current.md`.
+
+## Checklist (`CHECKPOINTS.md` — "Before `in_review`")
+
+1. **Todas las tareas de `tasks.md` marcadas `[x]`** — PASA. Las 9
+   secciones (0-9) de `specs/project-hero-lego-animation/tasks.md` están
+   íntegramente `[x]`; esta pasada no agregó tareas nuevas (es un bugfix
+   post-`done`, no una nueva sección de spec).
+2. **`npm run lint` pasa** — PASA. Corrido por mí de forma independiente,
+   sin errores ni warnings de ESLint.
+3. **`npm run build` pasa** — PASA. Corrido por mí de forma independiente:
+   `✓ Compiled successfully`, TypeScript sin errores, 26 rutas generadas
+   (incluida `/`), sin errores de SSR (`window is not defined` o
+   similares) relacionados a `three`/`gsap`.
+4. **`progress/impl_project-hero-lego-animation.md` con entrada de
+   verificación para cada `R<n>`** — PASA, sin cambios respecto a pasadas
+   anteriores ya confirmadas (R1-R21, sección "Requirement-by-requirement
+   verification", líneas 207-303 del archivo). Esta pasada no agrega ni
+   modifica ningún `R<n>` — es un bugfix de encuadre de cámara (R17,
+   "perspective camera, smooth movement") sobre código ya cubierto. Nota
+   menor, no bloqueante: el detalle numérico completo de este bug 5 (causa
+   raíz cuantitativa, valores nuevos, consolidación de constantes) vive en
+   `progress/current.md`, no en `progress/impl_project-hero-lego-animation.md`
+   — a diferencia de los bugs 1-4, que sí tienen su propia sección dentro
+   de `impl_*.md`. El checkpoint en sí sigue pasando (ningún `R<n>` queda
+   sin entrada), pero sería más consistente con el patrón ya establecido en
+   este mismo archivo que el bug 5 tuviera su propia sección "Bug 5" en
+   `impl_*.md` en vez de vivir solo en `current.md` (que se vacía al cierre
+   de sesión, mientras que `impl_*.md` es el registro permanente).
+5. **`design-check` si cambió `app/components/*.tsx`** — **PASA, corrido
+   por mí** (no estaba documentado como corrido en esta pasada por
+   `leader`/`current.md`, así que lo corrí yo mismo en vez de bloquear por
+   una omisión de trámite en un cambio trivial). `git diff 492375a c37a42b
+   -- 'app/components/*.tsx'` muestra un único archivo tocado,
+   `app/components/LegoHeroScene.tsx`, con exactamente 2 líneas: el import
+   de `CAMERA_RADIUS`/`CAMERA_HEIGHT` desde `./lego/scene`, y
+   `camera.position.set(0, 3.4, 11)` → `camera.position.set(0,
+   CAMERA_HEIGHT, CAMERA_RADIUS)` en la rama `reducedMotion`. Contra el
+   criterio del skill (colores hex sin token, `border-radius` hardcodeado,
+   `fontSize` fuera de escala, `boxShadow` custom, todos definidos contra
+   `app/globals.css`): **cero hallazgos** — el diff no toca ningún color,
+   radio, tamaño de fuente ni sombra; son constantes numéricas de cámara
+   de Three.js, fuera del dominio que el skill audita. Nada que "abordar o
+   aceptar explícitamente" porque no hay nada que reportar.
+6. **`feature_list.json` con una sola feature activa** — PASA. Confirmado
+   tanto por inspección directa (única entrada con `status: "in_review"`
+   en todo el archivo) como por `check-sdd-state`
+   ("single active feature: project-hero-lego-animation (in_review)").
+
+## Revisión del diff real (`git diff 492375a c37a42b`)
+
+Confirmé los 3 archivos mencionados en el encargo quedaron consistentes:
+
+- **`app/components/lego/scene.ts`**: `CAMERA_RADIUS`/`CAMERA_HEIGHT` pasan
+  de constantes privadas (`const`) a `export const CAMERA_RADIUS = 26` /
+  `export const CAMERA_HEIGHT = 8` — única fuente ahora. `controls.minDistance`
+  cambia 6→14, `controls.maxDistance` 18→42.
+- **`app/components/lego/timeline.ts`**: elimina su copia local de
+  `CAMERA_RADIUS`/`CAMERA_HEIGHT` (antes `11`/`3.4` duplicados) y las
+  importa de `./scene`. Uso en el tween de órbita
+  (`Math.sin(theta) * CAMERA_RADIUS`, `CAMERA_HEIGHT`,
+  `Math.cos(theta) * CAMERA_RADIUS`) queda intacto salvo por el origen del
+  valor.
+- **`app/components/LegoHeroScene.tsx`**: reemplaza el literal
+  hardcodeado `camera.position.set(0, 3.4, 11)` (rama `reducedMotion`) por
+  `camera.position.set(0, CAMERA_HEIGHT, CAMERA_RADIUS)`, importando ambas
+  constantes de `./lego/scene`.
+- **Grep de confirmación** (`grep -rn "CAMERA_RADIUS|CAMERA_HEIGHT"
+  app/components/lego`): 3 usos en `scene.ts` (definición + 1 uso),
+  1 import + 2 usos en `timeline.ts`, ninguna otra definición — una sola
+  fuente, sin ningún literal `11`/`3.4` suelto que se haya escapado del
+  reemplazo (confirmé también con grep dirigido sobre
+  `LegoHeroScene.tsx` que no queda ningún `11`/`3.4` residual).
+- **`lib/lego/layout.ts`**: `git diff 492375a c37a42b -- lib/lego/layout.ts`
+  → **vacío**. Los bugs 1-4 (studs, solapamiento, fragmentación,
+  `chooseGridDims` spread) no fueron tocados en esta pasada, tal como se
+  afirmó.
+- **`feature_list.json`/`progress/current.md`**: únicos otros archivos en
+  el diff, ambos documentación/estado — sin cambios de código fuera de los
+  3 archivos de escena mencionados.
+
+## Verificación con navegador real, hecha por mí (no reutilicé las capturas de `leader`)
+
+Reutilicé el `npm run dev` ya corriendo en este sandbox (proceso
+preexistente con `PIN=localtest1`/`JWT_SECRET` locales al proceso, nunca
+commiteados — confirmado vía `/proc/<pid>/environ` que es el mismo patrón
+descrito en `progress/impl_project-hero-lego-animation.md`) y Chromium +
+Playwright preinstalados
+(`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, cargado vía
+`require("/opt/node22/lib/node_modules/playwright")`). Script propio
+(`qa.cjs`, no reutilicé el de `leader`), 3 contextos de Playwright
+separados:
+
+1. **Narrativa normal, tier `reduced` natural de este sandbox** — fase
+   flotando a 1.2s (`reviewA_natural_floating_1200ms.png`) y estado final
+   tras la narrativa completa (`reviewA_natural_final_51s.png`): la nube
+   de piezas y el cubo final quedan cómodamente contenidos dentro del
+   canvas, con margen visible en los 4 lados. Sin recorte.
+2. **Tier `full` forzado** (`navigator.hardwareConcurrency`/`deviceMemory`
+   sobreescritos a 16 vía `addInitScript`, confirmado con
+   `page.evaluate` que los valores forzados tomaron: `{hc:16, dm:16,
+   w:1440}`) — **el caso crítico pedido explícitamente, el peor caso real
+   que ve cualquier usuario con una máquina normal**:
+   - Fase flotando a 1.2s (`reviewB_full_floating_1200ms.png`): nube más
+     densa que en tier `reduced` (más piezas), pero igual de bien
+     contenida dentro del canvas, sin ninguna pieza recortada por el
+     borde — este es el síntoma más notorio que reportó el usuario
+     ("zoom gigante") y queda resuelto.
+   - Mitad de la narrativa (~16s, `reviewB_full_mid_16s.png`): ensamblaje
+     en progreso, bien encuadrado.
+   - Estado final (~51s, `reviewB_full_final_51s.png`): cubo ensamblado
+     completo, sólido, con sombra de contacto visible (tier `full` tiene
+     sombras activadas), bien encuadrado dentro del canvas, sin recorte
+     en ningún borde.
+3. **`prefers-reduced-motion`** (`reducedMotion: "reduce"` en el contexto
+   de Playwright) — `reviewC_reducedmotion.png`: cubo estático centrado,
+   bien encuadrado, sin recorte.
+
+**Controles post-narrativa (`OrbitControls`, punto pedido explícitamente
+dado el cambio de `minDistance`/`maxDistance`)**: sobre el contexto de
+tier `full` ya en su estado final, hice un drag con el mouse (mousedown en
+el centro del canvas, mousemove de 150px en X / -50px en Y con 20 pasos,
+mouseup) y luego dos zooms con la rueda (`wheel(0, -400)` para acercar,
+`wheel(0, 800)` para alejar), con screenshot después de cada uno:
+
+- `reviewB_full_after_orbit_drag.png`: el cubo rotó de forma suave y
+  proporcional al gesto, sigue perfectamente encuadrado — sin salto brusco
+  de cámara al iniciar el control manual (el riesgo específico que se pidió
+  descartar).
+- `reviewB_full_after_zoom_in.png`: el cubo se acerca (más grande en
+  cuadro) de forma continua, sin recorte ni artefacto.
+- `reviewB_full_after_zoom_out.png`: el cubo se aleja de forma continua y
+  simétrica al zoom-in anterior, tampoco se queda "pegado" en un límite ni
+  salta — el nuevo rango `minDistance=14`/`maxDistance=42` funciona de
+  forma razonable, no dejó los controles en un estado roto (no hay
+  bloqueo, ni salto errático, ni imposibilidad de acercar/alejar).
+
+Capturas guardadas en el scratchpad de esta sesión (no commiteadas, mismo
+patrón que todas las pasadas anteriores):
+`/tmp/claude-0/-home-user-SpinAI/3fafdfcd-94fd-50ca-8e5b-15291cdf5252/scratchpad/review{A,B,C}_*.png`.
+
+## `npm run verify` — resultado (corrido por mí, independiente)
+
+```
+> npm run lint    → limpio, sin errores
+> npm run build   → ✓ Compiled successfully, 26 rutas generadas, sin errores SSR
+> npm run test    → 7 archivos de test, 86 tests, todos verdes
+> check-sdd-state → ✓ single active feature: project-hero-lego-animation (in_review)
+                    ✓ all spec_ready+ features have requirements/design/tasks on disk
+                    ✓ feature_list.json is consistent with docs/specs.md
+```
+
+## Conclusión
+
+Los 6 checkpoints de "Before `in_review`" pasan. El diagnóstico cuantitativo
+de `leader` (radio efectivo de la nube flotando ~7.17 unidades y del peor
+caso de cubo ensamblado ~6.24, ambos mayores al ~3.65 que la cámara
+original podía encuadrar) se confirma en la práctica: con la cámara nueva
+(`CAMERA_RADIUS=26`/`CAMERA_HEIGHT=8`), tanto la fase flotando como el
+cubo final quedan cómodamente dentro del canvas en los 3 escenarios
+pedidos (narrativa normal, tier `full` forzado — el caso real que reportó
+el usuario —, y `prefers-reduced-motion`), verificado con navegador real
+por mí de forma independiente, sin confiar en las capturas ya tomadas por
+`leader`. La consolidación de las 3 copias de las constantes en una sola
+fuente (`scene.ts`) está completa y sin residuos — confirmado por diff y
+grep, no solo por la descripción del commit. `lib/lego/layout.ts` y todo
+lo relacionado a los bugs 1-4 permanece intacto. El rango nuevo de
+`controls.minDistance`/`maxDistance` deja el `OrbitControls` post-narrativa
+en un estado funcional (drag y zoom probados, sin salto ni bloqueo).
+`npm run verify` verde de punta a punta, corrido por mí.
+
+Único hallazgo, **no bloqueante**: el detalle numérico completo del bug 5
+vive en `progress/current.md` (que se vacía al cierre de sesión) en vez de
+tener su propia sección persistente en
+`progress/impl_project-hero-lego-animation.md`, a diferencia de los bugs
+1-4 que sí siguen ese patrón. Recomiendo que, antes de cerrar la sesión,
+se traslade (o al menos se resuma con referencia al commit `c37a42b`) ese
+contenido a `impl_*.md` para que quede como registro permanente, mismo
+estándar que los bugs anteriores — no bloquea el pase a `done`.
+
+No cambio `feature_list.json` — reporto el veredicto (**APROBADO**) al
+`leader` para que mueva la feature a `done`.
