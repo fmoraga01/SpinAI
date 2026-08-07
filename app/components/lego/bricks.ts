@@ -23,7 +23,7 @@ interface BrickSizeDef {
 }
 
 export const BRICK_SIZE_DEFS: Record<BrickSizeId, BrickSizeDef> = {
-  "2x2": { studsX: 2, studsZ: 2, height: 0.936 }, // +20% then +30% more per user request (0.6 -> 0.72 -> 0.936); only size actually in use, see pickBrickSize()
+  "2x2": { studsX: 2, studsZ: 2, height: 1.1232 }, // +20%, +30%, +20% per user request (0.6 -> 0.72 -> 0.936 -> 1.1232); only size actually in use, see pickBrickSize()
   "2x4": { studsX: 4, studsZ: 2, height: 0.6 },
   "1x2": { studsX: 2, studsZ: 1, height: 0.6 },
   plate1x1: { studsX: 1, studsZ: 1, height: 0.22 },
