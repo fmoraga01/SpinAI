@@ -191,3 +191,14 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   verde sobre `dev` antes de promover. `main` avanzó por fast-forward de
   `34415bb` a `1e5f902` (sin conflictos) vía `git push origin
   origin/dev:main`. Sin bloque de SQL que correr en este cutover.
+
+- 2026-08-07: **promoción ejecutada.** `dev` estaba 2 commits adelante de
+  `main` (fix del hero LEGO 3D: las piezas dejaban de girar durante el
+  rebobinado — el reset de fase a "idle" ahora ocurre por pieza en cuanto
+  cada una termina su propio recorrido de reversa, en vez de esperar a que
+  todo el timeline llegue a t=0). Mismo chequeo que las promociones
+  anteriores: sin migraciones SQL nuevas, sin variables de entorno nuevas
+  (todo frontend puro), `lib/featureFlags.ts` sin diff entre ramas. `npm
+  run verify` en verde sobre `dev` antes de promover. `main` avanzó por
+  fast-forward de `1e5f902` a `8d5ef3d` (sin conflictos) vía `git push
+  origin origin/dev:main`. Sin bloque de SQL que correr en este cutover.
