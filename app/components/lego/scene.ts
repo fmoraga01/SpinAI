@@ -136,7 +136,21 @@ export function buildScene(container: HTMLElement, tier: QualityTier): SceneBund
     if (width <= 0 || height <= 0) return;
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setSize(width, height, false);
+    // Bugfix (post-`done` reopen, 6th pass): `updateStyle` must be `true`
+    // here. `WebGLRenderer.setSize()` always sets the canvas element's
+    // `width`/`height` HTML attributes to `cssSize * pixelRatio` (the
+    // drawing-buffer resolution) — with `updateStyle: false` it never sets
+    // the canvas's CSS `style.width`/`style.height` to match, and with no
+    // other CSS rule sizing the canvas (there isn't one — it's appended
+    // directly via `container.appendChild`), a `<canvas>` element's CSS box
+    // defaults to its `width`/`height` attribute values in CSS px. On any
+    // display with `devicePixelRatio > 1` (any retina/HiDPI screen), that
+    // made the canvas render literally larger than its container — e.g.
+    // measured in this sandbox at `deviceScaleFactor: 2`, a 532px container
+    // held a 795px canvas, overflowing past the container's own border.
+    // `updateStyle: true` makes Three.js set `canvas.style.width/height` to
+    // the intended CSS size explicitly, independent of pixel ratio.
+    renderer.setSize(width, height, true);
   }
 
   function dispose() {
