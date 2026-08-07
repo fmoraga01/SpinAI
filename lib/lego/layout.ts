@@ -115,8 +115,8 @@ export function generateFloatingPositions(n: number, seed = 1): Vector3Tuple[] {
 const BRICK_GAP = 0.12;
 /** `BRICK_SIZE_DEFS["2x2"]` footprint: 2 studs * STUD_UNIT (0.8) = 1.6. */
 const CELL_UNIT_XZ = 1.6 + BRICK_GAP;
-/** `BRICK_SIZE_DEFS["2x2"]` height: 0.72 (+20% per user request). */
-const CELL_UNIT_Y = 0.72 + BRICK_GAP;
+/** `BRICK_SIZE_DEFS["2x2"]` height: 0.936 (+20% then +30% more per user request). */
+const CELL_UNIT_Y = 0.936 + BRICK_GAP;
 
 interface GridCell {
   position: Vector3Tuple;

@@ -90,7 +90,7 @@ describe("generateCubePositions", () => {
   // grid spacing (`CELL_UNIT`) was independent of the footprint actually
   // assigned to each cell. Every cube-assigned piece is now a fixed `"2x2"`
   // brick (`app/components/lego/bricks.ts`'s `pickBrickSize`): footprint
-  // 1.6 x 1.6 world units (X/Z), height 0.72 (Y) — these half-extents must
+  // 1.6 x 1.6 world units (X/Z), height 0.936 (Y) — these half-extents must
   // stay in sync with `BRICK_SIZE_DEFS["2x2"]` / `STUD_UNIT` there. This
   // test asserts the real axis-aligned bounding boxes of every pair of
   // assigned cells never overlap, which is what an eyeballed screenshot
@@ -99,7 +99,7 @@ describe("generateCubePositions", () => {
     "never overlaps the axis-aligned bounding box of any two assigned pieces (n=%i)",
     (n) => {
       const halfX = 0.8;
-      const halfY = 0.36; // half of BRICK_SIZE_DEFS["2x2"].height (0.72, +20%)
+      const halfY = 0.468; // half of BRICK_SIZE_DEFS["2x2"].height (0.936)
       const halfZ = 0.8;
       const epsilon = 1e-9;
       const cells = generateCubePositions(n);
