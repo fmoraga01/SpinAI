@@ -711,3 +711,83 @@ final diff.
 **Not touched**: bugs 1/2/3 fixes (commits `3758211`/`f3a9c47`/`0542a9c`),
 the all-`"2x2"` brick-size trade-off (still pending separate user
 decision).
+
+## Bug 5 (2026-08-06, 5th reopen) — camera never fit the scene content ("giant zoom" reported by the user in their own real browser)
+
+The user tested the feature in their own real browser (not this sandbox)
+after the 4th-pass approval and sent a screenshot: LEGO pieces filling and
+overflowing the entire canvas, an extreme close-up rather than the
+well-composed floating cloud / assembled cube seen in every prior QA pass
+in this sandbox.
+
+**Root cause, quantified before touching any code**: `app/components/lego/scene.ts`
+had `CAMERA_RADIUS = 11`, `CAMERA_HEIGHT = 3.4`, camera FOV `37`. At that
+distance (~11.5 units from origin), the frustum can only comfortably frame
+an object up to ~3.65 units of radius. But:
+- The floating cloud (`FLOAT_RADIUS = 6` in `lib/lego/layout.ts`, plus a
+  brick-size margin) has an effective bounding radius of **~7.17** units —
+  almost double what fits.
+- The worst-case assembled cube across the `full` tier's `n` range (e.g.
+  `n=101` → dims `[5,5,5]`) has a bounding radius of **~6.24** — also
+  bigger than what fits.
+
+**Why 4 prior review passes never caught this**: this sandbox reports
+`navigator.hardwareConcurrency = 4`, which trips `getQualityTier()` into
+the smaller `reduced` tier (fewer pieces, physically smaller assembled
+box) even at desktop viewport widths — every default (non-forced) QA run
+in this feature's history landed in that easier case. The one time `full`
+tier was checked with real numbers (bug 4's `n=81` case), the camera was
+manually, temporarily pulled back "to see the full silhouette" — that was
+direct evidence the default camera already failed there, but it got
+treated as a QA convenience rather than recognized as the bug itself. A
+real user's browser, with a normal core count, lands in `full` tier by
+default — the exact worst case that was never verified end-to-end with
+the *actual* default camera.
+
+**Fix**: `CAMERA_RADIUS` 11 → **26**, `CAMERA_HEIGHT` 3.4 → **8** (same
+height/radius ratio preserved), computed to frame the larger of the two
+bounding radii above (~7.17) with ~15% margin — verified to comfortably
+fit an object up to radius ~8.64 at the new distance. FOV was deliberately
+left unchanged (37°): widening the FOV instead of pulling the camera back
+would have introduced wide-angle-lens distortion at the edges, the
+opposite of the brief's "product photography lens feeling"; pulling the
+camera back compresses perspective, which is the correct look.
+`controls.minDistance`/`controls.maxDistance` in `scene.ts` were rescaled
+from `6`/`18` to `14`/`42` to keep the manual post-narrative zoom range
+sensible around the new default distance (~27.2).
+
+**Consolidated 3 independent copies of the same constant** — this
+duplication is very likely *why* the bug went unnoticed as long as it did
+(one QA pass touching one copy doesn't fix or even reveal the other two):
+`CAMERA_RADIUS`/`CAMERA_HEIGHT` used to be defined separately in
+`scene.ts` and in `timeline.ts` (used by the orbit tween), and the
+`prefers-reduced-motion` static camera position in `LegoHeroScene.tsx` had
+the same numbers hardcoded as literals (`camera.position.set(0, 3.4, 11)`)
+— a third independent copy. Now `scene.ts` exports both constants and
+`timeline.ts`/`LegoHeroScene.tsx` both import from there; grep-confirmed
+no stray `11`/`3.4` literals remain.
+
+**Verification — real browser, two independent sessions** (this session's
+fix, then a separate `reviewer` pass that ran its own script rather than
+trusting these screenshots): both confirmed, across tier `reduced`
+(natural default in this sandbox), tier `full` (forced via
+`navigator.hardwareConcurrency`/`deviceMemory` overrides — the real-world
+case), and `prefers-reduced-motion`, that the floating cloud and the
+assembled cube are both fully contained within the canvas with visible
+margin, no clipping. `reviewer` additionally drag-tested and wheel-zoomed
+`OrbitControls` post-narrative in tier `full` and found smooth,
+un-stuck behavior across the new `minDistance`/`maxDistance` range.
+Screenshots from this session's fix (not committed, scratchpad-only):
+`camfix_A_natural_*.png`, `camfix_B_full_*.png`, `camfix_reducedmotion.png`.
+
+**Files changed this pass**: `app/components/lego/scene.ts`,
+`app/components/lego/timeline.ts`, `app/components/LegoHeroScene.tsx`.
+`lib/lego/layout.ts` untouched — bugs 1-4 unaffected.
+
+**`npm run verify`**: green (lint, build, 86 vitest tests unchanged,
+check-sdd-state) — this was a camera/render constant change, no new pure
+logic in `lib/lego/*` to add tests for.
+
+Reviewed and approved independently by `reviewer`, 5th pass (2026-08-06)
+— see `progress/review_project-hero-lego-animation.md`, fifth dated
+section, commit `1701b46`.

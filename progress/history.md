@@ -14,6 +14,14 @@ Entry format:
 - Merged to dev: <date/commit> · Promoted to main: <date/commit, or "pending">
 ```
 
+## project-hero-lego-animation — done 2026-08-06 (tercera vez, tras un quinto bug: encuadre de cámara)
+
+- Ver las 2 entradas anteriores de este mismo feature-id más abajo (no editadas, registro histórico).
+- Qué pasó: tras la segunda vez que llegó a `done` (4 bugs corregidos: studs, solapamiento, cubo fragmentado, grilla alargada), el usuario probó la implementación en SU propio navegador real — distinto del sandbox usado en todo el QA anterior — y mandó una captura: "se sigue viendo mal, tiene un zoom gigante". Diagnóstico: la cámara estaba a una distancia fija que solo encuadraba un objeto de radio ~3.65 unidades, pero la nube de piezas flotando mide ~7.17 de radio efectivo y el peor cubo del tier `full` ~6.24 — ambos desbordaban el cuadro. Nunca se detectó en las 4 rondas previas porque el sandbox usado para todo el QA anterior reporta `hardwareConcurrency=4`, lo que fuerza el tier `reduced` (menos piezas, objeto más chico) incluso en desktop — cualquier navegador real con una CPU normal cae en el tier `full`, el peor caso, que nunca se probó con la cámara real sin intervención manual.
+- Fix: cámara alejada (radio 11→26, altura 3.4→8, mismo FOV para no introducir distorsión de gran angular), calculado con el radio efectivo real de ambos casos límite, más consolidación de 3 copias independientes de esas constantes (regadas en 3 archivos distintos, la causa probable de que el bug pasara desapercibido) en una sola fuente. Verificado con navegador real por dos sesiones independientes (quien aplicó el fix, y `reviewer` por separado con su propio script), forzando específicamente el tier `full` — el caso real que ve un usuario normal, no solo el tier `reduced` al que este sandbox cae por defecto.
+- Merged to dev: commit `c37a42b` · Promoted to main: pending.
+- Pendiente de decisión del usuario (no técnico, sin cambios en esta ronda): aceptar el tamaño de pieza único (`"2x2"`) del bug 2, o pedir una versión con variedad de tamaños preservada.
+
 ## project-hero-lego-animation — done 2026-08-06 (segunda vez, tras reapertura por 4 bugs visuales)
 
 - Ver la entrada anterior de este mismo feature-id más abajo para el resumen original de la feature (no editada, registro histórico de la primera vez que llegó a `done`).
