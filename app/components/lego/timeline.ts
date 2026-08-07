@@ -416,12 +416,10 @@ export function buildMasterTimeline({
   return tl;
 }
 
-/** How long the fully-assembled cube holds still before rewinding (user
- * request 2026-08-08: "una vez que se ensamble esperemos unos 5 segundos y
- * el cubo debe desarmarse... sería hacer un rewind de la animación"). */
-const REWIND_HOLD_MS = 5000;
-
-/** Drives the assemble -> hold -> rewind -> reassemble ambient loop.
+/** Drives the assemble -> rewind -> reassemble ambient loop. The cube
+ * starts rewinding the instant it finishes assembling — no hold (user
+ * request 2026-08-08: originally held 5s before rewinding, then asked to
+ * drop that wait entirely so it un-assembles "sin tiempo de espera").
  * `tl.reverse()` plays every tween in the timeline backward — including
  * the camera orbit and the Final Lock/wave climax — which is exactly a
  * "rewind": pieces retrace their travel curves back to their floating
@@ -443,28 +441,24 @@ const REWIND_HOLD_MS = 5000;
  * time 0.
  *
  * The loop runs until the user's first drag (`pointerdown`), which stops
- * it, freezes the timeline exactly where it is (assembling, disassembling
- * or holding — decorative, not worth snapping to a "clean" state for), and
- * hands the camera over to `OrbitControls` (R14) with `autoRotate` off (the
- * user just grabbed it, so give direct control instead of fighting an
+ * it, freezes the timeline exactly where it is (assembling or
+ * disassembling — decorative, not worth snapping to a "clean" state for),
+ * and hands the camera over to `OrbitControls` (R14) with `autoRotate` off
+ * (the user just grabbed it, so give direct control instead of fighting an
  * ambient auto-rotate) — the same handoff `attachAutoRotateStopper` used
  * to do once-only before this loop existed. Returns a cleanup function to
- * remove the listener/timeout/callbacks on unmount (R20). */
+ * remove the listener/callbacks on unmount (R20). */
 export function attachAssemblyLoop(
   tl: gsap.core.Timeline,
   pieces: PieceRuntime[],
   controls: OrbitControls,
   domElement: HTMLElement
 ): () => void {
-  let holdTimeoutId: ReturnType<typeof setTimeout> | null = null;
   let stopped = false;
 
   tl.eventCallback("onComplete", () => {
     if (stopped) return;
-    holdTimeoutId = setTimeout(() => {
-      holdTimeoutId = null;
-      if (!stopped) tl.reverse();
-    }, REWIND_HOLD_MS);
+    tl.reverse();
   });
 
   tl.eventCallback("onReverseComplete", () => {
@@ -476,7 +470,6 @@ export function attachAssemblyLoop(
   const stopOnInteract = () => {
     if (stopped) return;
     stopped = true;
-    if (holdTimeoutId) clearTimeout(holdTimeoutId);
     tl.eventCallback("onComplete", null);
     tl.eventCallback("onReverseComplete", null);
     tl.pause();
@@ -488,7 +481,6 @@ export function attachAssemblyLoop(
 
   return () => {
     stopped = true;
-    if (holdTimeoutId) clearTimeout(holdTimeoutId);
     tl.eventCallback("onComplete", null);
     tl.eventCallback("onReverseComplete", null);
     domElement.removeEventListener("pointerdown", stopOnInteract);
