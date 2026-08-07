@@ -155,3 +155,16 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
     `NEXT_PUBLIC_SUPABASE_URL` en Vercel Production contra el dashboard
     real de Supabase prod y redesplegó. Confirmado funcionando de nuevo
     end-to-end.
+
+- 2026-08-07: **promoción ejecutada.** `dev` estaba 33 commits adelante de
+  `main` (feature `project-hero-lego-animation` completa — escena 3D LEGO
+  en el hero de la home — más dos cambios de copy: headline "Just do it!"
+  y botón "Asignados"). Revisado antes de promover: sin migraciones SQL
+  nuevas en `supabase/migrations/` desde el 2026-07-30 (mismos 7 archivos
+  ya aplicados en prod); sin variables de entorno nuevas (toda la feature
+  es frontend puro, sin rutas server-side nuevas); `lib/featureFlags.ts`
+  ya idéntico en `main` y `dev` (`proyectosStatusVisible: true`). `npm run
+  verify` (lint + build + 87 tests + check-sdd-state) en verde sobre `dev`
+  antes de promover. `main` avanzó por fast-forward de `df8840f` a
+  `11a6d6e` (sin conflictos) vía `git push origin origin/dev:main`. Sin
+  bloque de SQL que correr en este cutover.
