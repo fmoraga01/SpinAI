@@ -141,21 +141,56 @@ export function buildBrickGeometry(sizeId: BrickSizeId): THREE.BufferGeometry {
  * `roughness`/`clearcoat`/etc. are the definitive values from design.md
  * ("Material" section), not a range — `tier === "reduced"` only turns off
  * `clearcoat` (R19 cost reduction), it doesn't change the base look.
+ *
+ * Color-fidelity fix (user report: the assembled blue pieces read visibly
+ * off from `--color-primary` / the "Asignados" button, even though the hex
+ * is identical — `0x2c40ff` in both places). Root cause isn't the hex, it's
+ * everything the render pipeline does to it before it hits the screen: ACES
+ * filmic tone mapping (`scene.ts`'s `renderer.toneMapping`) desaturates
+ * saturated blues, and the studio `RoomEnvironment` reflections
+ * (`envMapIntensity`) plus the white `clearcoat` sheen mix white/gray into
+ * the surface — none of which the flat CSS button goes through. White/gray
+ * read fine because they're already near-neutral, so the wash-out is much
+ * less noticeable there; blue is the one saturated color, so it's the one
+ * that visibly drifts.
+ *
+ * Fix, blue only (white/gray keep the original "product photography" look
+ * and stay tone-mapped normally — they're near-neutral so ACES doesn't
+ * visibly shift them). First attempt (emissive + lower envMapIntensity/
+ * clearcoat, still tone-mapped) measured via a rendered screenshot sampled
+ * pixel-by-pixel: still landed at `#5a54ef` against the button's `#325dff`
+ * — closer but still visibly lavender-shifted, because ACES filmic tone
+ * mapping (`scene.ts`'s `renderer.toneMapping`) was still curving the
+ * *combined* lit+emissive output. `toneMapped = false` is the actual fix:
+ * it skips that curve entirely for this material's fragment output, the
+ * same escape hatch three.js provides for brand/UI colors inside an
+ * otherwise cinematic scene. Kept the lower `envMapIntensity`/`clearcoat`
+ * (less neutral-colored studio reflection diluting the hue) and a modest
+ * `emissive` (a still-untonemapped material is still lit/shaded — a token
+ * self-color term keeps it reading as blue even in the scene's darker
+ * corners/shadow side).
  */
+const BLUE_ENV_MAP_INTENSITY = 0.35; // vs. 1 for white/gray
+const BLUE_EMISSIVE_INTENSITY = 0.25;
+const BLUE_CLEARCOAT_FULL = 0.25; // vs. 0.6 for white/gray on full tier
+
 export function createMaterialPalette(
   tier: QualityTier
 ): Map<ColorName, THREE.MeshPhysicalMaterial> {
   const materials = new Map<ColorName, THREE.MeshPhysicalMaterial>();
   for (const { name, hex } of COLOR_PALETTE) {
+    const isBlue = name === "blue";
     materials.set(
       name,
       new THREE.MeshPhysicalMaterial({
         color: hex,
         roughness: tier === "full" ? 0.3 : 0.45,
         metalness: 0,
-        clearcoat: tier === "full" ? 0.6 : 0,
+        clearcoat: tier === "full" ? (isBlue ? BLUE_CLEARCOAT_FULL : 0.6) : 0,
         clearcoatRoughness: 0.15,
-        envMapIntensity: 1,
+        envMapIntensity: isBlue ? BLUE_ENV_MAP_INTENSITY : 1,
+        toneMapped: !isBlue,
+        ...(isBlue && { emissive: hex, emissiveIntensity: BLUE_EMISSIVE_INTENSITY }),
       })
     );
   }
