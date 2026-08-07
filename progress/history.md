@@ -14,6 +14,14 @@ Entry format:
 - Merged to dev: <date/commit> · Promoted to main: <date/commit, or "pending">
 ```
 
+## project-hero-lego-animation — done 2026-08-06 (cuarta vez, tras un sexto bug: el canvas no fijaba su tamaño CSS en pantallas retina)
+
+- Ver las 3 entradas anteriores de este mismo feature-id más abajo (no editadas, registro histórico).
+- Qué pasó: tras el fix de cámara (bug 5), el usuario probó de nuevo en su propio navegador y mandó una segunda captura, con una imagen de referencia de cómo debería verse: "la animacion se sigue viendo fuera de su canvas, con una especie de zoom" — el cubo aparecía recortado por el borde inferior/derecho del contenedor. Diagnóstico con medición exacta (no una corazonada): `renderer.setSize(width, height, false)` en `app/components/lego/scene.ts` nunca fijaba el `style.width`/`height` CSS del `<canvas>` — sin eso, el canvas usa sus propios atributos `width`/`height` (que sí incluyen `devicePixelRatio`) como tamaño CSS por defecto, así que en cualquier pantalla retina/HiDPI el canvas se dibujaba más grande que su contenedor. Nunca se detectó en las 5 rondas previas porque ningún QA anterior de esta feature había simulado una pantalla retina — todo corrió a `deviceScaleFactor: 1` por defecto. Reproducido con medición directa (`getBoundingClientRect()`): contenedor 532×532, canvas 795×795.
+- Fix: una sola línea, `updateStyle: false` → `true` en `renderer.setSize()`. Verificado tras el fix: canvas 530×530 en un contenedor de 532×532 (los 2px de diferencia son el borde del contenedor). Verificado con navegador real por dos sesiones independientes, ambas simulando retina explícitamente.
+- Merged to dev: commit `a068189` · Promoted to main: pending.
+- Pendiente de decisión del usuario (no técnico, sin cambios en esta ronda): aceptar el tamaño de pieza único (`"2x2"`) del bug 2, o pedir una versión con variedad de tamaños preservada.
+
 ## project-hero-lego-animation — done 2026-08-06 (tercera vez, tras un quinto bug: encuadre de cámara)
 
 - Ver las 2 entradas anteriores de este mismo feature-id más abajo (no editadas, registro histórico).

@@ -791,3 +791,91 @@ logic in `lib/lego/*` to add tests for.
 Reviewed and approved independently by `reviewer`, 5th pass (2026-08-06)
 — see `progress/review_project-hero-lego-animation.md`, fifth dated
 section, commit `1701b46`.
+
+## Bug 6 (2026-08-06, 6th reopen) — canvas never fit its container on retina/HiDPI displays
+
+The bug 5 camera fix (previous section) was real and necessary but not
+sufficient: the user tested it in their own real browser and sent a
+second screenshot — "la animacion se sigue viendo fuera de su canvas, con
+una especie de zoom" — showing the assembled cube visibly clipped by the
+bottom/right edge of the canvas's own bordered container, on
+`spinai-dev.vercel.app`.
+
+**Root cause, measured before touching code**: `app/components/lego/scene.ts`'s
+`resize()` called `renderer.setSize(width, height, false)`. Three.js's
+third `setSize` argument, `updateStyle`, controls whether the canvas
+element's CSS `style.width`/`style.height` get set to match the intended
+display size — with `false`, they never do. Only the canvas's `width`/
+`height` HTML *attributes* get set (to `cssSize * pixelRatio`, the
+drawing-buffer resolution needed for sharp rendering on high-density
+screens). With no other CSS rule sizing the canvas (confirmed via grep —
+none exists; it's appended directly via `container.appendChild`), a
+`<canvas>` with no explicit CSS size defaults to its own `width`/`height`
+attribute values as its CSS box size. On any screen with
+`devicePixelRatio > 1` (any retina/HiDPI display — likely the user's
+machine, and common in general), this made the canvas render literally
+larger than its DOM container.
+
+Reproduced in this sandbox by simulating a retina display
+(`deviceScaleFactor: 2` in Playwright's browser context) — something no
+prior QA pass on this feature had tried; every previous pass ran at the
+Chromium default of `deviceScaleFactor: 1`, where this bug is invisible.
+Measured directly via `canvas.getBoundingClientRect()` vs.
+`container.getBoundingClientRect()`: a 532×532 CSS px container held a
+795×795 CSS px canvas — real, measured overflow, not a screenshot
+impression.
+
+**Fix**: `renderer.setSize(width, height, false)` → `renderer.setSize(width, height, true)`,
+one line, in `resize()`. With `updateStyle: true`, Three.js explicitly
+sets `canvas.style.width`/`height` to the intended CSS size regardless of
+`devicePixelRatio`, while the drawing-buffer resolution (`canvas.width`/
+`height` attributes, driven by `renderer.setPixelRatio()`) still scales up
+for retina sharpness. Verified after the fix, same retina scenario: canvas
+530×530 CSS px inside a 532×532 container (the 2px difference is the
+container's own 1px border) — `canvas.style.width`/`height` now literally
+report `"530px"`.
+
+**Verification — real browser, two independent sessions** (this session's
+fix, then a separate `reviewer` pass with its own script and its own
+`getBoundingClientRect()` measurements, not trusting these screenshots):
+both confirmed, with `deviceScaleFactor: 2` simulated, that the floating
+cloud and the assembled cube stay fully inside the container's border with
+visible margin on all sides, on this sandbox's natural `reduced` tier.
+Forcing `full` tier simultaneously with simulated retina was investigated
+and *deliberately not* used as a verification scenario: that specific
+combination (100+ pieces + shadows + environment map, at ~2x render
+resolution, on this sandbox's software-only Swiftshader rendering with no
+real GPU) causes the assembly narrative to stall for well over 120
+real-world seconds — traced to GSAP's default lag-smoothing capping the
+timeline's effective progress during sustained per-frame render times far
+above what any GPU-accelerated browser would ever produce. Confirmed this
+is a sandbox-only rendering-performance artifact, not a functional bug: the
+same retina simulation *without* forcing `full` tier (i.e., normal `full`-tier
+weight is only ever hit on a real user's GPU-accelerated browser, not here)
+completes the full narrative normally in ~55s. The user's own screenshot
+independently corroborates this — it showed correctly-structured,
+grid-aligned assembled bricks (not a stalled/shapeless cluster), confirming
+their real browser's narrative was progressing normally; the only defect
+visible there was the canvas-overflow this fix addresses.
+
+**Targeted high-DPI audit** (per reviewer's request, given this bug hid for
+6 rounds specifically because no one had tested retina before): the only
+other `devicePixelRatio` usage in this feature is
+`renderer.setPixelRatio(...)` in `scene.ts`, which is correct (it
+intentionally scales the drawing-buffer resolution, not the CSS size).
+`LegoHeroScene.tsx`'s `ResizeObserver` reads `container.clientWidth`/
+`clientHeight`, which are already CSS pixels with no DPR assumption baked
+in. No other canvas-sizing code exists anywhere else in
+`app/components/lego/*`. Reviewer confirmed no other implicit
+`devicePixelRatio === 1` assumption remains.
+
+**Tests**: no new pure logic (`lib/lego/*` untouched) — `npm run verify`
+(lint + build + 86 vitest tests unchanged + check-sdd-state) green, run
+independently by both this session and `reviewer`.
+
+**Files changed this pass**: `app/components/lego/scene.ts` (one line +
+explanatory comment). Nothing from bugs 1-5 touched.
+
+Reviewed and approved independently by `reviewer`, 6th pass (2026-08-06)
+— see `progress/review_project-hero-lego-animation.md`, sixth dated
+section, commit `3b67563`.
