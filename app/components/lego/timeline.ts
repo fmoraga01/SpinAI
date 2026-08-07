@@ -287,14 +287,10 @@ export function buildMasterTimeline({
   camera,
   controls,
 }: MasterTimelineParams): gsap.core.Timeline {
-  const tl = gsap.timeline({
-    paused: true,
-    onComplete: () => {
-      controls.enabled = true; // R14
-      controls.autoRotate = true;
-      controls.autoRotateSpeed = 0.5;
-    },
-  });
+  // No onComplete handoff here anymore -- see `attachAssemblyLoop` below,
+  // which owns the assemble/hold/rewind loop and the eventual R14 handoff
+  // to OrbitControls (now on first user interaction, not automatic).
+  const tl = gsap.timeline({ paused: true });
 
   let cursor = 0;
 
@@ -455,21 +451,83 @@ export function buildMasterTimeline({
   return tl;
 }
 
-/** Stops `controls.autoRotate` on the first user interaction with the
- * canvas after the timeline hands off control (R14). Returns a cleanup
- * function to remove the listener on unmount (R20). */
-export function attachAutoRotateStopper(controls: OrbitControls, domElement: HTMLElement): () => void {
-  const stop = () => {
-    // Ignore stray clicks during Escenas 1-3/Final Lock, before the
-    // timeline hands control over (R14) — otherwise an early click would
-    // consume this (would-be) one-shot listener and leave nothing to stop
-    // `autoRotate` once it actually starts.
-    if (!controls.enabled) return;
+/** How long the fully-assembled cube holds still before rewinding (user
+ * request 2026-08-08: "una vez que se ensamble esperemos unos 5 segundos y
+ * el cubo debe desarmarse... sería hacer un rewind de la animación"). */
+const REWIND_HOLD_MS = 5000;
+
+/** Drives the assemble -> hold -> rewind -> reassemble ambient loop.
+ * `tl.reverse()` plays every tween in the timeline backward — including
+ * the camera orbit and the Final Lock/wave climax — which is exactly a
+ * "rewind": pieces retrace their travel curves back to their floating
+ * positions through the same eases, ending at `progress = 0` (verified:
+ * `updatePieceFromProgress` at `progress = 0` reproduces
+ * `floatingPosition`/`startQuaternion` exactly, the same values
+ * `createPieceRuntimes` seeded — so the loop is seamless, not a jump-cut).
+ *
+ * One thing GSAP's reverse doesn't handle for free: `piece.phase`
+ * ("idle"/"signaling"/"traveling"/"settled", read by `stepIdlePieces` to
+ * decide which pieces get ambient drift) is set by each tween's `onStart`/
+ * `onComplete`. `onComplete` only fires on forward completion, never
+ * during reverse playback, so after a reverse-to-start every piece is left
+ * on whatever phase its *last forward-direction* tween's `onStart`
+ * happened to set (in practice "signaling", from the Escena 2 signal
+ * tween) instead of back to "idle" — silently killing that piece's idle
+ * drift for the rest of the session. Fixed by forcing every piece back to
+ * "idle" in `onReverseComplete`, once the timeline has actually reached
+ * time 0.
+ *
+ * The loop runs until the user's first drag (`pointerdown`), which stops
+ * it, freezes the timeline exactly where it is (assembling, disassembling
+ * or holding — decorative, not worth snapping to a "clean" state for), and
+ * hands the camera over to `OrbitControls` (R14) with `autoRotate` off (the
+ * user just grabbed it, so give direct control instead of fighting an
+ * ambient auto-rotate) — the same handoff `attachAutoRotateStopper` used
+ * to do once-only before this loop existed. Returns a cleanup function to
+ * remove the listener/timeout/callbacks on unmount (R20). */
+export function attachAssemblyLoop(
+  tl: gsap.core.Timeline,
+  pieces: PieceRuntime[],
+  controls: OrbitControls,
+  domElement: HTMLElement
+): () => void {
+  let holdTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  let stopped = false;
+
+  tl.eventCallback("onComplete", () => {
+    if (stopped) return;
+    holdTimeoutId = setTimeout(() => {
+      holdTimeoutId = null;
+      if (!stopped) tl.reverse();
+    }, REWIND_HOLD_MS);
+  });
+
+  tl.eventCallback("onReverseComplete", () => {
+    if (stopped) return;
+    for (const piece of pieces) piece.phase = "idle";
+    tl.play();
+  });
+
+  const stopOnInteract = () => {
+    if (stopped) return;
+    stopped = true;
+    if (holdTimeoutId) clearTimeout(holdTimeoutId);
+    tl.eventCallback("onComplete", null);
+    tl.eventCallback("onReverseComplete", null);
+    tl.pause();
+    controls.enabled = true; // R14
     controls.autoRotate = false;
-    domElement.removeEventListener("pointerdown", stop);
+    domElement.removeEventListener("pointerdown", stopOnInteract);
   };
-  domElement.addEventListener("pointerdown", stop);
-  return () => domElement.removeEventListener("pointerdown", stop);
+  domElement.addEventListener("pointerdown", stopOnInteract);
+
+  return () => {
+    stopped = true;
+    if (holdTimeoutId) clearTimeout(holdTimeoutId);
+    tl.eventCallback("onComplete", null);
+    tl.eventCallback("onReverseComplete", null);
+    domElement.removeEventListener("pointerdown", stopOnInteract);
+  };
 }
 
 /** Places a piece directly at its assembled position/orientation with no

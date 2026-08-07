@@ -14,7 +14,7 @@ import {
   createPieceRuntimes,
   stepIdlePieces,
   buildMasterTimeline,
-  attachAutoRotateStopper,
+  attachAssemblyLoop,
   placePieceAtCube,
   type PieceRuntime,
 } from "./lego/timeline";
@@ -88,8 +88,8 @@ export default function LegoHeroScene() {
       cleanupFns.push(() => controls.removeEventListener("change", renderOnce));
     } else {
       const timeline = buildMasterTimeline({ pieces, finalLockPieces, camera, controls });
-      const removeAutoRotateStopper = attachAutoRotateStopper(controls, renderer.domElement);
-      cleanupFns.push(() => timeline.kill(), removeAutoRotateStopper);
+      const removeAssemblyLoop = attachAssemblyLoop(timeline, pieces, controls, renderer.domElement);
+      cleanupFns.push(() => timeline.kill(), removeAssemblyLoop);
 
       const start = performance.now();
       let lastTime = start;
