@@ -381,12 +381,40 @@ export function buildMasterTimeline({
   }
   cursor = addFinalCornerTravel(tl, finalLockPieces[3], cursor);
 
-  // ── Onda final (R13) — tiny, near-imperceptible ripple through the
-  // completed cube, propagating from the center outward.
+  // ── Onda final (R13) + pulso de escala sincronizado — "cube complete"
+  // climax. User feedback (2026-08-07): the original ripple alone (0.6s,
+  // 0.06 amplitude) was intentionally tiny/near-imperceptible and didn't
+  // read as a clear "done!" moment. Two effects now layered on top of each
+  // other, both anchored at the same `cursor`:
+  //   1. A synchronized scale pulse across every piece at once (no
+  //      distance-based stagger, unlike the ripple below) — same
+  //      "magnetic snap" overshoot feel as the individual final-corner
+  //      flash (`addFinalCornerTravel` above, peak 1.08), but hitting the
+  //      whole cube in lockstep so it reads as one unmistakable beat
+  //      instead of a per-piece detail.
+  //   2. The radial ripple, kept staggered by distance from center so it
+  //      still visibly propagates outward — just bigger/slower than
+  //      before (amplitude 0.06 -> 0.22, duration 0.6s -> 1.0s).
   tl.addLabel("wave", cursor);
-  const WAVE_DURATION = 0.6;
-  const WAVE_TWEEN = 0.25;
-  const WAVE_AMPLITUDE = 0.06;
+  const PULSE_PEAK_SCALE = 1.16;
+  const PULSE_UP_DURATION = 0.2;
+  const PULSE_DOWN_DURATION = 0.3;
+  for (const piece of pieces) {
+    tl.to(
+      piece,
+      { scale: PULSE_PEAK_SCALE, duration: PULSE_UP_DURATION, ease: "back.out(2.5)", onUpdate: () => updateMatrix(piece) },
+      cursor
+    );
+    tl.to(
+      piece,
+      { scale: 1, duration: PULSE_DOWN_DURATION, ease: "power2.inOut", onUpdate: () => updateMatrix(piece) },
+      cursor + PULSE_UP_DURATION
+    );
+  }
+
+  const WAVE_DURATION = 1.0;
+  const WAVE_TWEEN = 0.4;
+  const WAVE_AMPLITUDE = 0.22;
   const maxCubeDist = pieces.reduce((max, p) => Math.max(max, p.cubePosition.length()), 0) || 1;
   let waveEnd = cursor;
   for (const piece of pieces) {
@@ -397,7 +425,7 @@ export function buildMasterTimeline({
     tl.to(piece, { waveOffset: 0, duration: WAVE_TWEEN / 2, ease: "sine.inOut", onUpdate: () => updateMatrix(piece) }, start + WAVE_TWEEN / 2);
     waveEnd = Math.max(waveEnd, end);
   }
-  cursor = waveEnd;
+  cursor = Math.max(waveEnd, cursor + PULSE_UP_DURATION + PULSE_DOWN_DURATION);
 
   return tl;
 }
