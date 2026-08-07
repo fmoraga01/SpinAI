@@ -29,14 +29,24 @@ export function getQualityTier(
  * exactly means `generateCubePositions()` needs zero trimming to fit `n`
  * pieces into a `k*k*k` grid — 100% fill, no fragmentation, and
  * `chooseGridDims()` naturally returns `[k, k, k]` (its zero-waste result
- * always wins), no changes needed there. `full` uses `k=5` (125 pieces,
- * close to the original 80-120 range's upper end); `reduced` uses `k=4`
- * (64 pieces) — lighter than `full` for low-end/mobile, still a
- * convincingly dense cube (a `k=3`/27-piece cube reads as too sparse).
+ * always wins), no changes needed there.
+ *
+ * `full` is `k=10` (1000 pieces) per explicit user request ("el cubo debe
+ * ser de 10x10"). `reduced` was NOT bumped to match 1:1 — that tier exists
+ * specifically so low-end/narrow-viewport devices stay light (no shadows,
+ * capped pixel ratio, etc., see `bricks.ts`/`scene.ts`), and 1000 pieces
+ * would defeat that. Picked `k=6` (216 pieces) instead: a real, visible
+ * step up from the previous `k=4` (64), while staying well under `full`'s
+ * weight. `app/components/lego/scene.ts`'s `CAMERA_RADIUS`/`CAMERA_HEIGHT`
+ * were increased alongside this — a `k=10` cube is physically much larger
+ * (bounding radius ~12.6 world units vs. the old `k=5`'s ~6.24), and the
+ * camera distance has to grow to keep fitting it in frame (see that file's
+ * comment for the recalculated numbers) — this was the same class of bug
+ * fixed once already (canvas/camera not fitting the actual scene content).
  */
 export const BRICK_COUNT: Record<QualityTier, number> = {
-  full: 125, // 5^3
-  reduced: 64, // 4^3
+  full: 1000, // 10^3
+  reduced: 216, // 6^3
 };
 
 export function pickBrickCount(tier: QualityTier): number {

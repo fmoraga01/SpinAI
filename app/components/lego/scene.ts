@@ -42,9 +42,18 @@ export interface SceneBundle {
  * `prefers-reduced-motion` static camera use the exact same numbers — the
  * three previously had 3 independent copies of this constant, which is
  * exactly the kind of desync that let this bug hide in the first place.
+ *
+ * Bumped again (26/8 -> 44/13.54, same ratio) when `BRICK_COUNT.full`
+ * (`lib/lego/quality.ts`) went from `k=5` (125 pieces) to `k=10` (1000)
+ * per user request ("el cubo debe ser de 10x10") — a `k=10` cube is
+ * physically much bigger (bounding radius ~12.6 world units vs. ~6.24
+ * before), so the same "does the content actually fit in the frustum"
+ * math had to be redone: recomputed camera distance to fit the new
+ * worst case (the `k=10` cube, now bigger than the floating cloud) with
+ * the same ~15% margin.
  */
-export const CAMERA_RADIUS = 26;
-export const CAMERA_HEIGHT = 8;
+export const CAMERA_RADIUS = 44;
+export const CAMERA_HEIGHT = 13.54;
 
 export function buildScene(container: HTMLElement, tier: QualityTier): SceneBundle {
   const scene = new THREE.Scene();
@@ -125,11 +134,12 @@ export function buildScene(container: HTMLElement, tier: QualityTier): SceneBund
   controls.enabled = false;
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  // Scaled alongside CAMERA_RADIUS/CAMERA_HEIGHT above (was 6/18 when the
-  // default distance was ~11.5; now ~27.2) so manual zoom after the
-  // narrative ends still has a sensible range around the new default.
-  controls.minDistance = 14;
-  controls.maxDistance = 42;
+  // Scaled alongside CAMERA_RADIUS/CAMERA_HEIGHT above — was 14/42 when the
+  // default distance was ~27.2, now ~46 (10x10x10 cube) — so manual zoom
+  // after the narrative ends still has a sensible range around the new
+  // default.
+  controls.minDistance = 24;
+  controls.maxDistance = 71;
   controls.target.set(0, 0, 0);
 
   function resize(width: number, height: number) {
