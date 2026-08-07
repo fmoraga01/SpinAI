@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getQualityTier, pickBrickCount, BRICK_COUNT_RANGE } from "./quality";
-import { createRng } from "./rng";
+import { getQualityTier, pickBrickCount, BRICK_COUNT } from "./quality";
 
 describe("getQualityTier", () => {
   it("is full for a wide viewport and no hardware signals", () => {
@@ -44,15 +43,16 @@ describe("getQualityTier", () => {
 });
 
 describe("pickBrickCount", () => {
-  it("stays within the documented range per tier", () => {
-    const rng = createRng(1);
-    for (let i = 0; i < 50; i++) {
-      const full = pickBrickCount("full", rng);
-      expect(full).toBeGreaterThanOrEqual(BRICK_COUNT_RANGE.full[0]);
-      expect(full).toBeLessThanOrEqual(BRICK_COUNT_RANGE.full[1]);
-      const reduced = pickBrickCount("reduced", rng);
-      expect(reduced).toBeGreaterThanOrEqual(BRICK_COUNT_RANGE.reduced[0]);
-      expect(reduced).toBeLessThanOrEqual(BRICK_COUNT_RANGE.reduced[1]);
+  it("returns a fixed perfect-cube count per tier, matching BRICK_COUNT", () => {
+    expect(pickBrickCount("full")).toBe(BRICK_COUNT.full);
+    expect(pickBrickCount("reduced")).toBe(BRICK_COUNT.reduced);
+  });
+
+  it("both tier counts are perfect cubes (k^3 for an integer k >= 3)", () => {
+    for (const n of Object.values(BRICK_COUNT)) {
+      const k = Math.round(Math.cbrt(n));
+      expect(k ** 3).toBe(n);
+      expect(k).toBeGreaterThanOrEqual(3);
     }
   });
 });

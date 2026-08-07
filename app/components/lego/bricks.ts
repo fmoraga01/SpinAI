@@ -8,7 +8,7 @@ import type { CubeCell, Vector3Tuple } from "@/lib/lego/layout";
 import type { QualityTier } from "@/lib/lego/quality";
 
 export type BrickSizeId = "2x2" | "2x4" | "1x2" | "plate1x1";
-export type ColorName = "white" | "lightGray" | "darkGray" | "blue" | "yellow";
+export type ColorName = "white" | "gray" | "blue";
 
 const STUD_UNIT = 0.8; // world-space size of one "stud" footprint cell
 const STUD_RADIUS = 0.16;
@@ -29,14 +29,14 @@ export const BRICK_SIZE_DEFS: Record<BrickSizeId, BrickSizeDef> = {
   plate1x1: { studsX: 1, studsZ: 1, height: 0.22 },
 };
 
-/** R16: white/light-gray/dark-gray dominate, blue (`--color-primary`) and
- * yellow are a deliberate low-volume, high-contrast accent. */
+/** Palette restricted to white/gray/blue per user request — white
+ * dominates, gray is the secondary neutral, blue (`--color-primary`, same
+ * accent color as the rest of the site) is a deliberate low-volume,
+ * high-contrast accent. */
 export const COLOR_PALETTE: { name: ColorName; hex: number; weight: number }[] = [
   { name: "white", hex: 0xf4f5f7, weight: 65 },
-  { name: "lightGray", hex: 0xb9bec9, weight: 20 },
-  { name: "darkGray", hex: 0x3d4150, weight: 5 },
+  { name: "gray", hex: 0xb9bec9, weight: 27 },
   { name: "blue", hex: 0x2c40ff, weight: 8 }, // var(--color-primary)
-  { name: "yellow", hex: 0xffc93c, weight: 2 },
 ];
 
 function pickWeighted<T extends { weight: number }>(items: T[], rng: () => number): T {

@@ -124,6 +124,11 @@ export default function LegoHeroScene() {
       style={{
         aspectRatio: "1 / 1",
         minHeight: 320,
+        // Scales the rendered illustration up 15% visually without touching
+        // the WebGL camera/framing math — the container's own layout size
+        // (what `resize()`/`ResizeObserver` measure) is unaffected by
+        // `transform`, only the painted result grows.
+        transform: "scale(1.15)",
       }}
     />
   );
