@@ -48,7 +48,7 @@ export default function HomeCTAs() {
           transition: "opacity 150ms ease",
         }}
       >
-        Ver calendario de asignados
+        Asignados
         <span style={{ fontSize: 18 }}>↗</span>
       </button>
 
