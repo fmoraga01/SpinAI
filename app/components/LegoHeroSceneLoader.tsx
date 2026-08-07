@@ -18,8 +18,6 @@ const LegoHeroScene = dynamic(() => import("./LegoHeroScene"), {
       style={{
         aspectRatio: "1 / 1",
         minHeight: 320,
-        border: "1px solid var(--color-border)",
-        borderRadius: "var(--radius-md)",
         background: "transparent",
       }}
     />
