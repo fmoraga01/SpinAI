@@ -145,6 +145,51 @@ export function stepIdlePieces(pieces: PieceRuntime[], dt: number, elapsed: numb
   }
 }
 
+export interface CameraOrbitState {
+  theta: number;
+}
+
+/** Total angular sweep of the ambient camera orbit across Escenas 1-3
+ * (unchanged from the tween this replaced). */
+const CAMERA_ORBIT_SWEEP = Math.PI * 0.85;
+
+/** Drives the ambient camera orbit outside the (reversible) master
+ * timeline — see the comment above `buildMasterTimeline`'s Final Lock
+ * section for why: a tween living *inside* a timeline that gets
+ * `reverse()`d for the rewind loop would rotate backward during
+ * disassembly, producing a visible direction-flip at the loop seam.
+ * `state.theta` only ever increases (`dt` from the render loop is always
+ * >= 0 regardless of which way `tl` is currently playing), so the camera
+ * orbits the same direction through assembly *and* rewind, seamlessly.
+ *
+ * Rotation is paused — not reset, just held — once `tl.time()` reaches
+ * `rotatingZoneEnd` (pass `tl.labels.finalLock`, the same instant the old
+ * tween's duration ended), matching the original "camera holds through
+ * Final Lock/wave so attention stays on the corner pieces" behavior in
+ * both playback directions (`tl.time()` reports the current absolute
+ * position regardless of forward/reverse). No-ops once `controls.enabled`
+ * (R14 handoff to OrbitControls has happened, it owns the camera now). */
+export function stepCameraOrbit(
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls,
+  tl: gsap.core.Timeline,
+  rotatingZoneEnd: number,
+  state: CameraOrbitState,
+  dt: number
+): void {
+  if (controls.enabled) return;
+  if (tl.time() < rotatingZoneEnd) {
+    const angularSpeed = CAMERA_ORBIT_SWEEP / rotatingZoneEnd;
+    state.theta = (state.theta + angularSpeed * dt) % (Math.PI * 2);
+  }
+  camera.position.set(
+    Math.sin(state.theta) * CAMERA_RADIUS,
+    CAMERA_HEIGHT,
+    Math.cos(state.theta) * CAMERA_RADIUS
+  );
+  camera.lookAt(0, 0, 0);
+}
+
 export interface MasterTimelineParams {
   pieces: PieceRuntime[];
   finalLockPieces: PieceRuntime[]; // exactly 4, in Final Lock order
@@ -322,31 +367,18 @@ export function buildMasterTimeline({
     cursor = stageStart + stageSpan * STAGE_OVERLAP_FACTOR + ASSEMBLY_STAGE_PAUSES[stageIndex];
   });
 
-  // Camera orbit tween spanning the full Escenas 1-3 (floating -> signal ->
-  // assembly), a single slow `theta` sweep with `ease: "none"` (R5, R17:
-  // always smooth, never abrupt) — inserted at position 0 now that its
-  // total duration (`cursor`, the end of the assembly stages) is known.
-  // Camera holds its final orbit position through Final Lock/wave so
-  // attention stays on the corner pieces during the climax.
-  const preFinalLockDuration = cursor;
-  const cameraState = { theta: 0 };
-  tl.to(
-    cameraState,
-    {
-      theta: Math.PI * 0.85,
-      duration: preFinalLockDuration,
-      ease: "none",
-      onUpdate: () => {
-        camera.position.set(
-          Math.sin(cameraState.theta) * CAMERA_RADIUS,
-          CAMERA_HEIGHT,
-          Math.cos(cameraState.theta) * CAMERA_RADIUS
-        );
-        camera.lookAt(0, 0, 0);
-      },
-    },
-    0
-  );
+  // Camera orbit used to live here as a GSAP tween (theta 0 -> 0.85*PI over
+  // Escenas 1-3, held through Final Lock/wave) — moved out to
+  // `stepCameraOrbit()` below (user feedback 2026-08-08: tweening it
+  // *inside* this timeline meant `tl.reverse()` (the rewind loop's rewind)
+  // reversed the camera's rotation direction along with the pieces, so
+  // assembling and disassembling visibly orbited opposite ways, with an
+  // abrupt direction flip right at the loop seam. `stepCameraOrbit` reads
+  // `tl.time()` / `tl.labels.finalLock` (still set below, unchanged) but
+  // drives `theta` off real elapsed time outside the timeline, so it always
+  // advances the same direction regardless of which way the timeline is
+  // currently playing — same reasoning as `stepIdlePieces` already being a
+  // continuous effect run outside GSAP instead of a reversible tween.
 
   // ── Final Lock (R11-R13, simplified per user request 2026-08-08): used
   // to be a deliberate suspense build — 3 corners landing one at a time

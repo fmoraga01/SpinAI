@@ -13,10 +13,12 @@ import { createMaterialPalette, buildBrickAssignments, buildInstancedMeshes } fr
 import {
   createPieceRuntimes,
   stepIdlePieces,
+  stepCameraOrbit,
   buildMasterTimeline,
   attachAssemblyLoop,
   placePieceAtCube,
   type PieceRuntime,
+  type CameraOrbitState,
 } from "./lego/timeline";
 
 // `navigator.deviceMemory` is Chrome/Edge-only and missing from the
@@ -91,6 +93,9 @@ export default function LegoHeroScene() {
       const removeAssemblyLoop = attachAssemblyLoop(timeline, pieces, controls, renderer.domElement);
       cleanupFns.push(() => timeline.kill(), removeAssemblyLoop);
 
+      const cameraOrbitState: CameraOrbitState = { theta: 0 };
+      const rotatingZoneEnd = timeline.labels.finalLock;
+
       const start = performance.now();
       let lastTime = start;
       const frame = (time: number) => {
@@ -98,9 +103,11 @@ export default function LegoHeroScene() {
         lastTime = time;
         stepIdlePieces(pieces, dt, (time - start) / 1000);
         // Only let OrbitControls drive the camera once it owns it (R14) —
-        // calling `controls.update()` earlier would fight the GSAP-driven
-        // `camera.position` tween during Escenas 1-3 (its damping math
-        // isn't aware of those manual position writes).
+        // calling `controls.update()` earlier would fight
+        // `stepCameraOrbit`'s manual `camera.position` writes during
+        // Escenas 1-3 (its damping math isn't aware of those). No-ops
+        // itself once `controls.enabled` (see its own comment).
+        stepCameraOrbit(camera, controls, timeline, rotatingZoneEnd, cameraOrbitState, dt);
         if (controls.enabled) controls.update();
         renderer.render(scene, camera);
         rafId = requestAnimationFrame(frame);
