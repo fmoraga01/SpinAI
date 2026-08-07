@@ -249,6 +249,21 @@ function addPieceTravel(
       onStart: () => {
         piece.phase = "traveling";
       },
+      // Bugfix (user report 2026-08-08): during the rewind loop, pieces
+      // that finish reverse-traveling back to their floating spot stopped
+      // idle-spinning (`stepIdlePieces` only steps `phase === "idle"`
+      // pieces) — because `onComplete` above only fires forward, nothing
+      // ever put them back on "idle" until the *entire* timeline reversed
+      // all the way to t=0, so most pieces just sat frozen while only the
+      // last (earliest-assembled, "core" stage) pieces were still visibly
+      // moving. This tween is the *first* one added per piece (earliest
+      // start time), so it's the *last* one exited while reversing —
+      // exactly the moment this piece's own travel is fully undone.
+      // `onReverseComplete` fires right then, per piece, independent of
+      // when the rest of the timeline finishes.
+      onReverseComplete: () => {
+        piece.phase = "idle";
+      },
       onUpdate: () => updatePieceFromProgress(piece),
     },
     startTime
@@ -316,6 +331,14 @@ export function buildMasterTimeline({
         ease: "power2.out",
         onStart: () => {
           piece.phase = "signaling";
+        },
+        // Same per-piece reverse-completion fix as `addPieceTravel`'s first
+        // tween — this is the earliest-starting (so last-exited-in-reverse)
+        // tween of the pair, so it's the right spot to hand the piece back
+        // to "idle" the instant *this piece's* rewind through the signal
+        // pulse finishes, not only once the whole timeline reaches t=0.
+        onReverseComplete: () => {
+          piece.phase = "idle";
         },
         onUpdate: () => updateMatrix(piece),
       },
