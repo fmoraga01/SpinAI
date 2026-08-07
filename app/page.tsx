@@ -35,8 +35,7 @@ export default function Home() {
                 marginBottom: 28,
               }}
             >
-              El destino habló.{" "}
-              <span style={{ color: "var(--color-primary)" }}>Te toca a ti.</span>
+              Just do it!
             </h1>
 
             {/* Subtitle */}
