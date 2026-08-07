@@ -8,7 +8,7 @@ import {
   generateCubePositions,
   selectFinalLockCorners,
 } from "@/lib/lego/layout";
-import { buildScene } from "./lego/scene";
+import { buildScene, CAMERA_RADIUS, CAMERA_HEIGHT } from "./lego/scene";
 import { createMaterialPalette, buildBrickAssignments, buildInstancedMeshes } from "./lego/bricks";
 import {
   createPieceRuntimes,
@@ -77,7 +77,7 @@ export default function LegoHeroScene() {
       // R18: cube already assembled, static, camera fixed, controls on
       // immediately — no timeline, no continuous animation loop.
       pieces.forEach(placePieceAtCube);
-      camera.position.set(0, 3.4, 11);
+      camera.position.set(0, CAMERA_HEIGHT, CAMERA_RADIUS);
       camera.lookAt(0, 0, 0);
       controls.target.set(0, 0, 0);
       controls.enabled = true;

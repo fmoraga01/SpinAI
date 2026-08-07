@@ -6,6 +6,7 @@ import gsap from "gsap";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { buildCatmullRomPath } from "@/lib/lego/paths";
 import type { PieceRef } from "./bricks";
+import { CAMERA_RADIUS, CAMERA_HEIGHT } from "./scene";
 
 export type PiecePhase = "idle" | "signaling" | "traveling" | "settled";
 
@@ -30,8 +31,6 @@ export interface PieceRuntime {
   currentQuaternion: THREE.Quaternion;
 }
 
-const CAMERA_RADIUS = 11;
-const CAMERA_HEIGHT = 3.4;
 /** Small, bounded extrapolation distance for the transient back.out()
  * overshoot past `progress = 1` (R8) — see `sampleCurve` below. */
 const OVERSHOOT_EXTRAPOLATION = 0.6;

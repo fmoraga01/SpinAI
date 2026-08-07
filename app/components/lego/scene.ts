@@ -15,8 +15,36 @@ export interface SceneBundle {
   dispose: () => void;
 }
 
-const CAMERA_RADIUS = 11;
-const CAMERA_HEIGHT = 3.4;
+/**
+ * Bugfix (post-`done` reopen, 5th pass — see
+ * progress/impl_project-hero-lego-animation.md dated section for the full
+ * writeup): these used to be 11/3.4, sized without checking whether the
+ * scene content actually fits inside the camera's frustum at that
+ * distance. It didn't: the floating cloud (`FLOAT_RADIUS = 6` in
+ * `lib/lego/layout.ts`, plus brick margin) has an effective bounding
+ * radius of ~7.17 world units, and the worst-case assembled cube (full
+ * tier, e.g. `n=101`) is ~6.24 — both bigger than the ~3.65 a camera at
+ * distance 11 with a 37° FOV can actually frame. Pieces routinely
+ * overflowed the canvas, especially during the floating phase (Scene 1) —
+ * this went unnoticed across 4 prior review passes because this sandbox's
+ * `navigator.hardwareConcurrency = 4` always forces the smaller `reduced`
+ * tier by default, and the one place `full` tier was checked, the camera
+ * was manually (and temporarily) pulled back just to see the result,
+ * without recognizing that as evidence the *default* camera was wrong.
+ *
+ * Fixed values (verified by computing the actual bounding radius of both
+ * the floating cloud and the worst-case assembled cube across the full
+ * `n` range of both quality tiers, then solving for a camera distance
+ * that fits the larger of the two with ~15% margin — see the dated
+ * progress section for the exact numbers): `CAMERA_RADIUS = 26`,
+ * `CAMERA_HEIGHT = 8` (same height/radius ratio as before). Exported so
+ * `timeline.ts`'s orbit tween and `LegoHeroScene.tsx`'s
+ * `prefers-reduced-motion` static camera use the exact same numbers — the
+ * three previously had 3 independent copies of this constant, which is
+ * exactly the kind of desync that let this bug hide in the first place.
+ */
+export const CAMERA_RADIUS = 26;
+export const CAMERA_HEIGHT = 8;
 
 export function buildScene(container: HTMLElement, tier: QualityTier): SceneBundle {
   const scene = new THREE.Scene();
@@ -97,8 +125,11 @@ export function buildScene(container: HTMLElement, tier: QualityTier): SceneBund
   controls.enabled = false;
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.minDistance = 6;
-  controls.maxDistance = 18;
+  // Scaled alongside CAMERA_RADIUS/CAMERA_HEIGHT above (was 6/18 when the
+  // default distance was ~11.5; now ~27.2) so manual zoom after the
+  // narrative ends still has a sensible range around the new default.
+  controls.minDistance = 14;
+  controls.maxDistance = 42;
   controls.target.set(0, 0, 0);
 
   function resize(width: number, height: number) {
