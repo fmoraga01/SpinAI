@@ -162,9 +162,30 @@ const SNAP_DURATION = 0.15;
  * excluded here and animated separately, see `addFinalLock`). Durations
  * decrease and pauses grow across stages, per R10 ("ritmo acelera
  * gradualmente"); concrete values chosen within design.md's documented
- * ranges (1.2-2.2s duration, 0.3-0.6s pause). */
+ * ranges (1.2-2.2s duration, 0.3-0.6s pause).
+ *
+ * Pauses cut down from the design.md range (user feedback 2026-08-07: the
+ * last 2-3 staggered pieces of a stage always lagged behind the rest, and
+ * gating the next stage on 100% of the current stage landing — plus this
+ * fixed pause on top — read as a dead stall, not a deliberate beat. See
+ * `STAGE_OVERLAP_FACTOR` below for the other half of the fix. */
 const ASSEMBLY_STAGE_DURATIONS = [2.2, 1.9, 1.6, 1.4, 1.3, 1.2];
-const ASSEMBLY_STAGE_PAUSES = [0.3, 0.32, 0.36, 0.42, 0.5, 0.55];
+const ASSEMBLY_STAGE_PAUSES = [0.12, 0.13, 0.15, 0.17, 0.2, 0.22];
+/** Per-piece start stagger within a stage (R9's "no todas a la vez"),
+ * tightened alongside the pause cut above — narrower spread means fewer
+ * pieces visibly straggle at a stage's tail. */
+const STAGE_STAGGER_STEP = 0.01;
+const STAGE_STAGGER_CAP = 0.15;
+/** Fraction of a stage's own span (start of its first piece to landing of
+ * its last) that must elapse before the *next* stage's pieces start
+ * moving. <1 means overlap: the next stage begins while this stage's
+ * slowest pieces are still mid-flight/snapping, instead of everything
+ * going still first — this is what actually removes the "espera" the
+ * hard 100%-then-pause gate produced, the pause trim alone only shrinks
+ * it. Chosen conservatively (pieces still get ~2/3 of the stage's motion
+ * to land before the next one starts) so stages still read as "one layer
+ * finishes, then the next" rather than all blurring together. */
+const STAGE_OVERLAP_FACTOR = 0.65;
 
 function addPieceTravel(
   tl: gsap.core.Timeline,
@@ -337,13 +358,17 @@ export function buildMasterTimeline({
   stageGroups.forEach((group, stageIndex) => {
     tl.addLabel(stageLabels[stageIndex], cursor);
     const duration = ASSEMBLY_STAGE_DURATIONS[stageIndex];
+    const stageStart = cursor;
     let stageEnd = cursor;
     group.forEach((piece, i) => {
-      const stagger = Math.min(i * 0.015, 0.3);
+      const stagger = Math.min(i * STAGE_STAGGER_STEP, STAGE_STAGGER_CAP);
       const end = addPieceTravel(tl, piece, cursor + stagger, duration);
       stageEnd = Math.max(stageEnd, end);
     });
-    cursor = stageEnd + ASSEMBLY_STAGE_PAUSES[stageIndex];
+    // Overlap (see STAGE_OVERLAP_FACTOR comment): next stage starts partway
+    // through this one's span, not after every last piece has fully landed.
+    const stageSpan = stageEnd - stageStart;
+    cursor = stageStart + stageSpan * STAGE_OVERLAP_FACTOR + ASSEMBLY_STAGE_PAUSES[stageIndex];
   });
 
   // Camera orbit tween spanning the full Escenas 1-3 (floating -> signal ->
