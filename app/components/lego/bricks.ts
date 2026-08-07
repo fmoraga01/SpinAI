@@ -31,12 +31,18 @@ export const BRICK_SIZE_DEFS: Record<BrickSizeId, BrickSizeDef> = {
 
 /** Palette restricted to white/gray/blue per user request — white
  * dominates, gray is the secondary neutral, blue (`--color-primary`, same
- * accent color as the rest of the site) is a deliberate low-volume,
- * high-contrast accent. */
+ * accent color as the rest of the site) is an accent.
+ *
+ * Bugfix: blue's weight was 8 (matching the original 5-color brief, where
+ * it was spread thin across more categories) — with only 3 colors and a
+ * ~125/64-piece cube, that read as "no blue at all" in practice (~10/~5
+ * expected pieces, easy to miss or end up occluded inside the assembled
+ * cube). Bumped to 20 so blue reliably reads as present, not a rare
+ * accident, while white still dominates. */
 export const COLOR_PALETTE: { name: ColorName; hex: number; weight: number }[] = [
-  { name: "white", hex: 0xf4f5f7, weight: 65 },
-  { name: "gray", hex: 0xb9bec9, weight: 27 },
-  { name: "blue", hex: 0x2c40ff, weight: 8 }, // var(--color-primary)
+  { name: "white", hex: 0xf4f5f7, weight: 55 },
+  { name: "gray", hex: 0xb9bec9, weight: 25 },
+  { name: "blue", hex: 0x2c40ff, weight: 20 }, // var(--color-primary)
 ];
 
 function pickWeighted<T extends { weight: number }>(items: T[], rng: () => number): T {
