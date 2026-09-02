@@ -202,3 +202,16 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   run verify` en verde sobre `dev` antes de promover. `main` avanzó por
   fast-forward de `1e5f902` a `8d5ef3d` (sin conflictos) vía `git push
   origin origin/dev:main`. Sin bloque de SQL que correr en este cutover.
+
+- 2026-09-02: **promoción ejecutada.** `dev` estaba 2 commits adelante de
+  `main` (registro de la promoción anterior en este checklist, más el
+  cambio de flag para ocultar de nuevo la sección Status de Proyectos:
+  `proyectosStatusVisible: true → false` en `lib/featureFlags.ts`, a
+  pedido del usuario). Mismo chequeo que las promociones anteriores: sin
+  migraciones SQL nuevas desde `20260730160000` (mismos 7 archivos ya
+  aplicados en prod), sin variables de entorno nuevas (cambio de flag
+  puro, sin rutas server-side nuevas). `npm run verify` (lint + build + 87
+  tests + check-sdd-state) en verde sobre `dev` antes de promover. `main`
+  avanzó por fast-forward de `8d5ef3d` a `779464b` (sin conflictos) vía
+  `git push origin origin/dev:main`. Sin bloque de SQL que correr en este
+  cutover.
