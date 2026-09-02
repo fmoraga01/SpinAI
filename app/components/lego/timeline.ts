@@ -193,8 +193,6 @@ export function stepCameraOrbit(
 export interface MasterTimelineParams {
   pieces: PieceRuntime[];
   finalLockPieces: PieceRuntime[]; // exactly 4, in Final Lock order
-  camera: THREE.PerspectiveCamera;
-  controls: OrbitControls;
 }
 
 const FLOATING_DURATION = 3;
@@ -299,8 +297,6 @@ function addPieceTravel(
 export function buildMasterTimeline({
   pieces,
   finalLockPieces,
-  camera,
-  controls,
 }: MasterTimelineParams): gsap.core.Timeline {
   // No onComplete handoff here anymore -- see `attachAssemblyLoop` below,
   // which owns the assemble/hold/rewind loop and the eventual R14 handoff

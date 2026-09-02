@@ -89,7 +89,7 @@ export default function LegoHeroScene() {
       controls.addEventListener("change", renderOnce);
       cleanupFns.push(() => controls.removeEventListener("change", renderOnce));
     } else {
-      const timeline = buildMasterTimeline({ pieces, finalLockPieces, camera, controls });
+      const timeline = buildMasterTimeline({ pieces, finalLockPieces });
       const removeAssemblyLoop = attachAssemblyLoop(timeline, pieces, controls, renderer.domElement);
       cleanupFns.push(() => timeline.kill(), removeAssemblyLoop);
 
