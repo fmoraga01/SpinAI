@@ -215,3 +215,16 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   avanzó por fast-forward de `8d5ef3d` a `779464b` (sin conflictos) vía
   `git push origin origin/dev:main`. Sin bloque de SQL que correr en este
   cutover.
+
+- 2026-09-02: **promoción ejecutada.** `dev` estaba 2 commits adelante de
+  `main` (registro de la promoción anterior en este checklist, más un
+  refactor puro: se sacaron los parámetros `camera`/`controls` sin uso de
+  `buildMasterTimeline`/`MasterTimelineParams` en
+  `app/components/lego/timeline.ts`, que dejaban 2 warnings de lint —
+  restos de la refactorización que movió el giro de cámara fuera del
+  timeline de GSAP en una promoción anterior). Sin migraciones SQL nuevas,
+  sin variables de entorno nuevas, sin cambio de comportamiento. `npm run
+  verify` en verde (lint ahora en 0 warnings) sobre `dev` antes de
+  promover. `main` avanzó por fast-forward de `779464b` a `865bfb4` (sin
+  conflictos) vía `git push origin origin/dev:main`. Sin bloque de SQL que
+  correr en este cutover.
