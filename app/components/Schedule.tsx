@@ -37,10 +37,11 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
-  // El ciclo actual se completa cuando queda 1 o 0 turnos por venir (ver
-  // lib/teamRows.ts buildBulkPreview: cada giro asigna exactamente un turno
-  // por integrante activo para las próximas fechas disponibles).
-  const isCycleEnding = assignments.length > 0 && upcoming.length <= 1;
+  // "Llegó al último asignado" se mide sobre turnos con integrante asignado,
+  // no sobre filas "Sin asignar" (slots vacíos que ya esperan un próximo
+  // giro) — si no, nunca se dispara mientras existan esos placeholders.
+  const assignedUpcoming = upcoming.filter((a) => a.memberId);
+  const isCycleEnding = assignments.length > 0 && assignedUpcoming.length <= 1;
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -140,7 +141,7 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
         >
           <div>
             <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)", margin: 0 }}>
-              {upcoming.length === 1 ? "Este es el último turno asignado" : "Ya se completaron todos los turnos asignados"}
+              {assignedUpcoming.length === 1 ? "Este es el último turno asignado" : "Ya se completaron todos los turnos asignados"}
             </p>
             <p className="text-xs" style={{ color: "#4B5563", margin: "2px 0 0" }}>
               Gira la ruleta para asignar el próximo ciclo de turnos.
@@ -234,11 +235,6 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
                       {isNext && !isUnassigned && (
                         <span className="ml-2 font-medium" style={{ color: "var(--color-primary)" }}>
                           · Próximo
-                        </span>
-                      )}
-                      {isUnassigned && (
-                        <span className="ml-2 font-medium" style={{ color: "#F59E0B" }}>
-                          · Gira la ruleta para asignar
                         </span>
                       )}
                     </p>
