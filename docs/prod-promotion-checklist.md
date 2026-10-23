@@ -228,3 +228,21 @@ todo `/proyectos`) se rompe para quien siga sirviendo el código viejo.
   promover. `main` avanzó por fast-forward de `779464b` a `865bfb4` (sin
   conflictos) vía `git push origin origin/dev:main`. Sin bloque de SQL que
   correr en este cutover.
+
+- 2026-10-23: **promoción ejecutada.** `dev` estaba 3 commits adelante de
+  `main` (registro de la promoción anterior en este checklist, más la
+  feature "volver a girar la ruleta al llegar al último turno asignado":
+  banner con botón en `app/components/Schedule.tsx` que aparece cuando
+  queda 1 o 0 turnos con integrante asignado en "Próximos viernes", con un
+  fix sobre la primera versión porque la condición original contaba
+  también las filas "Sin asignar" precargadas y nunca se disparaba — ahora
+  cuenta solo turnos con `memberId`; de paso se quitó el texto "Gira la
+  ruleta para asignar" de esas filas vacías, que no era un botón real y
+  generaba confusión). Sin migraciones SQL nuevas desde `20260730160000`
+  (mismos 7 archivos ya aplicados en prod), sin variables de entorno
+  nuevas (cambio de frontend puro, sin rutas server-side nuevas), sin diff
+  en `lib/featureFlags.ts` entre ramas. `npm run verify` (lint + build + 87
+  tests + check-sdd-state) en verde sobre `dev` antes de promover. `main`
+  avanzó por fast-forward de `865bfb4` a `9219ed0` (sin conflictos) vía
+  `git push origin origin/dev:main`. Sin bloque de SQL que correr en este
+  cutover.
