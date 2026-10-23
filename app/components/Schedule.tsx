@@ -37,6 +37,10 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
   const sorted = [...assignments].sort((a, b) => a.date.localeCompare(b.date));
   const upcoming = sorted.filter((a) => !isPast(a.date));
   const past = sorted.filter((a) => isPast(a.date)).reverse();
+  // El ciclo actual se completa cuando queda 1 o 0 turnos por venir (ver
+  // lib/teamRows.ts buildBulkPreview: cada giro asigna exactamente un turno
+  // por integrante activo para las próximas fechas disponibles).
+  const isCycleEnding = assignments.length > 0 && upcoming.length <= 1;
 
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
@@ -124,6 +128,40 @@ export default function Schedule({ assignments, onPrepare, onRefresh }: Props) {
   return (
     <div className="space-y-5">
       <style>{`@keyframes scheduleRowIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+      {isCycleEnding && (
+        <div
+          className="flex items-center justify-between gap-3"
+          style={{
+            background: "#2C40FF0f",
+            border: "1px solid #2C40FF33",
+            borderRadius: "var(--radius-md)",
+            padding: "12px 16px",
+          }}
+        >
+          <div>
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text-primary)", margin: 0 }}>
+              {upcoming.length === 1 ? "Este es el último turno asignado" : "Ya se completaron todos los turnos asignados"}
+            </p>
+            <p className="text-xs" style={{ color: "#4B5563", margin: "2px 0 0" }}>
+              Gira la ruleta para asignar el próximo ciclo de turnos.
+            </p>
+          </div>
+          <button
+            onClick={() => switchDrawer("ruleta")}
+            style={{
+              flexShrink: 0,
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: "var(--radius-md)",
+              fontSize: 12, fontWeight: 600, color: "#fff",
+              background: "var(--color-primary)", border: "1px solid var(--color-primary)",
+              boxShadow: "var(--shadow-glow-sm)", cursor: "pointer", whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{ fontSize: 13 }}>◎</span>
+            Girar ruleta
+          </button>
+        </div>
+      )}
       {upcoming.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
